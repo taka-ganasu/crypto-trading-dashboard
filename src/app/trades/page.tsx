@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { fetchTrades } from "@/lib/api";
+import { formatNumber, formatPnl, colorByPnl, formatDate } from "@/lib/format";
 import type { Trade } from "@/types";
 
 export default function TradesPage() {
@@ -83,35 +84,24 @@ export default function TradesPage() {
                     {trade.strategy ?? "-"}
                   </td>
                   <td className="px-4 py-3 text-right font-mono text-zinc-300">
-                    {trade.entry_price.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
+                    {formatNumber(trade.entry_price)}
                   </td>
                   <td className="px-4 py-3 text-right font-mono text-zinc-300">
                     {trade.exit_price != null
-                      ? trade.exit_price.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })
+                      ? formatNumber(trade.exit_price)
                       : "-"}
                   </td>
                   <td className="px-4 py-3 text-right font-mono">
                     {trade.pnl != null ? (
-                      <span
-                        className={
-                          trade.pnl >= 0 ? "text-emerald-400" : "text-red-400"
-                        }
-                      >
-                        {trade.pnl >= 0 ? "+" : ""}
-                        {trade.pnl.toFixed(2)}
+                      <span className={colorByPnl(trade.pnl)}>
+                        {formatPnl(trade.pnl)}
                       </span>
                     ) : (
                       <span className="text-zinc-500">-</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-zinc-400">
-                    {new Date(trade.entry_time).toLocaleDateString()}
+                    {formatDate(trade.entry_time)}
                   </td>
                 </tr>
               ))

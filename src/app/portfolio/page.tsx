@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { fetchPortfolioState } from "@/lib/api";
+import { formatNumber, formatCurrency, formatPercent, formatPnl, colorByPnl, formatTimestamp } from "@/lib/format";
 
 interface StrategyEntry {
   id: string;
@@ -117,7 +118,7 @@ export default function PortfolioPage() {
             Total Value
           </p>
           <p className="text-2xl font-bold mt-1">
-            ${totalEquity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {formatCurrency(totalEquity)}
           </p>
         </div>
         <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
@@ -125,15 +126,12 @@ export default function PortfolioPage() {
             Total PnL
           </p>
           <p
-            className={`text-2xl font-bold mt-1 ${
-              totalPnl >= 0 ? "text-emerald-400" : "text-red-400"
-            }`}
+            className={`text-2xl font-bold mt-1 ${colorByPnl(totalPnl)}`}
           >
             {totalPnl >= 0 ? "+" : ""}
-            ${totalPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {formatCurrency(totalPnl)}
             <span className="text-sm ml-1">
-              ({totalPnlPct >= 0 ? "+" : ""}
-              {totalPnlPct.toFixed(2)}%)
+              ({formatPnl(totalPnlPct)}%)
             </span>
           </p>
         </div>
@@ -143,7 +141,7 @@ export default function PortfolioPage() {
           </p>
           <p className="text-sm text-zinc-300 mt-2">
             {lastUpdated
-              ? new Date(lastUpdated).toLocaleString()
+              ? formatTimestamp(lastUpdated)
               : "N/A"}
           </p>
         </div>
@@ -187,25 +185,17 @@ export default function PortfolioPage() {
                     </td>
                     <td className="px-4 py-3 text-zinc-400">{s.strategy}</td>
                     <td className="px-4 py-3 text-right text-zinc-300">
-                      {s.allocation_pct.toFixed(1)}%
+                      {formatPercent(s.allocation_pct, 1)}
                     </td>
                     <td className="px-4 py-3 text-right text-zinc-300 font-mono">
-                      $
-                      {s.equity.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
+                      {formatCurrency(s.equity)}
                     </td>
                     <td
-                      className={`px-4 py-3 text-right font-mono ${
-                        s.pnl >= 0 ? "text-emerald-400" : "text-red-400"
-                      }`}
+                      className={`px-4 py-3 text-right font-mono ${colorByPnl(s.pnl)}`}
                     >
-                      {s.pnl >= 0 ? "+" : ""}
-                      {s.pnl.toFixed(2)}
+                      {formatPnl(s.pnl)}
                       <span className="text-xs ml-1 opacity-70">
-                        ({s.pnl_pct >= 0 ? "+" : ""}
-                        {s.pnl_pct.toFixed(2)}%)
+                        ({formatPnl(s.pnl_pct)}%)
                       </span>
                     </td>
                   </tr>

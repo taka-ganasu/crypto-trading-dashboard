@@ -6,6 +6,7 @@ import {
   fetchMdseEvents,
   fetchMdseTrades,
 } from "@/lib/api";
+import { formatNumber, formatPnl, colorByPnl, formatTime } from "@/lib/format";
 import type { MdseDetectorScore, MdseEvent, MdseTrade } from "@/types";
 
 function winRateColor(rate: number): string {
@@ -77,12 +78,9 @@ export default function MdsePage() {
                 </span>
                 <span className="text-zinc-500">Avg PnL</span>
                 <span
-                  className={`text-right font-mono ${
-                    d.avg_pnl >= 0 ? "text-emerald-400" : "text-red-400"
-                  }`}
+                  className={`text-right font-mono ${colorByPnl(d.avg_pnl)}`}
                 >
-                  {d.avg_pnl >= 0 ? "+" : ""}
-                  {d.avg_pnl.toFixed(2)}
+                  {formatPnl(d.avg_pnl)}
                 </span>
                 <span className="text-zinc-500">Weight</span>
                 <span className="text-right font-mono text-zinc-300">
@@ -157,7 +155,7 @@ export default function MdsePage() {
                   {ev.confidence.toFixed(0)}%
                 </span>
                 <span className="shrink-0 text-xs text-zinc-500">
-                  {new Date(ev.timestamp).toLocaleTimeString()}
+                  {formatTime(ev.timestamp)}
                 </span>
               </div>
             ))
@@ -220,28 +218,17 @@ export default function MdsePage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-zinc-300">
-                      {t.entry_price.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
+                      {formatNumber(t.entry_price)}
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-zinc-300">
                       {t.exit_price != null
-                        ? t.exit_price.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })
+                        ? formatNumber(t.exit_price)
                         : "-"}
                     </td>
                     <td className="px-4 py-3 text-right font-mono">
                       {t.pnl != null ? (
-                        <span
-                          className={
-                            t.pnl >= 0 ? "text-emerald-400" : "text-red-400"
-                          }
-                        >
-                          {t.pnl >= 0 ? "+" : ""}
-                          {t.pnl.toFixed(2)}
+                        <span className={colorByPnl(t.pnl)}>
+                          {formatPnl(t.pnl)}
                         </span>
                       ) : (
                         <span className="text-zinc-500">-</span>

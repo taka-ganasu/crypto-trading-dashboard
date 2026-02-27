@@ -6,6 +6,7 @@ import {
   fetchExecutionQuality,
   fetchMarketSnapshots,
 } from "@/lib/api";
+import { formatNumber, formatPercent, formatPnl, colorByPnl, formatTimestamp } from "@/lib/format";
 import type {
   PerformanceSummary,
   ExecutionQuality,
@@ -77,12 +78,9 @@ export default function PerformancePage() {
               Total PnL
             </p>
             <p
-              className={`mt-1 text-2xl font-mono font-bold ${
-                (summary.total_pnl ?? 0) >= 0 ? "text-emerald-400" : "text-red-400"
-              }`}
+              className={`mt-1 text-2xl font-mono font-bold ${colorByPnl(summary.total_pnl ?? 0)}`}
             >
-              {(summary.total_pnl ?? 0) >= 0 ? "+" : ""}
-              {(summary.total_pnl ?? 0).toFixed(2)}
+              {formatPnl(summary.total_pnl ?? 0)}
             </p>
           </div>
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
@@ -90,7 +88,7 @@ export default function PerformancePage() {
               Win Rate
             </p>
             <p className="mt-1 text-2xl font-mono font-bold text-zinc-100">
-              {summary.win_rate != null ? ((summary.win_rate * 100).toFixed(1) + "%") : "—"}
+              {summary.win_rate != null ? formatPercent(summary.win_rate * 100, 1) : "—"}
             </p>
           </div>
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
@@ -110,7 +108,7 @@ export default function PerformancePage() {
                 summary.avg_slippage ?? 0
               )}`}
             >
-              {summary.avg_slippage != null ? (summary.avg_slippage.toFixed(3) + "%") : "—"}
+              {summary.avg_slippage != null ? formatPercent(summary.avg_slippage, 3) : "—"}
             </p>
           </div>
         </div>
@@ -175,7 +173,7 @@ export default function PerformancePage() {
                       {eq.api_latency_ms}
                     </td>
                     <td className="px-4 py-3 text-zinc-400">
-                      {new Date(eq.timestamp).toLocaleString()}
+                      {formatTimestamp(eq.timestamp)}
                     </td>
                   </tr>
                 ))
@@ -223,10 +221,7 @@ export default function PerformancePage() {
                       {snap.symbol}
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-zinc-300">
-                      {snap.price != null ? snap.price.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      }) : "—"}
+                      {snap.price != null ? formatNumber(snap.price) : "—"}
                     </td>
                     <td
                       className={`px-4 py-3 text-right font-mono ${rsiColor(
@@ -245,7 +240,7 @@ export default function PerformancePage() {
                       {snap.volume != null ? snap.volume.toLocaleString() : "—"}
                     </td>
                     <td className="px-4 py-3 text-zinc-400">
-                      {new Date(snap.timestamp).toLocaleString()}
+                      {formatTimestamp(snap.timestamp)}
                     </td>
                   </tr>
                 ))
