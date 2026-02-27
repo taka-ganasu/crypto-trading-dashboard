@@ -223,10 +223,10 @@ export default function PerformancePage() {
                       {snap.symbol}
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-zinc-300">
-                      {snap.price.toLocaleString(undefined, {
+                      {snap.price != null ? snap.price.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
-                      })}
+                      }) : "—"}
                     </td>
                     <td
                       className={`px-4 py-3 text-right font-mono ${rsiColor(
@@ -242,7 +242,7 @@ export default function PerformancePage() {
                       {snap.macd != null ? snap.macd.toFixed(4) : "-"}
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-zinc-300">
-                      {snap.volume.toLocaleString()}
+                      {snap.volume != null ? snap.volume.toLocaleString() : "—"}
                     </td>
                     <td className="px-4 py-3 text-zinc-400">
                       {new Date(snap.timestamp).toLocaleString()}
