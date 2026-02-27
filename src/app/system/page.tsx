@@ -8,7 +8,7 @@ import {
 } from "@/lib/api";
 import type { SystemHealth, SystemMetrics, SystemInfo } from "@/types";
 
-type SysStatus = "OK" | "DEGRADED" | "DOWN";
+type SysStatus = "OK" | "DEGRADED" | "DOWN" | "unreachable";
 
 const STATUS_CONFIG: Record<
   SysStatus,
@@ -34,6 +34,13 @@ const STATUS_CONFIG: Record<
     border: "border-red-500/30",
     dot: "bg-red-400",
     label: "System is down",
+  },
+  unreachable: {
+    color: "text-zinc-400",
+    bg: "bg-zinc-500/10",
+    border: "border-zinc-500/30",
+    dot: "bg-zinc-400",
+    label: "Health monitor not running (API-only mode)",
   },
 };
 
@@ -110,7 +117,8 @@ export default function SystemPage() {
     };
   }, []);
 
-  const status: SysStatus = health?.status ?? "OK";
+  const rawStatus = health?.status ?? "OK";
+  const status: SysStatus = rawStatus in STATUS_CONFIG ? (rawStatus as SysStatus) : "unreachable";
   const config = STATUS_CONFIG[status];
 
   return (

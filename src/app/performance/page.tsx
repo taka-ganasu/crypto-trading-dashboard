@@ -78,11 +78,11 @@ export default function PerformancePage() {
             </p>
             <p
               className={`mt-1 text-2xl font-mono font-bold ${
-                summary.total_pnl >= 0 ? "text-emerald-400" : "text-red-400"
+                (summary.total_pnl ?? 0) >= 0 ? "text-emerald-400" : "text-red-400"
               }`}
             >
-              {summary.total_pnl >= 0 ? "+" : ""}
-              {summary.total_pnl.toFixed(2)}
+              {(summary.total_pnl ?? 0) >= 0 ? "+" : ""}
+              {(summary.total_pnl ?? 0).toFixed(2)}
             </p>
           </div>
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
@@ -90,7 +90,7 @@ export default function PerformancePage() {
               Win Rate
             </p>
             <p className="mt-1 text-2xl font-mono font-bold text-zinc-100">
-              {(summary.win_rate * 100).toFixed(1)}%
+              {summary.win_rate != null ? ((summary.win_rate * 100).toFixed(1) + "%") : "—"}
             </p>
           </div>
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
@@ -98,7 +98,7 @@ export default function PerformancePage() {
               Profit Factor
             </p>
             <p className="mt-1 text-2xl font-mono font-bold text-zinc-100">
-              {summary.profit_factor.toFixed(2)}
+              {summary.profit_factor != null ? summary.profit_factor.toFixed(2) : "—"}
             </p>
           </div>
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
@@ -107,10 +107,10 @@ export default function PerformancePage() {
             </p>
             <p
               className={`mt-1 text-2xl font-mono font-bold ${slippageColor(
-                summary.avg_slippage
+                summary.avg_slippage ?? 0
               )}`}
             >
-              {summary.avg_slippage.toFixed(3)}%
+              {summary.avg_slippage != null ? (summary.avg_slippage.toFixed(3) + "%") : "—"}
             </p>
           </div>
         </div>
