@@ -23,6 +23,7 @@ const navItems = [
   { href: "/trades", label: "Trades" },
   { href: "/portfolio", label: "Portfolio" },
   { href: "/circuit-breaker", label: "Circuit Breaker" },
+  { href: "/system", label: "System" },
 ];
 
 export default function RootLayout({
