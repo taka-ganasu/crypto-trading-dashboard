@@ -8,6 +8,9 @@ import type {
   MdseDetectorScore,
   MdseEvent,
   MdseTrade,
+  SystemHealth,
+  SystemMetrics,
+  SystemInfo,
 } from "@/types";
 
 const BASE_URL = "/api";
@@ -74,4 +77,16 @@ export async function fetchMdseTrades(
   limit: number = 20
 ): Promise<MdseTrade[]> {
   return fetchJSON<MdseTrade[]>(`/mdse/trades?limit=${limit}`);
+}
+
+export async function fetchSystemHealth(): Promise<SystemHealth> {
+  return fetchJSON<SystemHealth>("/system/health");
+}
+
+export async function fetchSystemMetrics(): Promise<SystemMetrics> {
+  return fetchJSON<SystemMetrics>("/system/metrics");
+}
+
+export async function fetchSystemInfo(): Promise<SystemInfo> {
+  return fetchJSON<SystemInfo>("/system/info");
 }

@@ -48,6 +48,26 @@ export interface CircuitBreakerState {
   data: Record<string, unknown>;
 }
 
+export interface SystemHealth {
+  status: "OK" | "DEGRADED" | "DOWN";
+  uptime_seconds: number;
+  pid: number;
+}
+
+export interface SystemMetrics {
+  memory_mb: number;
+  cpu_percent: number;
+  ws_connected: boolean;
+  last_fr_fetch: string | null;
+  open_positions: number;
+}
+
+export interface SystemInfo {
+  db_path: string;
+  api_version: string;
+  python_version: string;
+}
+
 export interface AnalysisCycle {
   id: number;
   start_time: string;
