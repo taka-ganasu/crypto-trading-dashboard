@@ -1,17 +1,16 @@
 import type { NextConfig } from "next";
 
+const apiBaseUrl = process.env.API_BASE_URL || "http://localhost:8000";
+
 const nextConfig: NextConfig = {
   reactCompiler: true,
   async rewrites() {
-    if (process.env.NODE_ENV === "development") {
-      return [
-        {
-          source: "/api/:path*",
-          destination: "http://localhost:8000/api/:path*",
-        },
-      ];
-    }
-    return [];
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${apiBaseUrl}/api/:path*`,
+      },
+    ];
   },
 };
 
