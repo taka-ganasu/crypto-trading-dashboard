@@ -107,3 +107,29 @@ export interface MdseTrade {
   pnl: number | null;
   position_size: number;
 }
+
+export interface PerformanceSummary {
+  total_pnl: number;
+  win_rate: number;
+  profit_factor: number;
+  avg_slippage: number;
+}
+
+export interface ExecutionQuality {
+  trade_id: number;
+  expected_price: number;
+  actual_price: number;
+  slippage_pct: number;
+  api_latency_ms: number;
+  timestamp: string;
+}
+
+export interface MarketSnapshot {
+  symbol: string;
+  price: number;
+  rsi: number | null;
+  adx: number | null;
+  macd: number | null;
+  volume: number;
+  timestamp: string;
+}
