@@ -11,6 +11,9 @@ import type {
   SystemHealth,
   SystemMetrics,
   SystemInfo,
+  PerformanceSummary,
+  ExecutionQuality,
+  MarketSnapshot,
 } from "@/types";
 
 const BASE_URL = "/api";
@@ -89,4 +92,24 @@ export async function fetchSystemMetrics(): Promise<SystemMetrics> {
 
 export async function fetchSystemInfo(): Promise<SystemInfo> {
   return fetchJSON<SystemInfo>("/system/info");
+}
+
+export async function fetchPerformanceSummary(): Promise<PerformanceSummary> {
+  return fetchJSON<PerformanceSummary>("/performance/summary");
+}
+
+export async function fetchExecutionQuality(
+  limit: number = 50
+): Promise<ExecutionQuality[]> {
+  return fetchJSON<ExecutionQuality[]>(
+    `/performance/execution-quality?limit=${limit}`
+  );
+}
+
+export async function fetchMarketSnapshots(
+  limit: number = 20
+): Promise<MarketSnapshot[]> {
+  return fetchJSON<MarketSnapshot[]>(
+    `/performance/market-snapshots?limit=${limit}`
+  );
 }
