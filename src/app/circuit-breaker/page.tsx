@@ -72,6 +72,12 @@ const TRANSITIONS = [
   },
 ];
 
+function normalizeStatus(value: unknown): CBStatus {
+  if (typeof value !== "string") return "NORMAL";
+  const upper = value.toUpperCase();
+  return upper in STATUS_CONFIG ? (upper as CBStatus) : "NORMAL";
+}
+
 function StatusBadge({ status }: { status: CBStatus }) {
   const config = STATUS_CONFIG[status];
   return (
@@ -128,10 +134,10 @@ export default function CircuitBreakerPage() {
     };
   }, []);
 
-  const currentStatus: CBStatus =
-    (cbState?.data?.status as CBStatus) ?? "NORMAL";
+  const currentStatus = normalizeStatus(cbState?.data?.status);
   const config = STATUS_CONFIG[currentStatus];
-  const events = (cbState?.data?.recent_events as Array<Record<string, string>>) ?? [];
+  const events =
+    (cbState?.data?.recent_events as Array<Record<string, string>>) ?? [];
 
   return (
     <div className="space-y-8 max-w-4xl">
@@ -144,9 +150,7 @@ export default function CircuitBreakerPage() {
       </div>
 
       {/* Current Status */}
-      <div
-        className={`rounded-xl border ${config.border} ${config.bg} p-6`}
-      >
+      <div className={`rounded-xl border ${config.border} ${config.bg} p-6`}>
         <p className="text-xs font-medium uppercase tracking-wider text-zinc-500 mb-3">
           Current Status
         </p>
@@ -208,9 +212,7 @@ export default function CircuitBreakerPage() {
                 key={i}
                 className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3"
               >
-                <StatusBadge
-                  status={(event.status as CBStatus) ?? "NORMAL"}
-                />
+                <StatusBadge status={normalizeStatus(event.status)} />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-zinc-300 truncate">
                     {event.message ?? "State change"}
