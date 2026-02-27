@@ -5,6 +5,9 @@ import type {
   PortfolioState,
   CircuitBreakerState,
   AnalysisCycle,
+  MdseDetectorScore,
+  MdseEvent,
+  MdseTrade,
 } from "@/types";
 
 const BASE_URL = "/api";
@@ -55,4 +58,20 @@ export async function fetchAnalysisCycles(
   limit: number = 50
 ): Promise<AnalysisCycle[]> {
   return fetchJSON<AnalysisCycle[]>(`/cycles?limit=${limit}`);
+}
+
+export async function fetchMdseScores(): Promise<MdseDetectorScore[]> {
+  return fetchJSON<MdseDetectorScore[]>("/mdse/scores");
+}
+
+export async function fetchMdseEvents(
+  hours: number = 24
+): Promise<MdseEvent[]> {
+  return fetchJSON<MdseEvent[]>(`/mdse/events?hours=${hours}`);
+}
+
+export async function fetchMdseTrades(
+  limit: number = 20
+): Promise<MdseTrade[]> {
+  return fetchJSON<MdseTrade[]>(`/mdse/trades?limit=${limit}`);
 }

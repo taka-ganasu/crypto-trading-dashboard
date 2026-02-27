@@ -60,3 +60,30 @@ export interface AnalysisCycle {
   regime_info: string | null;
   created_at: string | null;
 }
+
+export interface MdseDetectorScore {
+  detector_name: string;
+  win_rate: number;
+  avg_pnl: number;
+  weight: number;
+  sample_count: number;
+}
+
+export interface MdseEvent {
+  id: number;
+  detector: string;
+  symbol: string;
+  direction: "long" | "short";
+  confidence: number;
+  timestamp: string;
+}
+
+export interface MdseTrade {
+  event_id: number;
+  symbol: string;
+  direction: "long" | "short";
+  entry_price: number;
+  exit_price: number | null;
+  pnl: number | null;
+  position_size: number;
+}
