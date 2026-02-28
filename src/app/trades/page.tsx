@@ -3,14 +3,21 @@
 import { useEffect, useState } from "react";
 import { fetchTrades } from "@/lib/api";
 import { formatNumber, formatPnl, colorByPnl, formatDate } from "@/lib/format";
+import DetailPanel from "@/components/DetailPanel";
 import type { Trade } from "@/types";
 
 export default function TradesPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
+  const [highlightTradeId, setHighlightTradeId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const tradeIdRaw = new URLSearchParams(window.location.search).get("tradeId");
+    const parsedTradeId = tradeIdRaw ? Number(tradeIdRaw) : NaN;
+    setHighlightTradeId(Number.isFinite(parsedTradeId) ? parsedTradeId : null);
+
     fetchTrades(undefined, 100)
       .then(setTrades)
       .catch((e: Error) => setError(e.message))
@@ -64,7 +71,12 @@ export default function TradesPage() {
               trades.map((trade) => (
                 <tr
                   key={trade.id}
-                  className="hover:bg-zinc-900/50 transition-colors"
+                  onClick={() => setSelectedTrade(trade)}
+                  className={`hover:bg-zinc-900/50 transition-colors cursor-pointer ${
+                    highlightTradeId === trade.id
+                      ? "bg-zinc-800/60"
+                      : ""
+                  }`}
                 >
                   <td className="px-4 py-3 font-medium text-zinc-200">
                     {trade.symbol}
@@ -109,6 +121,97 @@ export default function TradesPage() {
           </tbody>
         </table>
       </div>
+
+      <DetailPanel
+        isOpen={selectedTrade != null}
+        onClose={() => setSelectedTrade(null)}
+        title="Trade Details"
+      >
+        {selectedTrade && (
+          <div className="space-y-3 text-sm">
+            <DetailRow label="Trade ID" value={`#${selectedTrade.id}`} />
+            <DetailRow label="Symbol" value={selectedTrade.symbol} />
+            <DetailRow label="Side" value={selectedTrade.side} />
+            <DetailRow
+              label="Entry Price"
+              value={formatNumber(selectedTrade.entry_price)}
+            />
+            <DetailRow
+              label="Exit Price"
+              value={
+                selectedTrade.exit_price != null
+                  ? formatNumber(selectedTrade.exit_price)
+                  : "—"
+              }
+            />
+            <DetailRow
+              label="PnL"
+              value={
+                selectedTrade.pnl != null
+                  ? formatPnl(selectedTrade.pnl)
+                  : "—"
+              }
+            />
+            <DetailRow
+              label="PnL %"
+              value={
+                selectedTrade.pnl_pct != null
+                  ? `${selectedTrade.pnl_pct.toFixed(2)}%`
+                  : "—"
+              }
+            />
+            <DetailRow
+              label="Strategy"
+              value={selectedTrade.strategy ?? "—"}
+            />
+            <DetailRow
+              label="Timestamp"
+              value={formatDate(selectedTrade.entry_time)}
+            />
+            <DetailRow
+              label="Duration"
+              value={
+                selectedTrade.entry_time && selectedTrade.exit_time
+                  ? formatDuration(selectedTrade.entry_time, selectedTrade.exit_time)
+                  : "Open"
+              }
+            />
+            <DetailRow
+              label="Fees"
+              value={
+                selectedTrade.fees != null
+                  ? formatNumber(selectedTrade.fees)
+                  : "—"
+              }
+            />
+          </div>
+        )}
+      </DetailPanel>
     </div>
   );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-4 border-b border-zinc-800/70 pb-2">
+      <span className="text-zinc-500">{label}</span>
+      <span className="text-right text-zinc-200 font-mono">{value}</span>
+    </div>
+  );
+}
+
+function formatDuration(entryTime: string, exitTime: string): string {
+  const start = new Date(entryTime).getTime();
+  const end = new Date(exitTime).getTime();
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) {
+    return "—";
+  }
+
+  const minutes = Math.round((end - start) / 60000);
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  if (hours > 0) {
+    return `${hours}h ${remainingMinutes}m`;
+  }
+  return `${minutes}m`;
 }

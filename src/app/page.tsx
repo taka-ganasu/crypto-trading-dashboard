@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   fetchPortfolioState,
@@ -169,9 +170,10 @@ export default function Home() {
         ) : (
           <div className="divide-y divide-zinc-800">
             {trades.map((trade) => (
-              <div
+              <Link
                 key={trade.id}
-                className="px-5 py-3 flex items-center justify-between"
+                href={`/trades?tradeId=${trade.id}`}
+                className="px-5 py-3 flex items-center justify-between hover:bg-zinc-900/50 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <span
@@ -211,7 +213,7 @@ export default function Home() {
                     </p>
                   )}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}

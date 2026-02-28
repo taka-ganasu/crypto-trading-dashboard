@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { fetchSignals } from "@/lib/api";
+import DetailPanel from "@/components/DetailPanel";
 import type { Signal } from "@/types";
 
 function actionBadge(action: string) {
@@ -15,6 +16,7 @@ function actionBadge(action: string) {
 
 export default function SignalsPage() {
   const [signals, setSignals] = useState<Signal[]>([]);
+  const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -111,7 +113,8 @@ export default function SignalsPage() {
               signals.map((sig) => (
                 <tr
                   key={sig.id}
-                  className="hover:bg-zinc-900/50 transition-colors"
+                  onClick={() => setSelectedSignal(sig)}
+                  className="hover:bg-zinc-900/50 transition-colors cursor-pointer"
                 >
                   <td className="px-4 py-3 text-zinc-400">
                     {new Date(sig.timestamp).toLocaleString()}
@@ -151,6 +154,61 @@ export default function SignalsPage() {
           </tbody>
         </table>
       </div>
+
+      <DetailPanel
+        isOpen={selectedSignal != null}
+        onClose={() => setSelectedSignal(null)}
+        title="Signal Details"
+      >
+        {selectedSignal && (
+          <div className="space-y-3 text-sm">
+            <DetailRow label="Signal ID" value={`#${selectedSignal.id}`} />
+            <DetailRow label="Symbol" value={selectedSignal.symbol} />
+            <DetailRow label="Action" value={selectedSignal.action.toUpperCase()} />
+            <DetailRow
+              label="Score"
+              value={
+                selectedSignal.score != null
+                  ? selectedSignal.score.toFixed(3)
+                  : "—"
+              }
+            />
+            <DetailRow
+              label="Confidence"
+              value={
+                selectedSignal.confidence != null
+                  ? `${selectedSignal.confidence.toFixed(1)}%`
+                  : "—"
+              }
+            />
+            <DetailRow
+              label="Strategy"
+              value={selectedSignal.strategy_type ?? "—"}
+            />
+            <DetailRow
+              label="Timestamp"
+              value={new Date(selectedSignal.timestamp).toLocaleString()}
+            />
+            <DetailRow
+              label="Executed"
+              value={selectedSignal.executed === 1 ? "true" : "false"}
+            />
+            <DetailRow
+              label="Execution Details"
+              value={selectedSignal.skip_reason ?? "—"}
+            />
+          </div>
+        )}
+      </DetailPanel>
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-4 border-b border-zinc-800/70 pb-2">
+      <span className="text-zinc-500">{label}</span>
+      <span className="text-right text-zinc-200 font-mono">{value}</span>
     </div>
   );
 }
