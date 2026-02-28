@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { fetchPortfolioState } from "@/lib/api";
 import { formatNumber, formatCurrency, formatPercent, formatPnl, colorByPnl, formatTimestamp } from "@/lib/format";
+import DetailPanel from "@/components/DetailPanel";
 
 interface StrategyEntry {
   id: string;
@@ -13,6 +14,8 @@ interface StrategyEntry {
   initial_equity: number;
   pnl: number;
   pnl_pct: number;
+  position_count: number | null;
+  last_signal_time: string | null;
 }
 
 function parseStrategies(data: Record<string, unknown>): {
@@ -52,6 +55,14 @@ function parseStrategies(data: Record<string, unknown>): {
         initial_equity: initial,
         pnl,
         pnl_pct: pnlPct,
+        position_count:
+          typeof s.position_count === "number"
+            ? s.position_count
+            : null,
+        last_signal_time:
+          typeof s.last_signal_time === "string"
+            ? s.last_signal_time
+            : null,
       });
 
       if (!totalEquity) {
@@ -65,6 +76,7 @@ function parseStrategies(data: Record<string, unknown>): {
 
 export default function PortfolioPage() {
   const [strategies, setStrategies] = useState<StrategyEntry[]>([]);
+  const [selectedStrategy, setSelectedStrategy] = useState<StrategyEntry | null>(null);
   const [totalEquity, setTotalEquity] = useState(0);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -178,7 +190,8 @@ export default function PortfolioPage() {
                 {strategies.map((s) => (
                   <tr
                     key={s.id}
-                    className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors"
+                    onClick={() => setSelectedStrategy(s)}
+                    className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors cursor-pointer"
                   >
                     <td className="px-4 py-3 font-medium text-zinc-100">
                       {s.symbol}
@@ -205,6 +218,66 @@ export default function PortfolioPage() {
           </div>
         )}
       </div>
+
+      <DetailPanel
+        isOpen={selectedStrategy != null}
+        onClose={() => setSelectedStrategy(null)}
+        title="Strategy Details"
+      >
+        {selectedStrategy && (
+          <div className="space-y-3 text-sm">
+            <DetailRow
+              label="Strategy Name"
+              value={selectedStrategy.strategy}
+            />
+            <DetailRow
+              label="Symbol"
+              value={selectedStrategy.symbol}
+            />
+            <DetailRow
+              label="Allocation %"
+              value={formatPercent(selectedStrategy.allocation_pct, 1)}
+            />
+            <DetailRow
+              label="Current Value"
+              value={formatCurrency(selectedStrategy.equity)}
+            />
+            <DetailRow
+              label="PnL"
+              value={formatPnl(selectedStrategy.pnl)}
+            />
+            <DetailRow
+              label="PnL %"
+              value={`${formatPnl(selectedStrategy.pnl_pct)}%`}
+            />
+            <DetailRow
+              label="Position Count"
+              value={
+                selectedStrategy.position_count != null
+                  ? String(selectedStrategy.position_count)
+                  : "—"
+              }
+            />
+            <DetailRow
+              label="Last Signal Time"
+              value={
+                selectedStrategy.last_signal_time
+                  ? formatTimestamp(selectedStrategy.last_signal_time)
+                  : "—"
+              }
+            />
+          </div>
+        )}
+      </DetailPanel>
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-4 border-b border-zinc-800/70 pb-2">
+      <span className="text-zinc-500">{label}</span>
+      <span className="text-right text-zinc-200 font-mono">{value}</span>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import {
   fetchExecutionQuality,
   fetchMarketSnapshots,
 } from "@/lib/api";
+import DetailPanel from "@/components/DetailPanel";
 import { formatNumber, formatPercent, formatPnl, colorByPnl, formatTimestamp } from "@/lib/format";
 import type {
   PerformanceSummary,
@@ -30,6 +31,7 @@ export default function PerformancePage() {
   const [summary, setSummary] = useState<PerformanceSummary | null>(null);
   const [execQuality, setExecQuality] = useState<ExecutionQuality[]>([]);
   const [snapshots, setSnapshots] = useState<MarketSnapshot[]>([]);
+  const [selectedExecution, setSelectedExecution] = useState<ExecutionQuality | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -145,7 +147,8 @@ export default function PerformancePage() {
                 execQuality.map((eq) => (
                   <tr
                     key={`${eq.trade_id}-${eq.timestamp}`}
-                    className="hover:bg-zinc-900/50 transition-colors"
+                    onClick={() => setSelectedExecution(eq)}
+                    className="hover:bg-zinc-900/50 transition-colors cursor-pointer"
                   >
                     <td className="px-4 py-3 font-medium text-zinc-200">
                       #{eq.trade_id}
@@ -177,11 +180,51 @@ export default function PerformancePage() {
                     </td>
                   </tr>
                 ))
-              )}
-            </tbody>
-          </table>
-        </div>
+            )}
+          </tbody>
+        </table>
       </div>
+
+      <DetailPanel
+        isOpen={selectedExecution != null}
+        onClose={() => setSelectedExecution(null)}
+        title="Execution Quality Details"
+      >
+        {selectedExecution && (
+          <div className="space-y-3 text-sm">
+            <DetailRow label="Trade ID" value={`#${selectedExecution.trade_id}`} />
+            <DetailRow
+              label="Expected Price"
+              value={selectedExecution.expected_price.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 6,
+              })}
+            />
+            <DetailRow
+              label="Actual Price"
+              value={selectedExecution.actual_price.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 6,
+              })}
+            />
+            <DetailRow
+              label="Slippage"
+              value={(
+                selectedExecution.actual_price - selectedExecution.expected_price
+              ).toFixed(6)}
+            />
+            <DetailRow
+              label="Slippage %"
+              value={`${selectedExecution.slippage_pct.toFixed(3)}%`}
+            />
+            <DetailRow
+              label="Timestamp"
+              value={formatTimestamp(selectedExecution.timestamp)}
+            />
+          </div>
+        )}
+      </DetailPanel>
+    </div>
 
       {/* Market Snapshots Table */}
       <div>
@@ -249,6 +292,15 @@ export default function PerformancePage() {
           </table>
         </div>
       </div>
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-4 border-b border-zinc-800/70 pb-2">
+      <span className="text-zinc-500">{label}</span>
+      <span className="text-right text-zinc-200 font-mono">{value}</span>
     </div>
   );
 }

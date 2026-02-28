@@ -6,6 +6,7 @@ import {
   fetchMdseEvents,
   fetchMdseTrades,
 } from "@/lib/api";
+import DetailPanel from "@/components/DetailPanel";
 import { formatNumber, formatPnl, colorByPnl, formatTime } from "@/lib/format";
 import type { MdseDetectorScore, MdseEvent, MdseTrade } from "@/types";
 
@@ -25,6 +26,7 @@ export default function MdsePage() {
   const [scores, setScores] = useState<MdseDetectorScore[]>([]);
   const [events, setEvents] = useState<MdseEvent[]>([]);
   const [trades, setTrades] = useState<MdseTrade[]>([]);
+  const [selectedTrade, setSelectedTrade] = useState<MdseTrade | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -198,7 +200,8 @@ export default function MdsePage() {
                 trades.map((t) => (
                   <tr
                     key={t.event_id}
-                    className="hover:bg-zinc-900/50 transition-colors"
+                    onClick={() => setSelectedTrade(t)}
+                    className="hover:bg-zinc-900/50 transition-colors cursor-pointer"
                   >
                     <td className="px-4 py-3 font-mono text-zinc-400">
                       #{t.event_id}
@@ -243,7 +246,76 @@ export default function MdsePage() {
             </tbody>
           </table>
         </div>
+
+        <DetailPanel
+          isOpen={selectedTrade != null}
+          onClose={() => setSelectedTrade(null)}
+          title="MDSE Trade Details"
+        >
+          {selectedTrade && (
+            <MdseTradeDetail trade={selectedTrade} events={events} />
+          )}
+        </DetailPanel>
       </section>
+    </div>
+  );
+}
+
+function MdseTradeDetail({
+  trade,
+  events,
+}: {
+  trade: MdseTrade;
+  events: MdseEvent[];
+}) {
+  const relatedEvent = events.find((ev) => ev.id === trade.event_id);
+  const tradeWithExtra = trade as MdseTrade & {
+    detector_name?: string;
+    confidence?: number;
+    timestamp?: string;
+    confluence_score?: number;
+  };
+  const relatedEventExtra = (relatedEvent as MdseEvent & {
+    confluence_score?: number;
+  }) ?? null;
+
+  const detectorName = tradeWithExtra.detector_name ?? relatedEvent?.detector ?? "—";
+  const confidence = tradeWithExtra.confidence ?? relatedEvent?.confidence ?? null;
+  const timestamp = tradeWithExtra.timestamp ?? relatedEvent?.timestamp ?? null;
+  const confluenceScore =
+    tradeWithExtra.confluence_score ?? relatedEventExtra?.confluence_score ?? null;
+
+  return (
+    <div className="space-y-3 text-sm">
+      <DetailRow label="Event ID" value={`#${trade.event_id}`} />
+      <DetailRow label="Detector Name" value={detectorName} />
+      <DetailRow label="Symbol" value={trade.symbol} />
+      <DetailRow label="Direction" value={trade.direction.toUpperCase()} />
+      <DetailRow
+        label="Confidence"
+        value={confidence != null ? `${confidence.toFixed(1)}%` : "—"}
+      />
+      <DetailRow
+        label="Confluence Score"
+        value={confluenceScore != null ? confluenceScore.toFixed(2) : "—"}
+      />
+      <DetailRow
+        label="Timestamp"
+        value={timestamp != null ? formatTime(timestamp) : "—"}
+      />
+      <DetailRow
+        label="PnL"
+        value={trade.pnl != null ? formatPnl(trade.pnl) : "—"}
+      />
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-4 border-b border-zinc-800/70 pb-2">
+      <span className="text-zinc-500">{label}</span>
+      <span className="text-right text-zinc-200 font-mono">{value}</span>
     </div>
   );
 }
