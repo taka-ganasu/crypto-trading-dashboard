@@ -25,6 +25,7 @@ const navItems = [
   { href: "/signals", label: "Signals" },
   { href: "/portfolio", label: "Portfolio" },
   { href: "/performance", label: "Performance" },
+  { href: "/analysis", label: "Analysis" },
   { href: "/strategies", label: "Strategies" },
   { href: "/circuit-breaker", label: "Circuit Breaker" },
   { href: "/mdse", label: "MDSE" },
