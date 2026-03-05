@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Crypto Trading Dashboard
 
-## Getting Started
+暗号資産トレーディングボットの状態を可視化するダッシュボードアプリケーションです。  
+フロントエンドは **Next.js 16 + React 19 + Tailwind CSS 4** で構築されています。
 
-First, run the development server:
+## プロジェクト概要
+
+- フレームワーク: Next.js 16 (App Router)
+- UI: React 19 + Tailwind CSS 4
+- チャート: Recharts
+- テスト: Playwright E2E
+- API連携: `next.config.ts` の `rewrites` で `/api/*` をバックエンドへプロキシ
+
+## ページ一覧（全10ページ）
+
+1. `/` - Dashboard
+2. `/trades` - Trade History
+3. `/signals` - Signals
+4. `/portfolio` - Portfolio
+5. `/performance` - Performance
+6. `/analysis` - Analysis
+7. `/strategies` - Strategies
+8. `/circuit-breaker` - Circuit Breaker
+9. `/mdse` - MDSE
+10. `/system` - System
+
+## 主要コンポーネント一覧
+
+- `AppShell` - サイドバー/ヘッダーを含む全体レイアウト
+- `TimeRangeFilter` - 期間フィルター（URLクエリ連動）
+- `LoadingSpinner` - ローディング表示の共通UI
+- `DetailPanel` - 詳細表示のスライドパネル
+- `StatsOverviewCards` - ダッシュボード統計カード
+- `SystemStatusWidget` - Bot稼働ステータス表示
+- `CycleTable` / `RegimeTimeline` - Analysisページのテーブル/タイムライン
+- `StrategyCard` / `StrategyTable` - Strategiesページ表示
+- `DailyPnlChart` / `EquityCurveChart` / `StrategyAllocationPie` / `MdseTimelineChart` - 各種チャート
+- `ErrorBoundary` - コンポーネントレベルのエラー境界
+
+## 開発方法
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- 開発サーバー: `http://localhost:3000`
+- 本番ビルド確認:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## テスト
 
-## Learn More
+- E2Eテスト実行:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npx playwright test
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- 現在のE2Eテスト規模: **78テスト**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## APIプロキシ設定
 
-## Deploy on Vercel
+`next.config.ts` で `/api/:path*` をバックエンドAPIへプロキシしています。
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- 開発時デフォルト: `http://localhost:8000`
+- 本番時: 環境変数 `API_BASE_URL` を使用
+- フロントエンド側は常に `/api/*` を呼び出します
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Vercelデプロイ情報
+
+- デプロイコマンド:
+
+```bash
+vercel --prod --scope takaganasus-projects
+```
+
+- 必須環境変数（Production）:
+  - `API_BASE_URL=http://149.28.147.123`
+- リージョン: `sin1`（`vercel.json`）
