@@ -147,6 +147,27 @@ export interface EquityCurveResponse {
   start_date: string | null;
   end_date: string | null;
 }
+export interface MdseTimelinePoint {
+  timestamp: string;
+  price: number;
+  symbol: string;
+}
+
+export interface MdseTimelineEvent {
+  id: number;
+  timestamp: string;
+  price: number;
+  detector: string;
+  symbol: string;
+  direction: "long" | "short";
+  confidence: number;
+}
+
+export interface MdseTimeline {
+  prices: MdseTimelinePoint[];
+  events: MdseTimelineEvent[];
+}
+
 export interface StrategyPerformance {
   strategy: string;
   trade_count: number;

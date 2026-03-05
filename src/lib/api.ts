@@ -16,6 +16,7 @@ import type {
   MarketSnapshot,
   EquityCurveResponse,
   StrategyPerformance,
+  MdseTimeline,
 } from "@/types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
@@ -105,6 +106,21 @@ export async function fetchMdseTrades(
   if (start) params.set("start", start);
   if (end) params.set("end", end);
   return fetchJSON<MdseTrade[]>(`/mdse/trades?${params.toString()}`);
+}
+
+export async function fetchMdseTimeline(
+  hours: number = 24,
+  start?: string,
+  end?: string
+): Promise<MdseTimeline> {
+  const params = new URLSearchParams();
+  if (start) {
+    params.set("start", start);
+    if (end) params.set("end", end);
+  } else {
+    params.set("hours", String(hours));
+  }
+  return fetchJSON<MdseTimeline>(`/mdse/timeline?${params.toString()}`);
 }
 
 export async function fetchSystemHealth(): Promise<SystemHealth> {

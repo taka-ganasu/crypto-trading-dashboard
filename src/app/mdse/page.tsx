@@ -5,11 +5,13 @@ import {
   fetchMdseScores,
   fetchMdseEvents,
   fetchMdseTrades,
+  fetchMdseTimeline,
 } from "@/lib/api";
 import DetailPanel from "@/components/DetailPanel";
+import MdseTimelineChart from "@/components/MdseTimelineChart";
 import TimeRangeFilter, { useTimeRange } from "@/components/TimeRangeFilter";
 import { formatNumber, formatPnl, colorByPnl, formatTime } from "@/lib/format";
-import type { MdseDetectorScore, MdseEvent, MdseTrade } from "@/types";
+import type { MdseDetectorScore, MdseEvent, MdseTrade, MdseTimeline } from "@/types";
 
 function winRateColor(rate: number): string {
   if (rate > 50) return "text-emerald-400";
@@ -41,6 +43,7 @@ function MdseContent() {
   const [scores, setScores] = useState<MdseDetectorScore[]>([]);
   const [events, setEvents] = useState<MdseEvent[]>([]);
   const [trades, setTrades] = useState<MdseTrade[]>([]);
+  const [timeline, setTimeline] = useState<MdseTimeline | null>(null);
   const [selectedTrade, setSelectedTrade] = useState<MdseTrade | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,11 +55,13 @@ function MdseContent() {
       fetchMdseScores(),
       fetchMdseEvents(24, start, end),
       fetchMdseTrades(20, start, end),
+      fetchMdseTimeline(24, start, end).catch(() => null),
     ])
-      .then(([s, e, t]) => {
+      .then(([s, e, t, tl]) => {
         setScores(s);
         setEvents(e);
         setTrades(t);
+        setTimeline(tl);
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
@@ -124,6 +129,16 @@ function MdseContent() {
               No detector scores available
             </p>
           )}
+        </div>
+      </section>
+
+      {/* Detector Timeline Chart */}
+      <section>
+        <h2 className="text-xl font-bold text-zinc-100 mb-4">
+          Detector Timeline
+        </h2>
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+          <MdseTimelineChart data={timeline} />
         </div>
       </section>
 
