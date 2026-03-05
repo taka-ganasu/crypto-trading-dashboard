@@ -7,6 +7,8 @@ import {
   fetchCircuitBreakerState,
   fetchTrades,
 } from "@/lib/api";
+import StatsOverviewCards from "@/components/StatsOverviewCards";
+import SystemStatusWidget from "@/components/SystemStatusWidget";
 import type { PortfolioState, CircuitBreakerState, Trade } from "@/types";
 
 const CB_BADGE: Record<string, { bg: string; text: string; dot: string }> = {
@@ -108,6 +110,18 @@ export default function Home() {
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-semibold text-zinc-100">Dashboard</h1>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-400">
+          System Overview
+        </h2>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <SystemStatusWidget />
+          <div className="lg:col-span-2">
+            <StatsOverviewCards />
+          </div>
+        </div>
+      </section>
 
       {/* Top cards grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -68,6 +68,37 @@ export interface SystemInfo {
   python_version: string;
 }
 
+export interface BotHealthResponse {
+  status?: string | null;
+  health?: string | null;
+  state?: string | null;
+  api_version?: string | null;
+  version?: string | null;
+  updated_at?: string | null;
+  last_updated?: string | null;
+  timestamp?: string | null;
+  [key: string]: unknown;
+}
+
+export interface SystemStatsResponse {
+  recent_trades?: number | null;
+  trades_24h?: number | null;
+  trade_count?: number | null;
+  recent_signals?: number | null;
+  signals_24h?: number | null;
+  signal_count?: number | null;
+  mdse_events?: number | null;
+  mdse_event_count?: number | null;
+  events_24h?: number | null;
+  api_version?: string | null;
+  version?: string | null;
+  updated_at?: string | null;
+  last_updated?: string | null;
+  timestamp?: string | null;
+  data?: Record<string, unknown> | null;
+  [key: string]: unknown;
+}
+
 export interface AnalysisCycle {
   id: number;
   start_time: string;

@@ -11,6 +11,8 @@ import type {
   SystemHealth,
   SystemMetrics,
   SystemInfo,
+  BotHealthResponse,
+  SystemStatsResponse,
   PerformanceSummary,
   ExecutionQuality,
   MarketSnapshot,
@@ -133,6 +135,14 @@ export async function fetchSystemMetrics(): Promise<SystemMetrics> {
 
 export async function fetchSystemInfo(): Promise<SystemInfo> {
   return fetchJSON<SystemInfo>("/system/info");
+}
+
+export async function fetchBotHealth(): Promise<BotHealthResponse> {
+  return fetchJSON<BotHealthResponse>("/health");
+}
+
+export async function fetchSystemStatsOverview(): Promise<SystemStatsResponse> {
+  return fetchJSON<SystemStatsResponse>("/system/stats");
 }
 
 export async function fetchPerformanceSummary(): Promise<PerformanceSummary> {
