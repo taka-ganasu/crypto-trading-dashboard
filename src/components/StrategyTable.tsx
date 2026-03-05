@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { formatPercent, formatPnl, colorByPnl, formatNumber } from "@/lib/format";
 import type { StrategyPerformance } from "@/types";
 
@@ -22,10 +23,62 @@ interface StrategyTableProps {
   onSelect: (strategy: StrategyPerformance) => void;
 }
 
+type SortKey = "win_rate" | "profit_factor" | "sharpe" | null;
+type SortDirection = "asc" | "desc";
+
+function sortValue(
+  strategy: StrategyPerformance,
+  key: Exclude<SortKey, null>
+): number | null {
+  const value = strategy[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
 export default function StrategyTable({
   strategies,
   onSelect,
 }: StrategyTableProps) {
+  const [sortKey, setSortKey] = useState<SortKey>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+
+  const sortedStrategies = useMemo(() => {
+    if (sortKey == null) {
+      return strategies;
+    }
+
+    return [...strategies].sort((a, b) => {
+      const aValue = sortValue(a, sortKey);
+      const bValue = sortValue(b, sortKey);
+
+      if (aValue == null && bValue == null) {
+        return a.strategy.localeCompare(b.strategy);
+      }
+      if (aValue == null) return 1;
+      if (bValue == null) return -1;
+
+      const diff = aValue - bValue;
+      if (diff === 0) {
+        return a.strategy.localeCompare(b.strategy);
+      }
+      return sortDirection === "asc" ? diff : -diff;
+    });
+  }, [sortDirection, sortKey, strategies]);
+
+  function handleSort(nextKey: Exclude<SortKey, null>): void {
+    if (sortKey === nextKey) {
+      setSortDirection((prev) => (prev === "desc" ? "asc" : "desc"));
+      return;
+    }
+
+    setSortKey(nextKey);
+    setSortDirection("desc");
+  }
+
+  function sortIndicator(column: Exclude<SortKey, null>): string {
+    if (sortKey !== column) return "SORT";
+    return sortDirection === "desc" ? "DESC" : "ASC";
+  }
+
   return (
     <div className="overflow-x-auto rounded-lg border border-zinc-800">
       <table className="w-full text-sm">
@@ -33,15 +86,54 @@ export default function StrategyTable({
           <tr className="border-b border-zinc-800 bg-zinc-900 text-left text-xs uppercase tracking-wider text-zinc-500">
             <th className="px-4 py-3">Strategy</th>
             <th className="px-4 py-3 text-right">Trades</th>
-            <th className="px-4 py-3 text-right">Win Rate</th>
-            <th className="px-4 py-3 text-right">Profit Factor</th>
-            <th className="px-4 py-3 text-right">Sharpe</th>
+            <th className="px-4 py-3 text-right">
+              <button
+                type="button"
+                onClick={() => handleSort("win_rate")}
+                className="inline-flex items-center gap-2 text-right"
+                aria-label="Win Rate"
+              >
+                <span>Win Rate</span>
+                <span aria-hidden="true" className="text-[10px] text-zinc-600">
+                  {sortIndicator("win_rate")}
+                </span>
+              </button>
+            </th>
+            <th className="px-4 py-3 text-right">
+              <button
+                type="button"
+                onClick={() => handleSort("profit_factor")}
+                className="inline-flex items-center gap-2 text-right"
+                aria-label="Profit Factor"
+              >
+                <span>Profit Factor</span>
+                <span
+                  aria-hidden="true"
+                  className="text-[10px] text-zinc-600"
+                >
+                  {sortIndicator("profit_factor")}
+                </span>
+              </button>
+            </th>
+            <th className="px-4 py-3 text-right">
+              <button
+                type="button"
+                onClick={() => handleSort("sharpe")}
+                className="inline-flex items-center gap-2 text-right"
+                aria-label="Sharpe"
+              >
+                <span>Sharpe</span>
+                <span aria-hidden="true" className="text-[10px] text-zinc-600">
+                  {sortIndicator("sharpe")}
+                </span>
+              </button>
+            </th>
             <th className="px-4 py-3 text-right">Avg PnL</th>
             <th className="px-4 py-3 text-right">Max DD</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-800">
-          {strategies.length === 0 ? (
+          {sortedStrategies.length === 0 ? (
             <tr>
               <td
                 colSpan={7}
@@ -51,7 +143,7 @@ export default function StrategyTable({
               </td>
             </tr>
           ) : (
-            strategies.map((s) => (
+            sortedStrategies.map((s) => (
               <tr
                 key={s.strategy}
                 onClick={() => onSelect(s)}

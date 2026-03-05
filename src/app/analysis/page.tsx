@@ -166,6 +166,7 @@ function AnalysisContent() {
     fetchAnalysisCycles(100)
       .then((data) => {
         setCycles(Array.isArray(data) ? data : []);
+        setError(null);
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
