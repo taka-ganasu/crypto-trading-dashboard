@@ -116,6 +116,18 @@ export const defaultApiResponses: ApiResponseMap = {
     db_path: "data/trades.db",
     api_version: "1.0.0",
   },
+  "/api/health": {
+    status: "healthy",
+    api_version: "v1.3.0",
+    updated_at: "2026-01-01T00:10:00Z",
+  },
+  "/api/system/stats": {
+    recent_trades: 12,
+    recent_signals: 34,
+    mdse_events: 5,
+    api_version: "v1.3.0",
+    last_updated: "2026-01-01T00:10:00Z",
+  },
   "/api/performance/summary": {
     total_trades: 1,
     winning_trades: 1,
@@ -296,6 +308,18 @@ export const nullSafeApiResponses: ApiResponseMap = {
     platform: "linux",
     db_path: "data/trades.db",
     api_version: "1.0.0",
+  },
+  "/api/health": {
+    status: null,
+    api_version: null,
+    updated_at: null,
+  },
+  "/api/system/stats": {
+    recent_trades: null,
+    recent_signals: null,
+    mdse_events: null,
+    api_version: null,
+    last_updated: null,
   },
   "/api/performance/summary": {
     total_trades: 0,
