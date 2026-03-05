@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchPortfolioState } from "@/lib/api";
+import { fetchPortfolioState, fetchEquityCurve, fetchStrategyPerformance } from "@/lib/api";
+import type { EquityCurveResponse, StrategyPerformance } from "@/types";
 import { formatNumber, formatCurrency, formatPercent, formatPnl, colorByPnl, formatTimestamp } from "@/lib/format";
 import DetailPanel from "@/components/DetailPanel";
+import DailyPnlChart from "@/components/DailyPnlChart";
+import StrategyAllocationPie from "@/components/StrategyAllocationPie";
 
 interface StrategyEntry {
   id: string;
@@ -81,14 +84,22 @@ export default function PortfolioPage() {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [equityCurve, setEquityCurve] = useState<EquityCurveResponse | null>(null);
+  const [strategyPerf, setStrategyPerf] = useState<StrategyPerformance[]>([]);
 
   useEffect(() => {
-    fetchPortfolioState()
-      .then((state) => {
+    Promise.all([
+      fetchPortfolioState(),
+      fetchEquityCurve().catch(() => null),
+      fetchStrategyPerformance().catch(() => []),
+    ])
+      .then(([state, curve, perf]) => {
         const parsed = parseStrategies(state.data);
         setStrategies(parsed.strategies);
         setTotalEquity(parsed.totalEquity);
         setLastUpdated(parsed.lastUpdated);
+        if (curve) setEquityCurve(curve);
+        setStrategyPerf(perf ?? []);
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : "Failed to fetch");
@@ -156,6 +167,41 @@ export default function PortfolioPage() {
               ? formatTimestamp(lastUpdated)
               : "N/A"}
           </p>
+        </div>
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+          <h3 className="text-sm font-medium text-zinc-300 mb-3">
+            Daily PnL
+          </h3>
+          <DailyPnlChart
+            data={
+              equityCurve?.data?.map((d) => ({
+                date: d.date,
+                daily_pnl: d.daily_pnl ?? 0,
+              })) ?? []
+            }
+          />
+        </div>
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+          <h3 className="text-sm font-medium text-zinc-300 mb-3">
+            Strategy Allocation
+          </h3>
+          <StrategyAllocationPie
+            data={
+              strategies.length > 0
+                ? strategies.map((s) => ({
+                    name: `${s.symbol} ${s.strategy}`,
+                    value: s.allocation_pct,
+                  }))
+                : strategyPerf.map((s) => ({
+                    name: s.strategy,
+                    value: s.trade_count,
+                  }))
+            }
+          />
         </div>
       </div>
 
