@@ -1,28 +1,45 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { fetchTrades } from "@/lib/api";
 import { formatNumber, formatPnl, colorByPnl, formatDate } from "@/lib/format";
 import DetailPanel from "@/components/DetailPanel";
+import TimeRangeFilter, { useTimeRange } from "@/components/TimeRangeFilter";
 import type { Trade } from "@/types";
 
 export default function TradesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-full">
+          <p className="text-zinc-500">Loading trades...</p>
+        </div>
+      }
+    >
+      <TradesContent />
+    </Suspense>
+  );
+}
+
+function TradesContent() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [highlightTradeId, setHighlightTradeId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { start, end } = useTimeRange();
 
   useEffect(() => {
     const tradeIdRaw = new URLSearchParams(window.location.search).get("tradeId");
     const parsedTradeId = tradeIdRaw ? Number(tradeIdRaw) : NaN;
     setHighlightTradeId(Number.isFinite(parsedTradeId) ? parsedTradeId : null);
 
-    fetchTrades(undefined, 100)
+    setLoading(true);
+    fetchTrades(undefined, 100, start, end)
       .then(setTrades)
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [start, end]);
 
   if (loading) {
     return (
@@ -44,7 +61,10 @@ export default function TradesPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-xl font-bold text-zinc-100">Trade History</h1>
-        <span className="text-sm text-zinc-500">{trades.length} trades</span>
+        <div className="flex items-center gap-4">
+          <TimeRangeFilter />
+          <span className="text-sm text-zinc-500">{trades.length} trades</span>
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-zinc-800">
