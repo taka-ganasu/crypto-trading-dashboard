@@ -186,6 +186,36 @@ export const defaultApiResponses: ApiResponseMap = {
       max_dd: 80.0,
     },
   ],
+  "/api/mdse/timeline": {
+    prices: [
+      { timestamp: "2026-01-01T00:00:00Z", price: 100000, symbol: "BTC/USDT" },
+      { timestamp: "2026-01-01T04:00:00Z", price: 100200, symbol: "BTC/USDT" },
+      { timestamp: "2026-01-01T08:00:00Z", price: 99800, symbol: "BTC/USDT" },
+      { timestamp: "2026-01-01T12:00:00Z", price: 100500, symbol: "BTC/USDT" },
+      { timestamp: "2026-01-01T16:00:00Z", price: 100300, symbol: "BTC/USDT" },
+      { timestamp: "2026-01-01T20:00:00Z", price: 100800, symbol: "BTC/USDT" },
+    ],
+    events: [
+      {
+        id: 1,
+        timestamp: "2026-01-01T08:00:00Z",
+        price: 99800,
+        detector: "fr_extreme",
+        symbol: "BTC/USDT",
+        direction: "long",
+        confidence: 85,
+      },
+      {
+        id: 2,
+        timestamp: "2026-01-01T16:00:00Z",
+        price: 100300,
+        detector: "liq_cascade",
+        symbol: "BTC/USDT",
+        direction: "short",
+        confidence: 72,
+      },
+    ],
+  },
 };
 
 export const nullSafeApiResponses: ApiResponseMap = {
@@ -256,6 +286,7 @@ export const nullSafeApiResponses: ApiResponseMap = {
     end_date: null,
   },
   "/api/performance/by-strategy": [],
+  "/api/mdse/timeline": { prices: [], events: [] },
 };
 
 export async function installApiMocks(
