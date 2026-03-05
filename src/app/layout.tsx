@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import AppShell from "@/components/AppShell";
 import "./globals.css";
@@ -15,11 +15,25 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Crypto Trading Dashboard",
-  description: "Real-time crypto trading monitoring dashboard",
+  description:
+    "Real-time monitoring dashboard for crypto trading performance, risk, and system health.",
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
     shortcut: ["/icon.svg"],
   },
+  openGraph: {
+    title: "Crypto Trading Dashboard",
+    description:
+      "Real-time monitoring dashboard for crypto trading performance, risk, and system health.",
+    type: "website",
+    siteName: "Crypto Trading Dashboard",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#09090b",
 };
 
 export default function RootLayout({

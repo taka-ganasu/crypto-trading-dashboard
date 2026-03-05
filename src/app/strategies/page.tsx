@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { fetchStrategyPerformance } from "@/lib/api";
 import { formatPercent, formatPnl, colorByPnl, formatNumber } from "@/lib/format";
 import DetailPanel from "@/components/DetailPanel";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import StrategyCard from "@/components/StrategyCard";
 import StrategyTable from "@/components/StrategyTable";
 import type { StrategyPerformance } from "@/types";
@@ -22,11 +23,7 @@ export default function StrategiesPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-zinc-500">Loading strategy data...</p>
-      </div>
-    );
+    return <LoadingSpinner label="Loading strategy data..." />;
   }
 
   if (error) {

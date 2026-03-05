@@ -6,6 +6,7 @@ import {
   fetchSystemMetrics,
   fetchSystemInfo,
 } from "@/lib/api";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import type { SystemHealth, SystemMetrics, SystemInfo } from "@/types";
 
 type SysStatus = "OK" | "DEGRADED" | "DOWN" | "unreachable";
@@ -120,6 +121,10 @@ export default function SystemPage() {
   const rawStatus = health?.status ?? "OK";
   const status: SysStatus = rawStatus in STATUS_CONFIG ? (rawStatus as SysStatus) : "unreachable";
   const config = STATUS_CONFIG[status];
+
+  if (loading && !health && !metrics && !info && !error) {
+    return <LoadingSpinner label="Loading system data..." />;
+  }
 
   return (
     <div className="space-y-8 max-w-4xl">

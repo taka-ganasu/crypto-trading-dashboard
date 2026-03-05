@@ -50,7 +50,7 @@ export default function AppShell({ children }: AppShellProps) {
           <h1 className="text-lg font-bold tracking-tight">Crypto Trading</h1>
           <p className="mt-0.5 text-xs text-zinc-500">Dashboard</p>
         </div>
-        <nav className="flex-1 px-2 py-3">
+        <nav className="flex-1 px-2 py-3" aria-label="Main navigation">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -58,6 +58,7 @@ export default function AppShell({ children }: AppShellProps) {
                 key={item.href}
                 href={item.href}
                 onClick={closeMobileNav}
+                aria-current={isActive ? "page" : undefined}
                 className={`block rounded-md px-3 py-2 text-sm transition-colors ${
                   isActive
                     ? "bg-zinc-800 text-zinc-100"

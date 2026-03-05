@@ -7,6 +7,7 @@ import {
   fetchCircuitBreakerState,
   fetchTrades,
 } from "@/lib/api";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import StatsOverviewCards from "@/components/StatsOverviewCards";
 import SystemStatusWidget from "@/components/SystemStatusWidget";
 import type { PortfolioState, CircuitBreakerState, Trade } from "@/types";
@@ -76,11 +77,7 @@ export default function Home() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-zinc-500 text-sm">Loading dashboard...</div>
-      </div>
-    );
+    return <LoadingSpinner label="Loading dashboard..." />;
   }
 
   if (error) {

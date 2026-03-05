@@ -9,6 +9,7 @@ import {
 } from "@/lib/api";
 import DetailPanel from "@/components/DetailPanel";
 import EquityCurveChart from "@/components/EquityCurveChart";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { formatNumber, formatPercent, formatPnl, colorByPnl, formatTimestamp } from "@/lib/format";
 import type {
   PerformanceSummary,
@@ -57,11 +58,7 @@ export default function PerformancePage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-zinc-500">Loading performance data...</p>
-      </div>
-    );
+    return <LoadingSpinner label="Loading performance data..." />;
   }
 
   if (error) {
@@ -138,7 +135,7 @@ export default function PerformancePage() {
           Execution Quality
         </h2>
         <div className="overflow-x-auto rounded-lg border border-zinc-800">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm" aria-label="Execution quality table">
             <thead>
               <tr className="border-b border-zinc-800 bg-zinc-900 text-left text-xs uppercase tracking-wider text-zinc-500">
                 <th className="px-4 py-3">Trade ID</th>
@@ -196,7 +193,7 @@ export default function PerformancePage() {
                     </td>
                   </tr>
                 ))
-            )}
+              )}
           </tbody>
         </table>
       </div>
@@ -248,7 +245,7 @@ export default function PerformancePage() {
           Market Snapshots
         </h2>
         <div className="overflow-x-auto rounded-lg border border-zinc-800">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm" aria-label="Market snapshots table">
             <thead>
               <tr className="border-b border-zinc-800 bg-zinc-900 text-left text-xs uppercase tracking-wider text-zinc-500">
                 <th className="px-4 py-3">Symbol</th>

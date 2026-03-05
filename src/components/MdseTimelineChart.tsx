@@ -107,6 +107,8 @@ export default function MdseTimelineChart({ data }: MdseTimelineChartProps) {
       <div
         className="flex h-64 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900"
         data-testid="mdse-timeline-chart"
+        role="img"
+        aria-label="Detector timeline chart"
       >
         <p className="text-zinc-500">No timeline data available</p>
       </div>
@@ -138,7 +140,7 @@ export default function MdseTimelineChart({ data }: MdseTimelineChartProps) {
   const detectors = [...new Set(data.events.map((e) => e.detector))];
 
   return (
-    <div data-testid="mdse-timeline-chart">
+    <div data-testid="mdse-timeline-chart" role="img" aria-label="Detector timeline chart">
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 16, right: 8, left: 0, bottom: 0 }}>

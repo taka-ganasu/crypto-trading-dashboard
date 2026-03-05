@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { fetchPortfolioState, fetchEquityCurve, fetchStrategyPerformance } from "@/lib/api";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import type { EquityCurveResponse, StrategyPerformance } from "@/types";
 import { formatNumber, formatCurrency, formatPercent, formatPnl, colorByPnl, formatTimestamp } from "@/lib/format";
 import DetailPanel from "@/components/DetailPanel";
@@ -108,11 +109,7 @@ export default function PortfolioPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-zinc-500 text-sm">Loading portfolio...</div>
-      </div>
-    );
+    return <LoadingSpinner label="Loading portfolio..." />;
   }
 
   if (error) {
@@ -218,7 +215,7 @@ export default function PortfolioPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm" aria-label="Strategy allocations table">
               <thead>
                 <tr className="border-b border-zinc-800 text-zinc-500 text-xs uppercase tracking-wide">
                   <th className="text-left px-4 py-3 font-medium">Symbol</th>

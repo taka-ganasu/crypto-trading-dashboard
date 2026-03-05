@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import CycleTable, { type DisplayCycle, type RegimeType } from "@/components/CycleTable";
 import RegimeTimeline from "@/components/RegimeTimeline";
 import { fetchAnalysisCycles } from "@/lib/api";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import type { AnalysisCycle } from "@/types";
 
 type ParsedRegime = {
@@ -144,13 +145,7 @@ function compareCycles(a: DisplayCycle, b: DisplayCycle): number {
 
 export default function AnalysisPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex h-full items-center justify-center">
-          <p className="text-zinc-500">Loading analysis...</p>
-        </div>
-      }
-    >
+    <Suspense fallback={<LoadingSpinner label="Loading analysis..." />}>
       <AnalysisContent />
     </Suspense>
   );
@@ -203,11 +198,7 @@ function AnalysisContent() {
   }, [displayCycles]);
 
   if (loading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <p className="text-zinc-500">Loading analysis...</p>
-      </div>
-    );
+    return <LoadingSpinner label="Loading analysis..." />;
   }
 
   if (error) {
