@@ -14,6 +14,8 @@ import type {
   PerformanceSummary,
   ExecutionQuality,
   MarketSnapshot,
+  EquityCurveResponse,
+  StrategyPerformance,
 } from "@/types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
@@ -28,11 +30,15 @@ async function fetchJSON<T>(path: string): Promise<T> {
 
 export async function fetchTrades(
   symbol?: string,
-  limit: number = 50
+  limit: number = 50,
+  start?: string,
+  end?: string
 ): Promise<Trade[]> {
   const params = new URLSearchParams();
   if (symbol) params.set("symbol", symbol);
   params.set("limit", String(limit));
+  if (start) params.set("start", start);
+  if (end) params.set("end", end);
   const query = params.toString();
   return fetchJSON<Trade[]>(`/trades?${query}`);
 }
@@ -43,11 +49,15 @@ export async function fetchTradeSummary(): Promise<TradeSummary> {
 
 export async function fetchSignals(
   symbol?: string,
-  limit: number = 50
+  limit: number = 50,
+  start?: string,
+  end?: string
 ): Promise<Signal[]> {
   const params = new URLSearchParams();
   if (symbol) params.set("symbol", symbol);
   params.set("limit", String(limit));
+  if (start) params.set("start", start);
+  if (end) params.set("end", end);
   const query = params.toString();
   return fetchJSON<Signal[]>(`/signals?${query}`);
 }
@@ -71,15 +81,30 @@ export async function fetchMdseScores(): Promise<MdseDetectorScore[]> {
 }
 
 export async function fetchMdseEvents(
-  hours: number = 24
+  hours: number = 24,
+  start?: string,
+  end?: string
 ): Promise<MdseEvent[]> {
-  return fetchJSON<MdseEvent[]>(`/mdse/events?hours=${hours}`);
+  const params = new URLSearchParams();
+  if (start) {
+    params.set("start", start);
+    if (end) params.set("end", end);
+  } else {
+    params.set("hours", String(hours));
+  }
+  return fetchJSON<MdseEvent[]>(`/mdse/events?${params.toString()}`);
 }
 
 export async function fetchMdseTrades(
-  limit: number = 20
+  limit: number = 20,
+  start?: string,
+  end?: string
 ): Promise<MdseTrade[]> {
-  return fetchJSON<MdseTrade[]>(`/mdse/trades?limit=${limit}`);
+  const params = new URLSearchParams();
+  params.set("limit", String(limit));
+  if (start) params.set("start", start);
+  if (end) params.set("end", end);
+  return fetchJSON<MdseTrade[]>(`/mdse/trades?${params.toString()}`);
 }
 
 export async function fetchSystemHealth(): Promise<SystemHealth> {
@@ -111,5 +136,22 @@ export async function fetchMarketSnapshots(
 ): Promise<MarketSnapshot[]> {
   return fetchJSON<MarketSnapshot[]>(
     `/performance/market-snapshots?limit=${limit}`
+  );
+}
+
+export async function fetchStrategyPerformance(): Promise<StrategyPerformance[]> {
+  return fetchJSON<StrategyPerformance[]>("/performance/by-strategy");
+}
+
+export async function fetchEquityCurve(
+  startDate?: string,
+  endDate?: string
+): Promise<EquityCurveResponse> {
+  const params = new URLSearchParams();
+  if (startDate) params.set("start_date", startDate);
+  if (endDate) params.set("end_date", endDate);
+  const query = params.toString();
+  return fetchJSON<EquityCurveResponse>(
+    `/performance/equity-curve${query ? `?${query}` : ""}`
   );
 }

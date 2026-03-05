@@ -133,3 +133,27 @@ export interface MarketSnapshot {
   volume: number;
   timestamp: string;
 }
+
+export interface EquityCurvePoint {
+  date: string;
+  balance: number;
+  daily_pnl: number;
+  cumulative_pnl: number;
+}
+
+export interface EquityCurveResponse {
+  data: EquityCurvePoint[];
+  total_days: number;
+  start_date: string | null;
+  end_date: string | null;
+}
+
+export interface StrategyPerformance {
+  strategy: string;
+  trade_count: number;
+  win_rate: number | null;
+  profit_factor: number | null;
+  sharpe: number | null;
+  avg_pnl: number | null;
+  max_dd: number | null;
+}
