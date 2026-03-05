@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import ErrorBoundary from "@/components/ErrorBoundary";
 
 const navItems = [
   { href: "/", label: "Dashboard" },
@@ -101,7 +100,7 @@ export default function AppShell({ children }: AppShellProps) {
         </header>
 
         <main className="flex-1 overflow-auto p-4 md:p-6">
-          <ErrorBoundary>{children}</ErrorBoundary>
+          {children}
         </main>
       </div>
     </div>
