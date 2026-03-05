@@ -36,6 +36,7 @@ const nullSafetyTargets = [
     ],
   },
   { path: "/performance", fallbackTexts: ["No execution data", "—"] },
+  { path: "/strategies", fallbackTexts: ["No strategy data available", "0 strategies"] },
 ] as const;
 
 test.beforeEach(async ({ page }) => {

@@ -106,6 +106,10 @@ export async function fetchExecutionQuality(
   );
 }
 
+export async function fetchStrategyPerformance(): Promise<StrategyPerformance[]> {
+  return fetchJSON<StrategyPerformance[]>("/performance/by-strategy");
+}
+
 export async function fetchMarketSnapshots(
   limit: number = 20
 ): Promise<MarketSnapshot[]> {

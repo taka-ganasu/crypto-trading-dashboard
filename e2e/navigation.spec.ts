@@ -12,6 +12,7 @@ const navTargets = [
   { label: "Signals", path: "/signals", heading: "Signals" },
   { label: "Portfolio", path: "/portfolio", contentText: "Strategy Allocations" },
   { label: "Performance", path: "/performance", heading: "Performance" },
+  { label: "Strategies", path: "/strategies", heading: "Strategies" },
   { label: "Circuit Breaker", path: "/circuit-breaker", heading: "Circuit Breaker" },
   { label: "MDSE", path: "/mdse", heading: "MDSE Detector Status" },
   { label: "System", path: "/system", heading: "System" },

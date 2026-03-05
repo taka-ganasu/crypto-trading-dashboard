@@ -156,6 +156,26 @@ export const defaultApiResponses: ApiResponseMap = {
     },
   ],
   "/api/cycles": [],
+  "/api/performance/by-strategy": [
+    {
+      strategy: "trend_following",
+      trade_count: 15,
+      win_rate: 0.6,
+      profit_factor: 1.8,
+      sharpe: 1.2,
+      avg_pnl: 25.5,
+      max_dd: 120.0,
+    },
+    {
+      strategy: "mean_reversion",
+      trade_count: 10,
+      win_rate: 0.5,
+      profit_factor: 1.1,
+      sharpe: 0.6,
+      avg_pnl: 5.2,
+      max_dd: 80.0,
+    },
+  ],
 };
 
 export const nullSafeApiResponses: ApiResponseMap = {
@@ -219,6 +239,7 @@ export const nullSafeApiResponses: ApiResponseMap = {
     },
   ],
   "/api/cycles": [],
+  "/api/performance/by-strategy": [],
 };
 
 export async function installApiMocks(

@@ -133,3 +133,13 @@ export interface MarketSnapshot {
   volume: number;
   timestamp: string;
 }
+
+export interface StrategyPerformance {
+  strategy: string;
+  trade_count: number;
+  win_rate: number | null;
+  profit_factor: number | null;
+  sharpe: number | null;
+  avg_pnl: number | null;
+  max_dd: number | null;
+}
