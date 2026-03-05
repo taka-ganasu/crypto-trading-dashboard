@@ -51,14 +51,23 @@ function CustomTooltip({
 export default function DailyPnlChart({ data }: DailyPnlChartProps) {
   if (data.length === 0) {
     return (
-      <div className="flex h-64 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900">
+      <div
+        className="flex h-64 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900"
+        role="img"
+        aria-label="Daily PnL chart"
+      >
         <p className="text-zinc-500">No PnL data available</p>
       </div>
     );
   }
 
   return (
-    <div className="h-72 w-full" data-testid="daily-pnl-chart">
+    <div
+      className="h-72 w-full"
+      data-testid="daily-pnl-chart"
+      role="img"
+      aria-label="Daily PnL chart"
+    >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />

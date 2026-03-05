@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { fetchTrades } from "@/lib/api";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { formatNumber, formatPnl, colorByPnl, formatDate } from "@/lib/format";
 import DetailPanel from "@/components/DetailPanel";
 import TimeRangeFilter, { useTimeRange } from "@/components/TimeRangeFilter";
@@ -9,13 +10,7 @@ import type { Trade } from "@/types";
 
 export default function TradesPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center h-full">
-          <p className="text-zinc-500">Loading trades...</p>
-        </div>
-      }
-    >
+    <Suspense fallback={<LoadingSpinner label="Loading trades..." />}>
       <TradesContent />
     </Suspense>
   );
@@ -42,11 +37,7 @@ function TradesContent() {
   }, [start, end]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-zinc-500">Loading trades...</p>
-      </div>
-    );
+    return <LoadingSpinner label="Loading trades..." />;
   }
 
   if (error) {
@@ -68,7 +59,7 @@ function TradesContent() {
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-zinc-800">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm" aria-label="Trades table">
           <thead>
             <tr className="border-b border-zinc-800 bg-zinc-900 text-left text-xs uppercase tracking-wider text-zinc-500">
               <th className="px-4 py-3">Symbol</th>

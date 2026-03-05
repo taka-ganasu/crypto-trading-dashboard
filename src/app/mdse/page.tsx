@@ -8,6 +8,7 @@ import {
   fetchMdseTimeline,
 } from "@/lib/api";
 import DetailPanel from "@/components/DetailPanel";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import MdseTimelineChart from "@/components/MdseTimelineChart";
 import TimeRangeFilter, { useTimeRange } from "@/components/TimeRangeFilter";
 import { formatNumber, formatPnl, colorByPnl, formatTime } from "@/lib/format";
@@ -27,13 +28,7 @@ function winRateBorder(rate: number): string {
 
 export default function MdsePage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center h-full">
-          <p className="text-zinc-500">Loading MDSE data...</p>
-        </div>
-      }
-    >
+    <Suspense fallback={<LoadingSpinner label="Loading MDSE data..." />}>
       <MdseContent />
     </Suspense>
   );
@@ -68,11 +63,7 @@ function MdseContent() {
   }, [start, end]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-zinc-500">Loading MDSE data...</p>
-      </div>
-    );
+    return <LoadingSpinner label="Loading MDSE data..." />;
   }
 
   if (error) {
@@ -213,7 +204,7 @@ function MdseContent() {
           </span>
         </div>
         <div className="overflow-x-auto rounded-lg border border-zinc-800">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm" aria-label="MDSE trades table">
             <thead>
               <tr className="border-b border-zinc-800 bg-zinc-900 text-left text-xs uppercase tracking-wider text-zinc-500">
                 <th className="px-4 py-3">Event ID</th>

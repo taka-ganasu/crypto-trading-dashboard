@@ -40,7 +40,12 @@ function formatDateTime(value: string | null): string {
 
 export default function RegimeTimeline({ cycles }: { cycles: DisplayCycle[] }) {
   return (
-    <section className="rounded-lg border border-zinc-800 bg-zinc-900 p-4" data-testid="regime-timeline">
+    <section
+      className="rounded-lg border border-zinc-800 bg-zinc-900 p-4"
+      data-testid="regime-timeline"
+      role="img"
+      aria-label="Regime transition timeline chart"
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-sm font-semibold text-zinc-200">Regime Transition Timeline</h2>
 
