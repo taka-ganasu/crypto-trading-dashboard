@@ -147,7 +147,6 @@ export interface EquityCurveResponse {
   start_date: string | null;
   end_date: string | null;
 }
-
 export interface StrategyPerformance {
   strategy: string;
   trade_count: number;
