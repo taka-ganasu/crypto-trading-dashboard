@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { fetchSignals } from "@/lib/api";
 import DetailPanel from "@/components/DetailPanel";
+import TimeRangeFilter, { useTimeRange } from "@/components/TimeRangeFilter";
 import type { Signal } from "@/types";
 
 function actionBadge(action: string) {
@@ -15,17 +16,33 @@ function actionBadge(action: string) {
 }
 
 export default function SignalsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-full">
+          <p className="text-zinc-500">Loading signals...</p>
+        </div>
+      }
+    >
+      <SignalsContent />
+    </Suspense>
+  );
+}
+
+function SignalsContent() {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { start, end } = useTimeRange();
 
   useEffect(() => {
-    fetchSignals(undefined, 100)
+    setLoading(true);
+    fetchSignals(undefined, 100, start, end)
       .then(setSignals)
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [start, end]);
 
   if (loading) {
     return (
@@ -64,7 +81,10 @@ export default function SignalsPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-xl font-bold text-zinc-100">Signals</h1>
-        <span className="text-sm text-zinc-500">{total} signals</span>
+        <div className="flex items-center gap-4">
+          <TimeRangeFilter />
+          <span className="text-sm text-zinc-500">{total} signals</span>
+        </div>
       </div>
 
       {/* Stats Cards */}

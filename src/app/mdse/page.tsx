@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import {
   fetchMdseScores,
   fetchMdseEvents,
   fetchMdseTrades,
 } from "@/lib/api";
 import DetailPanel from "@/components/DetailPanel";
+import TimeRangeFilter, { useTimeRange } from "@/components/TimeRangeFilter";
 import { formatNumber, formatPnl, colorByPnl, formatTime } from "@/lib/format";
 import type { MdseDetectorScore, MdseEvent, MdseTrade } from "@/types";
 
@@ -23,15 +24,35 @@ function winRateBorder(rate: number): string {
 }
 
 export default function MdsePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-full">
+          <p className="text-zinc-500">Loading MDSE data...</p>
+        </div>
+      }
+    >
+      <MdseContent />
+    </Suspense>
+  );
+}
+
+function MdseContent() {
   const [scores, setScores] = useState<MdseDetectorScore[]>([]);
   const [events, setEvents] = useState<MdseEvent[]>([]);
   const [trades, setTrades] = useState<MdseTrade[]>([]);
   const [selectedTrade, setSelectedTrade] = useState<MdseTrade | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { start, end } = useTimeRange();
 
   useEffect(() => {
-    Promise.all([fetchMdseScores(), fetchMdseEvents(24), fetchMdseTrades(20)])
+    setLoading(true);
+    Promise.all([
+      fetchMdseScores(),
+      fetchMdseEvents(24, start, end),
+      fetchMdseTrades(20, start, end),
+    ])
       .then(([s, e, t]) => {
         setScores(s);
         setEvents(e);
@@ -39,7 +60,7 @@ export default function MdsePage() {
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [start, end]);
 
   if (loading) {
     return (
@@ -61,9 +82,12 @@ export default function MdsePage() {
     <div className="space-y-8">
       {/* Detector Status Cards */}
       <section>
-        <h1 className="text-xl font-bold text-zinc-100 mb-4">
-          MDSE Detector Status
-        </h1>
+        <div className="mb-4 flex items-center justify-between">
+          <h1 className="text-xl font-bold text-zinc-100">
+            MDSE Detector Status
+          </h1>
+          <TimeRangeFilter />
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {scores.map((d) => (
             <div
@@ -103,11 +127,11 @@ export default function MdsePage() {
         </div>
       </section>
 
-      {/* Recent Events Timeline (24h) */}
+      {/* Recent Events Timeline */}
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-zinc-100">
-            Recent Events (24h)
+            Recent Events
           </h2>
           <span className="text-sm text-zinc-500">
             {events.length} events
@@ -116,7 +140,7 @@ export default function MdsePage() {
         <div className="space-y-2">
           {events.length === 0 ? (
             <p className="text-center text-zinc-500 py-8">
-              No events in the last 24 hours
+              No events found
             </p>
           ) : (
             events.map((ev) => (
