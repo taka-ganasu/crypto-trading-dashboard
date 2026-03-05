@@ -48,14 +48,23 @@ export default function StrategyAllocationPie({
 }: StrategyAllocationPieProps) {
   if (data.length === 0) {
     return (
-      <div className="flex h-64 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900">
+      <div
+        className="flex h-64 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900"
+        role="img"
+        aria-label="Strategy allocation chart"
+      >
         <p className="text-zinc-500">No allocation data available</p>
       </div>
     );
   }
 
   return (
-    <div className="h-72 w-full" data-testid="strategy-allocation-pie">
+    <div
+      className="h-72 w-full"
+      data-testid="strategy-allocation-pie"
+      role="img"
+      aria-label="Strategy allocation chart"
+    >
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie

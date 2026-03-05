@@ -81,7 +81,7 @@ export default function StrategyTable({
 
   return (
     <div className="overflow-x-auto rounded-lg border border-zinc-800">
-      <table className="w-full text-sm">
+      <table className="w-full text-sm" aria-label="Strategy comparison table">
         <thead>
           <tr className="border-b border-zinc-800 bg-zinc-900 text-left text-xs uppercase tracking-wider text-zinc-500">
             <th className="px-4 py-3">Strategy</th>

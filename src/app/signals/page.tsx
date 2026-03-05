@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { fetchSignals } from "@/lib/api";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import DetailPanel from "@/components/DetailPanel";
 import TimeRangeFilter, { useTimeRange } from "@/components/TimeRangeFilter";
 import type { Signal } from "@/types";
@@ -17,13 +18,7 @@ function actionBadge(action: string) {
 
 export default function SignalsPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center h-full">
-          <p className="text-zinc-500">Loading signals...</p>
-        </div>
-      }
-    >
+    <Suspense fallback={<LoadingSpinner label="Loading signals..." />}>
       <SignalsContent />
     </Suspense>
   );
@@ -45,11 +40,7 @@ function SignalsContent() {
   }, [start, end]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-zinc-500">Loading signals...</p>
-      </div>
-    );
+    return <LoadingSpinner label="Loading signals..." />;
   }
 
   if (error) {
@@ -106,7 +97,7 @@ function SignalsContent() {
 
       {/* Signal History Table */}
       <div className="overflow-x-auto rounded-lg border border-zinc-800">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm" aria-label="Signals table">
           <thead>
             <tr className="border-b border-zinc-800 bg-zinc-900 text-left text-xs uppercase tracking-wider text-zinc-500">
               <th className="px-4 py-3">Timestamp</th>

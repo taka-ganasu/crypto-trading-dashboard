@@ -65,7 +65,11 @@ function CustomTooltip({
 export default function EquityCurveChart({ data }: EquityCurveChartProps) {
   if (data.length === 0) {
     return (
-      <div className="flex h-64 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900">
+      <div
+        className="flex h-64 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900"
+        role="img"
+        aria-label="Equity curve chart"
+      >
         <p className="text-zinc-500">No equity data available</p>
       </div>
     );
@@ -76,7 +80,12 @@ export default function EquityCurveChart({ data }: EquityCurveChartProps) {
   const fillColor = hasProfit ? "#34d39920" : "#f8717120";
 
   return (
-    <div className="h-72 w-full" data-testid="equity-curve-chart">
+    <div
+      className="h-72 w-full"
+      data-testid="equity-curve-chart"
+      role="img"
+      aria-label="Equity curve chart"
+    >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <defs>

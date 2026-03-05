@@ -67,7 +67,7 @@ export default function CycleTable({ cycles }: { cycles: DisplayCycle[] }) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm" aria-label="Cycle table">
           <thead>
             <tr className="border-b border-zinc-800 bg-zinc-900/90 text-left text-xs uppercase tracking-wider text-zinc-500">
               <th className="px-4 py-3">Cycle</th>

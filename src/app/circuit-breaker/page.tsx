@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { fetchCircuitBreakerState } from "@/lib/api";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import type { CircuitBreakerState } from "@/types";
 
 type CBStatus = "NORMAL" | "WARNING" | "PAUSED" | "STOPPED";
@@ -138,6 +139,10 @@ export default function CircuitBreakerPage() {
   const config = STATUS_CONFIG[currentStatus];
   const events =
     (cbState?.data?.recent_events as Array<Record<string, string>>) ?? [];
+
+  if (loading && !cbState && !error) {
+    return <LoadingSpinner label="Loading circuit breaker data..." />;
+  }
 
   return (
     <div className="space-y-8 max-w-4xl">
