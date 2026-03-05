@@ -156,6 +156,16 @@ export const defaultApiResponses: ApiResponseMap = {
     },
   ],
   "/api/cycles": [],
+  "/api/performance/equity-curve": {
+    data: [
+      { date: "2026-01-01", balance: 10100, daily_pnl: 100, cumulative_pnl: 100 },
+      { date: "2026-01-02", balance: 10120, daily_pnl: 20, cumulative_pnl: 120 },
+      { date: "2026-01-03", balance: 10320, daily_pnl: 200, cumulative_pnl: 320 },
+    ],
+    total_days: 3,
+    start_date: "2026-01-01",
+    end_date: "2026-01-03",
+  },
 };
 
 export const nullSafeApiResponses: ApiResponseMap = {
@@ -219,6 +229,12 @@ export const nullSafeApiResponses: ApiResponseMap = {
     },
   ],
   "/api/cycles": [],
+  "/api/performance/equity-curve": {
+    data: [],
+    total_days: 0,
+    start_date: null,
+    end_date: null,
+  },
 };
 
 export async function installApiMocks(

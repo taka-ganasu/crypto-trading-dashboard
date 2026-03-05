@@ -5,13 +5,16 @@ import {
   fetchPerformanceSummary,
   fetchExecutionQuality,
   fetchMarketSnapshots,
+  fetchEquityCurve,
 } from "@/lib/api";
 import DetailPanel from "@/components/DetailPanel";
+import EquityCurveChart from "@/components/EquityCurveChart";
 import { formatNumber, formatPercent, formatPnl, colorByPnl, formatTimestamp } from "@/lib/format";
 import type {
   PerformanceSummary,
   ExecutionQuality,
   MarketSnapshot,
+  EquityCurvePoint,
 } from "@/types";
 
 function slippageColor(pct: number): string {
@@ -31,6 +34,7 @@ export default function PerformancePage() {
   const [summary, setSummary] = useState<PerformanceSummary | null>(null);
   const [execQuality, setExecQuality] = useState<ExecutionQuality[]>([]);
   const [snapshots, setSnapshots] = useState<MarketSnapshot[]>([]);
+  const [equityCurve, setEquityCurve] = useState<EquityCurvePoint[]>([]);
   const [selectedExecution, setSelectedExecution] = useState<ExecutionQuality | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,11 +44,13 @@ export default function PerformancePage() {
       fetchPerformanceSummary(),
       fetchExecutionQuality(50),
       fetchMarketSnapshots(20),
+      fetchEquityCurve(),
     ])
-      .then(([s, eq, ms]) => {
+      .then(([s, eq, ms, ec]) => {
         setSummary(s);
         setExecQuality(eq);
         setSnapshots(ms);
+        setEquityCurve(ec.data);
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
@@ -115,6 +121,16 @@ export default function PerformancePage() {
           </div>
         </div>
       )}
+
+      {/* Equity Curve Chart */}
+      <div className="mb-8">
+        <h2 className="mb-3 text-lg font-semibold text-zinc-100">
+          Equity Curve
+        </h2>
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+          <EquityCurveChart data={equityCurve} />
+        </div>
+      </div>
 
       {/* Execution Quality Table */}
       <div className="mb-8">

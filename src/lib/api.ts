@@ -14,6 +14,8 @@ import type {
   PerformanceSummary,
   ExecutionQuality,
   MarketSnapshot,
+  EquityCurveResponse,
+  StrategyPerformance,
 } from "@/types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
@@ -84,9 +86,12 @@ export async function fetchMdseEvents(
   end?: string
 ): Promise<MdseEvent[]> {
   const params = new URLSearchParams();
-  params.set("hours", String(hours));
-  if (start) params.set("start", start);
-  if (end) params.set("end", end);
+  if (start) {
+    params.set("start", start);
+    if (end) params.set("end", end);
+  } else {
+    params.set("hours", String(hours));
+  }
   return fetchJSON<MdseEvent[]>(`/mdse/events?${params.toString()}`);
 }
 
@@ -131,5 +136,22 @@ export async function fetchMarketSnapshots(
 ): Promise<MarketSnapshot[]> {
   return fetchJSON<MarketSnapshot[]>(
     `/performance/market-snapshots?limit=${limit}`
+  );
+}
+
+export async function fetchStrategyPerformance(): Promise<StrategyPerformance[]> {
+  return fetchJSON<StrategyPerformance[]>("/performance/by-strategy");
+}
+
+export async function fetchEquityCurve(
+  startDate?: string,
+  endDate?: string
+): Promise<EquityCurveResponse> {
+  const params = new URLSearchParams();
+  if (startDate) params.set("start_date", startDate);
+  if (endDate) params.set("end_date", endDate);
+  const query = params.toString();
+  return fetchJSON<EquityCurveResponse>(
+    `/performance/equity-curve${query ? `?${query}` : ""}`
   );
 }
