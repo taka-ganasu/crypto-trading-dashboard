@@ -17,6 +17,10 @@ export const metadata: Metadata = {
   title: "Crypto Trading Dashboard",
   description:
     "Real-time monitoring dashboard for crypto trading performance, risk, and system health.",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    shortcut: ["/icon.svg"],
+  },
   openGraph: {
     title: "Crypto Trading Dashboard",
     description:
