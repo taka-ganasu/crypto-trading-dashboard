@@ -15,6 +15,7 @@ const smokeTargets = [
   { path: "/mdse", heading: "MDSE Detector Status" },
   { path: "/system", heading: "System" },
   { path: "/performance", heading: "Performance" },
+  { path: "/analysis", heading: "Analysis" },
   { path: "/strategies", heading: "Strategies" },
 ] as const;
 

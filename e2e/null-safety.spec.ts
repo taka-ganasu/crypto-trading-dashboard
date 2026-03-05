@@ -36,6 +36,7 @@ const nullSafetyTargets = [
     ],
   },
   { path: "/performance", fallbackTexts: ["No execution data", "—"] },
+  { path: "/analysis", fallbackTexts: ["No analysis cycles found", "—"] },
   { path: "/strategies", fallbackTexts: ["No strategy data available", "0 strategies"] },
 ] as const;
 
