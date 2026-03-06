@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   fetchPortfolioState,
   fetchCircuitBreakerState,
@@ -55,26 +55,56 @@ export default function Home() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
+
+  const loadDashboard = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setWarning(null);
+
+    const [portfolioResult, cbResult, tradesResult] = await Promise.allSettled([
+      fetchPortfolioState(),
+      fetchCircuitBreakerState(),
+      fetchTrades(undefined, 3),
+    ]);
+
+    const failedSections: string[] = [];
+
+    if (portfolioResult.status === "fulfilled") {
+      setPortfolio(portfolioResult.value);
+    } else {
+      setPortfolio(null);
+      failedSections.push("portfolio");
+    }
+
+    if (cbResult.status === "fulfilled") {
+      setCb(cbResult.value);
+    } else {
+      setCb(null);
+      failedSections.push("circuit breaker");
+    }
+
+    if (tradesResult.status === "fulfilled") {
+      setTrades(tradesResult.value);
+    } else {
+      setTrades([]);
+      failedSections.push("recent trades");
+    }
+
+    if (failedSections.length === 3) {
+      setError("Failed to load dashboard data.");
+    } else if (failedSections.length > 0) {
+      setWarning(
+        `Some sections failed to load: ${failedSections.join(", ")}. Showing available data.`
+      );
+    }
+
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
-    async function load() {
-      try {
-        const [pf, cbState, recentTrades] = await Promise.all([
-          fetchPortfolioState(),
-          fetchCircuitBreakerState(),
-          fetchTrades(undefined, 3),
-        ]);
-        setPortfolio(pf);
-        setCb(cbState);
-        setTrades(recentTrades);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load data");
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+    void loadDashboard();
+  }, [loadDashboard]);
 
   if (loading) {
     return <LoadingSpinner label="Loading dashboard..." />;
@@ -83,11 +113,21 @@ export default function Home() {
   if (error) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-center">
+        <div className="text-center" role="alert" aria-live="assertive">
           <p className="text-red-400 text-sm">{error}</p>
+          <p className="text-zinc-500 text-xs mt-1">
+            API server response could not be retrieved.
+          </p>
           <p className="text-zinc-500 text-xs mt-1">
             Make sure the API server is running
           </p>
+          <button
+            type="button"
+            onClick={() => void loadDashboard()}
+            className="mt-3 rounded border border-zinc-700 bg-zinc-900 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -107,6 +147,16 @@ export default function Home() {
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-semibold text-zinc-100">Dashboard</h1>
+
+      {warning && (
+        <div
+          className="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-2 text-sm text-yellow-300"
+          role="status"
+          aria-live="polite"
+        >
+          {warning}
+        </div>
+      )}
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-400">

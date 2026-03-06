@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import {
   fetchMdseScores,
   fetchMdseEvents,
@@ -42,25 +42,70 @@ function MdseContent() {
   const [selectedTrade, setSelectedTrade] = useState<MdseTrade | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const { start, end } = useTimeRange();
 
-  useEffect(() => {
+  const loadMdseData = useCallback(async () => {
     setLoading(true);
-    Promise.all([
-      fetchMdseScores(),
-      fetchMdseEvents(24, start, end),
-      fetchMdseTrades(20, start, end),
-      fetchMdseTimeline(24, start, end).catch(() => null),
-    ])
-      .then(([s, e, t, tl]) => {
-        setScores(s);
-        setEvents(e);
-        setTrades(t);
-        setTimeline(tl);
-      })
-      .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
+    setError(null);
+    setWarning(null);
+
+    const [scoresResult, eventsResult, tradesResult, timelineResult] =
+      await Promise.allSettled([
+        fetchMdseScores(),
+        fetchMdseEvents(24, start, end),
+        fetchMdseTrades(20, start, end),
+        fetchMdseTimeline(24, start, end),
+      ]);
+
+    const failedSections: string[] = [];
+    let criticalFailures = 0;
+
+    if (scoresResult.status === "fulfilled") {
+      setScores(scoresResult.value);
+    } else {
+      setScores([]);
+      failedSections.push("detector scores");
+      criticalFailures += 1;
+    }
+
+    if (eventsResult.status === "fulfilled") {
+      setEvents(eventsResult.value);
+    } else {
+      setEvents([]);
+      failedSections.push("recent events");
+      criticalFailures += 1;
+    }
+
+    if (tradesResult.status === "fulfilled") {
+      setTrades(tradesResult.value);
+    } else {
+      setTrades([]);
+      failedSections.push("trades");
+      criticalFailures += 1;
+    }
+
+    if (timelineResult.status === "fulfilled") {
+      setTimeline(timelineResult.value);
+    } else {
+      setTimeline(null);
+      failedSections.push("timeline chart");
+    }
+
+    if (criticalFailures >= 3) {
+      setError("Failed to load MDSE data.");
+    } else if (failedSections.length > 0) {
+      setWarning(
+        `Some sections failed to load: ${failedSections.join(", ")}. Showing available data.`
+      );
+    }
+
+    setLoading(false);
   }, [start, end]);
+
+  useEffect(() => {
+    void loadMdseData();
+  }, [loadMdseData]);
 
   if (loading) {
     return <LoadingSpinner label="Loading MDSE data..." />;
@@ -69,13 +114,32 @@ function MdseContent() {
   if (error) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-red-400">Error: {error}</p>
+        <div className="text-center" role="alert" aria-live="assertive">
+          <p className="text-red-400">Error: {error}</p>
+          <button
+            type="button"
+            onClick={() => void loadMdseData()}
+            className="mt-3 rounded border border-zinc-700 bg-zinc-900 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
+      {warning && (
+        <div
+          className="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-2 text-sm text-yellow-300"
+          role="status"
+          aria-live="polite"
+        >
+          {warning}
+        </div>
+      )}
+
       {/* Detector Status Cards */}
       <section>
         <div className="mb-4 flex items-center justify-between">
