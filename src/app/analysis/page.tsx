@@ -5,6 +5,7 @@ import CycleTable, { type DisplayCycle, type RegimeType } from "@/components/Cyc
 import RegimeTimeline from "@/components/RegimeTimeline";
 import { fetchAnalysisCycles } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import TimeRangeFilter, { useTimeRange } from "@/components/TimeRangeFilter";
 import type { AnalysisCycle } from "@/types";
 
 type ParsedRegime = {
@@ -155,17 +156,18 @@ function AnalysisContent() {
   const [cycles, setCycles] = useState<AnalysisCycle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { start, end } = useTimeRange();
 
   useEffect(() => {
     setLoading(true);
-    fetchAnalysisCycles(100)
+    fetchAnalysisCycles(100, start, end)
       .then((data) => {
         setCycles(Array.isArray(data) ? data : []);
         setError(null);
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [start, end]);
 
   const displayCycles = useMemo(() => {
     return cycles.map(toDisplayCycle).sort(compareCycles);
@@ -213,7 +215,10 @@ function AnalysisContent() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-zinc-100">Analysis</h1>
-        <span className="text-sm text-zinc-500">{stats.totalCycles} cycles</span>
+        <div className="flex items-center gap-4">
+          <TimeRangeFilter />
+          <span className="text-sm text-zinc-500">{stats.totalCycles} cycles</span>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
