@@ -41,3 +41,14 @@ for (const target of smokeTargets) {
     expectNoConsoleErrors(errors);
   });
 }
+
+test("smoke: /system go-live widget", async ({ page }) => {
+  const errors = trackConsoleErrors(page);
+
+  await page.goto("/system");
+  await expect(page.getByTestId("go-live-widget")).toBeVisible();
+  await expect(page.getByText("75% (9/12)")).toBeVisible();
+  await expect(page.getByTestId("go-live-item")).toHaveCount(12);
+
+  expectNoConsoleErrors(errors);
+});
