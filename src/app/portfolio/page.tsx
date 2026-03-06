@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { fetchPortfolioState, fetchEquityCurve, fetchStrategyPerformance } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import type { EquityCurveResponse, StrategyPerformance } from "@/types";
@@ -85,28 +85,69 @@ export default function PortfolioPage() {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const [equityCurve, setEquityCurve] = useState<EquityCurveResponse | null>(null);
   const [strategyPerf, setStrategyPerf] = useState<StrategyPerformance[]>([]);
 
-  useEffect(() => {
-    Promise.all([
+  const loadPortfolio = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setWarning(null);
+
+    const [stateResult, curveResult, perfResult] = await Promise.allSettled([
       fetchPortfolioState(),
-      fetchEquityCurve().catch(() => null),
-      fetchStrategyPerformance().catch(() => []),
-    ])
-      .then(([state, curve, perf]) => {
-        const parsed = parseStrategies(state.data);
-        setStrategies(parsed.strategies);
-        setTotalEquity(parsed.totalEquity);
-        setLastUpdated(parsed.lastUpdated);
-        if (curve) setEquityCurve(curve);
-        setStrategyPerf(perf ?? []);
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : "Failed to fetch");
-      })
-      .finally(() => setLoading(false));
+      fetchEquityCurve(),
+      fetchStrategyPerformance(),
+    ]);
+
+    if (stateResult.status !== "fulfilled") {
+      setStrategies([]);
+      setTotalEquity(0);
+      setLastUpdated(null);
+      setEquityCurve(null);
+      setStrategyPerf([]);
+      setError(
+        stateResult.reason instanceof Error
+          ? stateResult.reason.message
+          : "Failed to load portfolio state"
+      );
+      setLoading(false);
+      return;
+    }
+
+    const parsed = parseStrategies(stateResult.value.data);
+    setStrategies(parsed.strategies);
+    setTotalEquity(parsed.totalEquity);
+    setLastUpdated(parsed.lastUpdated);
+
+    const failedSections: string[] = [];
+
+    if (curveResult.status === "fulfilled") {
+      setEquityCurve(curveResult.value);
+    } else {
+      setEquityCurve(null);
+      failedSections.push("daily PnL chart");
+    }
+
+    if (perfResult.status === "fulfilled") {
+      setStrategyPerf(perfResult.value ?? []);
+    } else {
+      setStrategyPerf([]);
+      failedSections.push("strategy performance");
+    }
+
+    if (failedSections.length > 0) {
+      setWarning(
+        `Some sections failed to load: ${failedSections.join(", ")}. Showing available data.`
+      );
+    }
+
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    void loadPortfolio();
+  }, [loadPortfolio]);
 
   if (loading) {
     return <LoadingSpinner label="Loading portfolio..." />;
@@ -115,11 +156,18 @@ export default function PortfolioPage() {
   if (error) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-center">
+        <div className="text-center" role="alert" aria-live="assertive">
           <p className="text-red-400 text-sm">{error}</p>
           <p className="text-zinc-600 text-xs mt-1">
             Make sure the API server is running on port 8000
           </p>
+          <button
+            type="button"
+            onClick={() => void loadPortfolio()}
+            className="mt-3 rounded border border-zinc-700 bg-zinc-900 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -131,6 +179,16 @@ export default function PortfolioPage() {
 
   return (
     <div className="space-y-6">
+      {warning && (
+        <div
+          className="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-2 text-sm text-yellow-300"
+          role="status"
+          aria-live="polite"
+        >
+          {warning}
+        </div>
+      )}
+
       {/* Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
