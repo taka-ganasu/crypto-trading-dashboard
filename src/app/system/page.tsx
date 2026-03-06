@@ -11,6 +11,13 @@ import type { SystemHealth, SystemMetrics, SystemInfo } from "@/types";
 
 type SysStatus = "OK" | "DEGRADED" | "DOWN" | "unreachable";
 
+type GoLiveChecklistItem = {
+  id: number;
+  label: string;
+  completed: boolean;
+  note?: string;
+};
+
 const STATUS_CONFIG: Record<
   SysStatus,
   { color: string; bg: string; border: string; dot: string; label: string }
@@ -44,6 +51,21 @@ const STATUS_CONFIG: Record<
     label: "Health monitor not running (API-only mode)",
   },
 };
+
+const GO_LIVE_CHECKLIST: GoLiveChecklistItem[] = [
+  { id: 1, label: "HL本番接続", completed: true },
+  { id: 2, label: "入金確認($656)", completed: true },
+  { id: 3, label: "注文テスト", completed: true },
+  { id: 4, label: "緊急停止テスト", completed: true },
+  { id: 5, label: "--once実行", completed: true },
+  { id: 6, label: "WS安定テスト", completed: true },
+  { id: 7, label: "SQLiteバックアップ", completed: true },
+  { id: 8, label: "連絡先リスト", completed: true },
+  { id: 9, label: "FR source HL切替", completed: true },
+  { id: 10, label: "testnet:false切替", completed: false, note: "殿判断待ち" },
+  { id: 11, label: "systemd設定", completed: false },
+  { id: 12, label: "Slack通知設定", completed: false },
+];
 
 function StatusBadge({ status }: { status: SysStatus }) {
   const config = STATUS_CONFIG[status];
@@ -121,6 +143,9 @@ export default function SystemPage() {
   const rawStatus = health?.status ?? "OK";
   const status: SysStatus = rawStatus in STATUS_CONFIG ? (rawStatus as SysStatus) : "unreachable";
   const config = STATUS_CONFIG[status];
+  const completedCount = GO_LIVE_CHECKLIST.filter((item) => item.completed).length;
+  const totalCount = GO_LIVE_CHECKLIST.length;
+  const progressPercent = Math.round((completedCount / totalCount) * 100);
 
   if (loading && !health && !metrics && !info && !error) {
     return <LoadingSpinner label="Loading system data..." />;
@@ -169,6 +194,67 @@ export default function SystemPage() {
             </div>
           </>
         )}
+      </div>
+
+      {/* Resource Metrics */}
+      <div
+        className="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-6"
+        data-testid="go-live-widget"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-zinc-100">
+              Go-Live Progress
+            </h2>
+            <p className="mt-1 text-sm text-zinc-400">
+              Deployment readiness checklist for production cutover
+            </p>
+          </div>
+          <div className="rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 text-right">
+            <p className="text-xs uppercase tracking-wider text-cyan-300">
+              Progress
+            </p>
+            <p className="text-xl font-bold text-cyan-200">
+              {progressPercent}% ({completedCount}/{totalCount})
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+          <div
+            className="h-full rounded-full bg-cyan-400"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+
+        <p className="mt-3 text-xs text-zinc-500">
+          Remaining blockers: testnet:false切替（殿判断）、systemd設定、Slack
+          Webhook
+        </p>
+
+        <ul className="mt-5 grid gap-3 md:grid-cols-2">
+          {GO_LIVE_CHECKLIST.map((item) => (
+            <li
+              key={item.id}
+              className={`rounded-lg border p-3 ${item.completed ? "border-emerald-500/30 bg-emerald-500/10" : "border-zinc-700 bg-zinc-900/60"}`}
+              data-testid="go-live-item"
+            >
+              <div className="flex items-start gap-3">
+                <span className="text-base leading-none" aria-hidden="true">
+                  {item.completed ? "✅" : "⬜"}
+                </span>
+                <div>
+                  <p className="text-sm text-zinc-100">
+                    {item.id}. {item.label}
+                  </p>
+                  {item.note ? (
+                    <p className="mt-1 text-xs text-zinc-400">{item.note}</p>
+                  ) : null}
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
 
       {/* Resource Metrics */}
