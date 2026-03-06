@@ -74,9 +74,15 @@ export async function fetchCircuitBreakerState(): Promise<CircuitBreakerState> {
 }
 
 export async function fetchAnalysisCycles(
-  limit: number = 50
+  limit: number = 50,
+  start?: string,
+  end?: string
 ): Promise<AnalysisCycle[]> {
-  return fetchJSON<AnalysisCycle[]>(`/cycles?limit=${limit}`);
+  const params = new URLSearchParams();
+  params.set("limit", String(limit));
+  if (start) params.set("start", start);
+  if (end) params.set("end", end);
+  return fetchJSON<AnalysisCycle[]>(`/cycles?${params.toString()}`);
 }
 
 export async function fetchMdseScores(): Promise<MdseDetectorScore[]> {
