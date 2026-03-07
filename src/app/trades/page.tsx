@@ -113,7 +113,7 @@ function TradesContent() {
                   <td className="px-4 py-3 text-right font-mono text-zinc-300">
                     {trade.exit_price != null
                       ? formatNumber(trade.exit_price)
-                      : <span className="text-zinc-500 italic">Dry-run</span>}
+                      : <span className="text-zinc-500 italic">{getExitPriceFallbackLabel(trade)}</span>}
                   </td>
                   <td className="px-4 py-3 text-right font-mono">
                     {trade.pnl != null ? (
@@ -156,7 +156,7 @@ function TradesContent() {
               value={
                 selectedTrade.exit_price != null
                   ? formatNumber(selectedTrade.exit_price)
-                  : "Dry-run"
+                  : getExitPriceFallbackLabel(selectedTrade)
               }
             />
             <DetailRow
@@ -212,6 +212,10 @@ function TradesContent() {
       </DetailPanel>
     </div>
   );
+}
+
+function getExitPriceFallbackLabel(trade: Trade): string {
+  return trade.dry_run === true ? "Dry-run" : "Open";
 }
 
 function DetailRow({ label, value }: { label: string; value: string }) {
