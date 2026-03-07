@@ -34,9 +34,9 @@ test("dashboard system overview is null-safe", async ({ page }) => {
 
   await expect(page.getByText("System Overview")).toBeVisible();
   await expect(page.getByTestId("bot-status-value")).toHaveText(/unknown/i);
-  await expect(page.getByTestId("stats-recent-trades")).toHaveText("0");
-  await expect(page.getByTestId("stats-recent-signals")).toHaveText("0");
-  await expect(page.getByTestId("stats-mdse-events")).toHaveText("0");
+  await expect(page.getByTestId("stats-recent-trades")).toHaveText("No data");
+  await expect(page.getByTestId("stats-recent-signals")).toHaveText("No data");
+  await expect(page.getByTestId("stats-mdse-events")).toHaveText("No data");
   await expect(page.getByTestId("stats-api-version")).toHaveText("—");
   await expect(page.getByTestId("stats-last-updated")).toHaveText("—");
 

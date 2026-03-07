@@ -40,6 +40,13 @@ export interface Signal {
   created_at: string | null;
 }
 
+export interface SignalListResponse {
+  signals: Signal[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
 export interface PortfolioPosition {
   side?: string | null;
   size?: number | null;
@@ -87,6 +94,7 @@ export interface SystemMetrics {
 export interface SystemInfo {
   db_path: string;
   api_version: string;
+  bot_version?: string | null;
   python_version: string;
   platform: string;
 }
@@ -147,6 +155,22 @@ export interface SystemStatsResponse {
   [key: string]: unknown;
 }
 
+export interface StrategySnapshot {
+  id: string;
+  symbol: string;
+  strategy: string;
+  allocation_pct: number;
+  status: string;
+  trade_count?: number | null;
+  win_rate?: number | null;
+  recent_pnl?: number | null;
+}
+
+export interface StrategiesResponse {
+  active_plan?: string | null;
+  strategies: StrategySnapshot[];
+}
+
 export interface AnalysisCycle {
   id: number;
   start_time: string;
@@ -158,14 +182,33 @@ export interface AnalysisCycle {
   duration_seconds: number | null;
   regime_info: string | null;
   created_at: string | null;
+  total_count?: number | null;
 }
 
 export interface MdseDetectorScore {
   detector_name: string;
-  win_rate: number;
-  avg_pnl: number;
-  weight: number;
-  sample_count: number;
+  win_rate: number | null;
+  avg_pnl: number | null;
+  weight: number | null;
+  sample_count: number | null;
+}
+
+export interface MdseSummaryDetector {
+  detector_name: string;
+  event_count: number;
+  validated_count: number;
+  win_rate: number | null;
+  avg_pnl: number | null;
+  weight: number | null;
+  sample_count: number | null;
+  last_event_at: string | null;
+}
+
+export interface MdseSummary {
+  total_events: number;
+  validated_events: number;
+  unvalidated_events: number;
+  detectors: MdseSummaryDetector[];
 }
 
 export interface MdseEvent {
@@ -239,7 +282,6 @@ export interface EquityCurveResponse {
   start_date: string | null;
   end_date: string | null;
 }
-
 export interface TradeByStrategyDaily {
   date: string;
   strategy: string;
