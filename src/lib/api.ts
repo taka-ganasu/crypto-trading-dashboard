@@ -19,6 +19,7 @@ import type {
   MarketSnapshot,
   EquityCurveResponse,
   StrategyPerformance,
+  TradeByStrategyDaily,
   MdseTimeline,
 } from "@/types";
 
@@ -192,6 +193,19 @@ export async function fetchStrategyPerformance(): Promise<StrategyPerformance[]>
   return fetchJSON<StrategyPerformance[]>("/performance/by-strategy");
 }
 
+export async function fetchTradesByStrategy(
+  startDate?: string,
+  endDate?: string
+): Promise<TradeByStrategyDaily[]> {
+  const params = new URLSearchParams();
+  if (startDate) params.set("start_date", startDate);
+  if (endDate) params.set("end_date", endDate);
+  const query = params.toString();
+  return fetchJSON<TradeByStrategyDaily[]>(
+    `/trades/by-strategy${query ? `?${query}` : ""}`
+  );
+}
+
 export async function fetchEquityCurve(
   startDate?: string,
   endDate?: string
@@ -200,7 +214,17 @@ export async function fetchEquityCurve(
   if (startDate) params.set("start_date", startDate);
   if (endDate) params.set("end_date", endDate);
   const query = params.toString();
-  return fetchJSON<EquityCurveResponse>(
-    `/performance/equity-curve${query ? `?${query}` : ""}`
-  );
+
+  try {
+    return await fetchJSON<EquityCurveResponse>(
+      `/equity-curve${query ? `?${query}` : ""}`
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("API error: 404")) {
+      return fetchJSON<EquityCurveResponse>(
+        `/performance/equity-curve${query ? `?${query}` : ""}`
+      );
+    }
+    throw error;
+  }
 }

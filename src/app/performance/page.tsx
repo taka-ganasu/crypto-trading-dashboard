@@ -6,7 +6,9 @@ import {
   fetchExecutionQuality,
   fetchMarketSnapshots,
   fetchEquityCurve,
+  fetchTradesByStrategy,
 } from "@/lib/api";
+import DailyStrategyPnlChart from "@/components/DailyStrategyPnlChart";
 import DetailPanel from "@/components/DetailPanel";
 import EquityCurveChart from "@/components/EquityCurveChart";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -22,6 +24,7 @@ import type {
   ExecutionQuality,
   MarketSnapshot,
   EquityCurvePoint,
+  TradeByStrategyDaily,
 } from "@/types";
 
 function slippageColor(pct: number): string {
@@ -49,6 +52,7 @@ export default function PerformancePage() {
   const [execQuality, setExecQuality] = useState<ExecutionQuality[]>([]);
   const [snapshots, setSnapshots] = useState<MarketSnapshot[]>([]);
   const [equityCurve, setEquityCurve] = useState<EquityCurvePoint[]>([]);
+  const [dailyStrategyPnl, setDailyStrategyPnl] = useState<TradeByStrategyDaily[]>([]);
   const [selectedExecution, setSelectedExecution] = useState<ExecutionQuality | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,12 +63,13 @@ export default function PerformancePage() {
     setError(null);
     setWarning(null);
 
-    const [summaryResult, eqResult, snapshotsResult, curveResult] =
+    const [summaryResult, eqResult, snapshotsResult, curveResult, strategyPnlResult] =
       await Promise.allSettled([
         fetchPerformanceSummary(),
         fetchExecutionQuality(50),
         fetchMarketSnapshots(20),
         fetchEquityCurve(),
+        fetchTradesByStrategy(),
       ]);
 
     const failedSections: string[] = [];
@@ -102,6 +107,14 @@ export default function PerformancePage() {
       failedSections.push("equity curve");
     }
 
+    if (strategyPnlResult.status === "fulfilled") {
+      setDailyStrategyPnl(strategyPnlResult.value);
+      successCount += 1;
+    } else {
+      setDailyStrategyPnl([]);
+      failedSections.push("daily strategy pnl");
+    }
+
     if (successCount === 0) {
       setError("Failed to load performance data.");
     } else if (failedSections.length > 0) {
@@ -134,7 +147,7 @@ export default function PerformancePage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex h-full items-center justify-center">
         <div className="text-center" role="alert" aria-live="assertive">
           <p className="text-red-400">Error: {error}</p>
           <button
@@ -169,7 +182,9 @@ export default function PerformancePage() {
         <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
             <p className="text-xs uppercase tracking-wider text-zinc-500">Total PnL</p>
-            <p className={`mt-1 text-2xl font-mono font-bold ${colorByPnl(summary.total_pnl ?? 0)}`}>
+            <p
+              className={`mt-1 text-2xl font-mono font-bold ${colorByPnl(summary.total_pnl ?? 0)}`}
+            >
               {formatPnl(summary.total_pnl ?? 0)}
             </p>
           </div>
@@ -187,7 +202,9 @@ export default function PerformancePage() {
           </div>
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
             <p className="text-xs uppercase tracking-wider text-zinc-500">Avg Slippage</p>
-            <p className={`mt-1 text-2xl font-mono font-bold ${slippageColor(summary.avg_slippage ?? 0)}`}>
+            <p
+              className={`mt-1 text-2xl font-mono font-bold ${slippageColor(summary.avg_slippage ?? 0)}`}
+            >
               {summary.avg_slippage != null ? formatPercent(summary.avg_slippage, 3) : "—"}
             </p>
           </div>
@@ -198,6 +215,13 @@ export default function PerformancePage() {
         <h2 className="mb-3 text-lg font-semibold text-zinc-100">Equity Curve</h2>
         <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
           <EquityCurveChart data={equityCurve} />
+        </div>
+      </div>
+
+      <div className="mb-8">
+        <h2 className="mb-3 text-lg font-semibold text-zinc-100">Daily PnL by Strategy</h2>
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+          <DailyStrategyPnlChart data={dailyStrategyPnl} />
         </div>
       </div>
 
@@ -227,11 +251,15 @@ export default function PerformancePage() {
                   <tr
                     key={`${eq.trade_id}-${eq.timestamp}`}
                     onClick={() => setSelectedExecution(eq)}
-                    className="hover:bg-zinc-900/50 transition-colors cursor-pointer"
+                    className="cursor-pointer transition-colors hover:bg-zinc-900/50"
                   >
                     <td className="px-4 py-3 font-medium text-zinc-200">#{eq.trade_id}</td>
-                    <td className="px-4 py-3 text-right font-mono text-zinc-300">{formatPrice(eq.expected_price)}</td>
-                    <td className="px-4 py-3 text-right font-mono text-zinc-300">{formatPrice(eq.actual_price)}</td>
+                    <td className="px-4 py-3 text-right font-mono text-zinc-300">
+                      {formatPrice(eq.expected_price)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono text-zinc-300">
+                      {formatPrice(eq.actual_price)}
+                    </td>
                     <td className={`px-4 py-3 text-right font-mono ${slippageColor(eq.slippage_pct)}`}>
                       {eq.slippage_pct.toFixed(3)}%
                     </td>
@@ -256,7 +284,9 @@ export default function PerformancePage() {
               <DetailRow label="Actual Price" value={formatPrice(selectedExecution.actual_price)} />
               <DetailRow
                 label="Slippage"
-                value={(selectedExecution.actual_price - selectedExecution.expected_price).toFixed(6)}
+                value={(
+                  selectedExecution.actual_price - selectedExecution.expected_price
+                ).toFixed(6)}
               />
               <DetailRow label="Slippage %" value={`${selectedExecution.slippage_pct.toFixed(3)}%`} />
               <DetailRow label="Timestamp" value={formatTimestamp(selectedExecution.timestamp)} />
@@ -289,7 +319,10 @@ export default function PerformancePage() {
                 </tr>
               ) : (
                 snapshots.map((snap, i) => (
-                  <tr key={`${snap.symbol}-${snap.timestamp}-${i}`} className="hover:bg-zinc-900/50 transition-colors">
+                  <tr
+                    key={`${snap.symbol}-${snap.timestamp}-${i}`}
+                    className="transition-colors hover:bg-zinc-900/50"
+                  >
                     <td className="px-4 py-3 font-medium text-zinc-200">{snap.symbol}</td>
                     <td className="px-4 py-3 text-right font-mono text-zinc-300">
                       {snap.price != null ? formatNumber(snap.price) : "—"}
@@ -322,7 +355,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-start justify-between gap-4 border-b border-zinc-800/70 pb-2">
       <span className="text-zinc-500">{label}</span>
-      <span className="text-right text-zinc-200 font-mono">{value}</span>
+      <span className="font-mono text-right text-zinc-200">{value}</span>
     </div>
   );
 }
