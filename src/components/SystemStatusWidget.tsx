@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { fetchBotHealth } from "@/lib/api";
 import type { BotHealthResponse } from "@/types";
 
 type BotStatus = "healthy" | "degraded" | "unhealthy" | "unknown";
@@ -57,40 +55,13 @@ function getStatus(payload: BotHealthResponse | null): BotStatus {
   return normalizeStatus(payload.status ?? payload.health ?? payload.state ?? null);
 }
 
-export default function SystemStatusWidget() {
-  const [health, setHealth] = useState<BotHealthResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface SystemStatusWidgetProps {
+  health: BotHealthResponse | null;
+  loading: boolean;
+  error: string | null;
+}
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const response = await fetchBotHealth();
-        if (!cancelled) {
-          setHealth(response);
-          setError(null);
-        }
-      } catch (e) {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Failed to fetch health");
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
-
-    load();
-    const interval = setInterval(load, 30000);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, []);
-
+export default function SystemStatusWidget({ health, loading, error }: SystemStatusWidgetProps) {
   const status = getStatus(health);
   const style = STATUS_STYLE[status];
 

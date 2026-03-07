@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { fetchSystemStatsOverview } from "@/lib/api";
+import { useMemo } from "react";
 import type { SystemStatsResponse } from "@/types";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -78,40 +77,13 @@ function formatTimestamp(value: string | null): string {
   return parsed.toLocaleString();
 }
 
-export default function StatsOverviewCards() {
-  const [stats, setStats] = useState<SystemStatsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface StatsOverviewCardsProps {
+  stats: SystemStatsResponse | null;
+  loading: boolean;
+  error: string | null;
+}
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const response = await fetchSystemStatsOverview();
-        if (!cancelled) {
-          setStats(response);
-          setError(null);
-        }
-      } catch (e) {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Failed to fetch stats");
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
-
-    load();
-    const interval = setInterval(load, 30000);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, []);
-
+export default function StatsOverviewCards({ stats, loading, error }: StatsOverviewCardsProps) {
   const view = useMemo(() => {
     const recentTrades = readNumber(stats, [
       ["recent_trades"],

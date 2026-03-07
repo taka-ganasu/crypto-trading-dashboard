@@ -6,11 +6,19 @@ import {
   fetchPortfolioState,
   fetchCircuitBreakerState,
   fetchTrades,
+  fetchBotHealth,
+  fetchSystemStatsOverview,
 } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import StatsOverviewCards from "@/components/StatsOverviewCards";
 import SystemStatusWidget from "@/components/SystemStatusWidget";
-import type { PortfolioState, CircuitBreakerState, Trade } from "@/types";
+import type {
+  PortfolioState,
+  CircuitBreakerState,
+  Trade,
+  BotHealthResponse,
+  SystemStatsResponse,
+} from "@/types";
 
 const CB_BADGE: Record<string, { bg: string; text: string; dot: string }> = {
   NORMAL: {
@@ -62,20 +70,29 @@ export default function Home() {
   const [portfolio, setPortfolio] = useState<PortfolioState | null>(null);
   const [cb, setCb] = useState<CircuitBreakerState | null>(null);
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [health, setHealth] = useState<BotHealthResponse | null>(null);
+  const [healthError, setHealthError] = useState<string | null>(null);
+  const [stats, setStats] = useState<SystemStatsResponse | null>(null);
+  const [statsError, setStatsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
 
-  const loadDashboard = useCallback(async () => {
-    setLoading(true);
+  const loadDashboard = useCallback(async (isInitial: boolean = false) => {
+    if (isInitial) {
+      setLoading(true);
+    }
     setError(null);
     setWarning(null);
 
-    const [portfolioResult, cbResult, tradesResult] = await Promise.allSettled([
-      fetchPortfolioState(),
-      fetchCircuitBreakerState(),
-      fetchTrades(undefined, 3),
-    ]);
+    const [portfolioResult, cbResult, tradesResult, healthResult, statsResult] =
+      await Promise.allSettled([
+        fetchPortfolioState(),
+        fetchCircuitBreakerState(),
+        fetchTrades(undefined, 3),
+        fetchBotHealth(),
+        fetchSystemStatsOverview(),
+      ]);
 
     const failedSections: string[] = [];
 
@@ -100,7 +117,33 @@ export default function Home() {
       failedSections.push("recent trades");
     }
 
-    if (failedSections.length === 3) {
+    if (healthResult.status === "fulfilled") {
+      setHealth(healthResult.value);
+      setHealthError(null);
+    } else {
+      setHealth(null);
+      setHealthError(
+        healthResult.reason instanceof Error
+          ? healthResult.reason.message
+          : "Failed to fetch health"
+      );
+      failedSections.push("bot health");
+    }
+
+    if (statsResult.status === "fulfilled") {
+      setStats(statsResult.value);
+      setStatsError(null);
+    } else {
+      setStats(null);
+      setStatsError(
+        statsResult.reason instanceof Error
+          ? statsResult.reason.message
+          : "Failed to fetch stats"
+      );
+      failedSections.push("system stats");
+    }
+
+    if (failedSections.length === 5) {
       setError("Failed to load dashboard data.");
     } else if (failedSections.length > 0) {
       setWarning(
@@ -108,11 +151,15 @@ export default function Home() {
       );
     }
 
-    setLoading(false);
+    if (isInitial) {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    void loadDashboard();
+    void loadDashboard(true);
+    const interval = setInterval(() => void loadDashboard(false), 30000);
+    return () => clearInterval(interval);
   }, [loadDashboard]);
 
   if (loading) {
@@ -173,9 +220,9 @@ export default function Home() {
           System Overview
         </h2>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <SystemStatusWidget />
+          <SystemStatusWidget health={health} loading={loading} error={healthError} />
           <div className="lg:col-span-2">
-            <StatsOverviewCards />
+            <StatsOverviewCards stats={stats} loading={loading} error={statsError} />
           </div>
         </div>
       </section>
