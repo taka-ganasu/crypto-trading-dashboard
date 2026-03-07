@@ -81,15 +81,6 @@ function StatusBadge({ status }: { status: SysStatus }) {
   );
 }
 
-function formatUptime(seconds: number): string {
-  const d = Math.floor(seconds / 86400);
-  const h = Math.floor((seconds % 86400) / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  if (d > 0) return `${d}d ${h}h ${m}m`;
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
-}
-
 function formatTimestamp(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -121,6 +112,20 @@ function errorRowClass(statusCode: number): string {
 
 function formatSinceIso(hours: number): string {
   return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+}
+
+function normalizeSystemStatus(status: string | null | undefined): SysStatus {
+  const normalized = (status ?? "").toLowerCase();
+  if (normalized === "ok") return "OK";
+  if (normalized === "degraded") return "DEGRADED";
+  if (normalized === "down") return "DOWN";
+  return "unreachable";
+}
+
+function formatConnectivity(value: boolean | null | undefined): string {
+  if (value === true) return "Connected";
+  if (value === false) return "Disconnected";
+  return "—";
 }
 
 export default function SystemPage() {
@@ -201,9 +206,7 @@ export default function SystemPage() {
     };
   }, []);
 
-  const rawStatus = health?.status ?? "unreachable";
-  const status: SysStatus =
-    rawStatus in STATUS_CONFIG ? (rawStatus as SysStatus) : "unreachable";
+  const status = normalizeSystemStatus(health?.status ?? null);
   const config = STATUS_CONFIG[status];
   const completedCount = GO_LIVE_CHECKLIST.filter((item) => item.completed).length;
   const totalCount = GO_LIVE_CHECKLIST.length;
@@ -270,13 +273,16 @@ export default function SystemPage() {
                 <p className={`mt-3 text-sm ${config.color}`}>{config.label}</p>
                 <div className="mt-4 flex items-center gap-6 text-sm text-zinc-400">
                   <span>
-                    Uptime:{" "}
+                    DB:{" "}
                     <span className="text-zinc-200 font-medium">
-                      {formatUptime(health?.uptime_seconds ?? 0)}
+                      {formatConnectivity(health?.db_connected)}
                     </span>
                   </span>
                   <span>
-                    PID: <span className="font-mono text-zinc-200">{health?.pid ?? "—"}</span>
+                    Exchange:{" "}
+                    <span className="font-mono text-zinc-200">
+                      {formatConnectivity(health?.exchange_connected)}
+                    </span>
                   </span>
                 </div>
               </>

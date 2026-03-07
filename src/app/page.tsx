@@ -49,6 +49,15 @@ function formatDate(iso: string): string {
   });
 }
 
+function toNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
 export default function Home() {
   const [portfolio, setPortfolio] = useState<PortfolioState | null>(null);
   const [cb, setCb] = useState<CircuitBreakerState | null>(null);
@@ -135,9 +144,10 @@ export default function Home() {
 
   // Extract portfolio data
   const pfData = portfolio?.data ?? {};
-  const totalBalance = (pfData.total_balance as number) ?? 0;
-  const dailyPnl = (pfData.daily_pnl as number) ?? 0;
-  const dailyPnlPct = (pfData.daily_pnl_pct as number) ?? 0;
+  const totalBalance =
+    toNumber(pfData.total_balance) ?? toNumber(pfData.equity) ?? 0;
+  const dailyPnl = toNumber(pfData.daily_pnl) ?? 0;
+  const dailyPnlPct = toNumber(pfData.daily_pnl_pct) ?? 0;
 
   // Extract circuit breaker state
   const cbData = cb?.data ?? {};

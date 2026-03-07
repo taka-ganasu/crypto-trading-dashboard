@@ -32,50 +32,39 @@ function asString(value: unknown): string | null {
   return trimmed ? trimmed : null;
 }
 
-function readNumber(payload: SystemStatsResponse | null, keys: string[]): number {
+function readPath(payload: SystemStatsResponse | null, path: string[]): unknown {
+  if (!payload) return null;
+  let cursor: unknown = payload;
+  for (const key of path) {
+    const obj = asRecord(cursor);
+    if (!obj || !(key in obj)) {
+      return null;
+    }
+    cursor = obj[key];
+  }
+  return cursor;
+}
+
+function readNumber(payload: SystemStatsResponse | null, paths: string[][]): number {
   if (!payload) return 0;
 
-  const root = payload as Record<string, unknown>;
-  const nested = asRecord(payload.data);
-
-  for (const key of keys) {
-    const rootValue = asNumber(root[key]);
-    if (rootValue != null) {
-      return rootValue;
-    }
-  }
-
-  if (nested) {
-    for (const key of keys) {
-      const nestedValue = asNumber(nested[key]);
-      if (nestedValue != null) {
-        return nestedValue;
-      }
+  for (const path of paths) {
+    const value = asNumber(readPath(payload, path));
+    if (value != null) {
+      return value;
     }
   }
 
   return 0;
 }
 
-function readText(payload: SystemStatsResponse | null, keys: string[]): string | null {
+function readText(payload: SystemStatsResponse | null, paths: string[][]): string | null {
   if (!payload) return null;
 
-  const root = payload as Record<string, unknown>;
-  const nested = asRecord(payload.data);
-
-  for (const key of keys) {
-    const rootValue = asString(root[key]);
-    if (rootValue) {
-      return rootValue;
-    }
-  }
-
-  if (nested) {
-    for (const key of keys) {
-      const nestedValue = asString(nested[key]);
-      if (nestedValue) {
-        return nestedValue;
-      }
+  for (const path of paths) {
+    const value = asString(readPath(payload, path));
+    if (value) {
+      return value;
     }
   }
 
@@ -124,11 +113,27 @@ export default function StatsOverviewCards() {
   }, []);
 
   const view = useMemo(() => {
-    const recentTrades = readNumber(stats, ["recent_trades", "trades_24h", "trade_count"]);
-    const recentSignals = readNumber(stats, ["recent_signals", "signals_24h", "signal_count"]);
-    const mdseEvents = readNumber(stats, ["mdse_events", "mdse_event_count", "events_24h"]);
-    const apiVersion = readText(stats, ["api_version", "version"]);
-    const lastUpdated = readText(stats, ["last_updated", "updated_at", "timestamp"]);
+    const recentTrades = readNumber(stats, [
+      ["recent_trades"],
+      ["trades_24h"],
+      ["trade_count"],
+      ["db_stats", "total_trades"],
+    ]);
+    const recentSignals = readNumber(stats, [
+      ["recent_signals"],
+      ["signals_24h"],
+      ["signal_count"],
+      ["db_stats", "total_signals"],
+    ]);
+    const mdseEvents = readNumber(stats, [
+      ["recent_mdse_events"],
+      ["mdse_events"],
+      ["mdse_event_count"],
+      ["events_24h"],
+      ["db_stats", "total_distortion_events"],
+    ]);
+    const apiVersion = readText(stats, [["api_version"], ["version"]]);
+    const lastUpdated = readText(stats, [["last_updated"], ["updated_at"], ["timestamp"]]);
 
     return {
       recentTrades,
