@@ -116,6 +116,26 @@ export const defaultApiResponses: ApiResponseMap = {
     db_path: "data/trades.db",
     api_version: "1.0.0",
   },
+  "/api/errors": [
+    {
+      ts: "2026-01-01T00:30:00Z",
+      status_code: 503,
+      method: "GET",
+      path: "/api/system/health",
+      detail: "Service unavailable",
+      exc_type: "RuntimeError",
+      traceback: "Traceback (most recent call last):\\nRuntimeError: service down",
+    },
+    {
+      ts: "2026-01-01T01:00:00Z",
+      status_code: 404,
+      method: "GET",
+      path: "/api/unknown",
+      detail: "Not found",
+      exc_type: null,
+      traceback: null,
+    },
+  ],
   "/api/health": {
     status: "healthy",
     api_version: "v1.3.0",
@@ -309,6 +329,7 @@ export const nullSafeApiResponses: ApiResponseMap = {
     db_path: "data/trades.db",
     api_version: "1.0.0",
   },
+  "/api/errors": [],
   "/api/health": {
     status: null,
     api_version: null,

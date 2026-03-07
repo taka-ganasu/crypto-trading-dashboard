@@ -11,6 +11,7 @@ import type {
   SystemHealth,
   SystemMetrics,
   SystemInfo,
+  ApiError,
   BotHealthResponse,
   SystemStatsResponse,
   PerformanceSummary,
@@ -141,6 +142,22 @@ export async function fetchSystemMetrics(): Promise<SystemMetrics> {
 
 export async function fetchSystemInfo(): Promise<SystemInfo> {
   return fetchJSON<SystemInfo>("/system/info");
+}
+
+export async function fetchApiErrors(
+  since?: string,
+  statusGte?: number,
+  limit?: number
+): Promise<ApiError[]> {
+  const params = new URLSearchParams();
+  if (since) params.set("since", since);
+  if (statusGte) params.set("status_gte", String(statusGte));
+  if (limit) params.set("limit", String(limit));
+  const query = params.toString();
+  const res = await fetch(`${BASE_URL}/errors${query ? `?${query}` : ""}`);
+  if (!res.ok) return [];
+  const payload: unknown = await res.json();
+  return Array.isArray(payload) ? (payload as ApiError[]) : [];
 }
 
 export async function fetchBotHealth(): Promise<BotHealthResponse> {

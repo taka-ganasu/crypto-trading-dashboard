@@ -68,6 +68,16 @@ export interface SystemInfo {
   python_version: string;
 }
 
+export interface ApiError {
+  ts: string;
+  status_code: number;
+  method: string;
+  path: string;
+  detail: string;
+  exc_type: string | null;
+  traceback: string | null;
+}
+
 export interface BotHealthResponse {
   status?: string | null;
   health?: string | null;
