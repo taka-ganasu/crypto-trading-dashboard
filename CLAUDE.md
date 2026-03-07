@@ -44,3 +44,8 @@ src/
 - **Vercel**: `vercel --prod --scope takaganasus-projects`
 - **環境変数**: `API_BASE_URL=http://149.28.147.123`（Vercel Production に設定済み）
 - **リージョン**: sin1（シンガポール）— vercel.json で設定済み
+
+## API-Dashboard型同期ルール
+- API型(src/types/index.ts)を参照する際は、Bot側(crypto-trading-bot)の最新Pydanticスキーマを確認すること
+- Bot APIのPydanticモデルが正(source of truth)
+- フィールド名・型・Optional/Required を完全に一致させること

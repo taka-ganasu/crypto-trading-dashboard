@@ -3,16 +3,32 @@
 import { Fragment, useEffect, useState } from "react";
 import {
   fetchApiErrors,
+  fetchBotHealth,
   fetchSystemHealth,
   fetchSystemInfo,
   fetchSystemMetrics,
 } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import type { ApiError, SystemHealth, SystemInfo, SystemMetrics } from "@/types";
+import type {
+  ApiError,
+  BotHealthCheckItem,
+  BotHealthResponse,
+  SystemHealth,
+  SystemInfo,
+  SystemMetrics,
+} from "@/types";
 import packageJson from "../../../package.json";
 
 type SysStatus = "OK" | "DEGRADED" | "DOWN" | "unreachable";
 type ActiveTab = "info" | "errors";
+type GoLiveStatus = "ok" | "warning" | "error" | "unknown";
+
+type GoLiveCheckItem = {
+  name: string;
+  status: GoLiveStatus;
+  message: string;
+  latencyMs: number | null;
+};
 
 const STATUS_CONFIG: Record<
   SysStatus,
@@ -49,6 +65,39 @@ const STATUS_CONFIG: Record<
 };
 
 const DASHBOARD_VERSION = packageJson.version as string;
+const GO_LIVE_STATUS_CONFIG: Record<
+  GoLiveStatus,
+  { label: string; color: string; dot: string; border: string; bg: string }
+> = {
+  ok: {
+    label: "OK",
+    color: "text-emerald-300",
+    dot: "bg-emerald-400",
+    border: "border-emerald-500/30",
+    bg: "bg-emerald-500/10",
+  },
+  warning: {
+    label: "Warning",
+    color: "text-yellow-300",
+    dot: "bg-yellow-400",
+    border: "border-yellow-500/30",
+    bg: "bg-yellow-500/10",
+  },
+  error: {
+    label: "Error",
+    color: "text-red-300",
+    dot: "bg-red-400",
+    border: "border-red-500/30",
+    bg: "bg-red-500/10",
+  },
+  unknown: {
+    label: "Unknown",
+    color: "text-zinc-300",
+    dot: "bg-zinc-400",
+    border: "border-zinc-700",
+    bg: "bg-zinc-800/40",
+  },
+};
 
 function StatusBadge({ status }: { status: SysStatus }) {
   const config = STATUS_CONFIG[status];
@@ -129,8 +178,85 @@ function formatOpenPositions(value: number | null | undefined): string {
   return "—";
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return null;
+}
+
+function asString(value: unknown): string | null {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+  return null;
+}
+
+function asNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  return null;
+}
+
+function readStringField(payload: Record<string, unknown>, keys: string[]): string | null {
+  for (const key of keys) {
+    const value = asString(payload[key]);
+    if (value) return value;
+  }
+  return null;
+}
+
+function readHealthField(health: BotHealthResponse | null, keys: string[]): string | null {
+  const root = asRecord(health);
+  if (!root) return null;
+
+  const direct = readStringField(root, keys);
+  if (direct) return direct;
+
+  const data = asRecord(root.data);
+  if (!data) return null;
+  return readStringField(data, keys);
+}
+
+function normalizeGoLiveStatus(status: string | null | undefined): GoLiveStatus {
+  const normalized = (status ?? "").toLowerCase();
+  if (normalized === "ok") return "ok";
+  if (normalized === "warn" || normalized === "warning") return "warning";
+  if (normalized === "fail" || normalized === "error") return "error";
+  return "unknown";
+}
+
+function readHealthChecks(health: BotHealthResponse | null): BotHealthCheckItem[] {
+  const root = asRecord(health);
+  if (!root) return [];
+
+  if (Array.isArray(root.checks)) {
+    return root.checks as BotHealthCheckItem[];
+  }
+
+  const data = asRecord(root.data);
+  if (data && Array.isArray(data.checks)) {
+    return data.checks as BotHealthCheckItem[];
+  }
+  return [];
+}
+
+function normalizeGoLiveChecks(health: BotHealthResponse | null): GoLiveCheckItem[] {
+  return readHealthChecks(health).map((item, index) => {
+    const rawItem = asRecord(item);
+    const name = asString(rawItem?.name) ?? `check_${index + 1}`;
+    const status = normalizeGoLiveStatus(asString(rawItem?.status));
+    const message = asString(rawItem?.message) ?? "—";
+    const latencyMs = asNumber(rawItem?.latency_ms);
+    return { name, status, message, latencyMs };
+  });
+}
+
 export default function SystemPage() {
   const [health, setHealth] = useState<SystemHealth | null>(null);
+  const [botHealth, setBotHealth] = useState<BotHealthResponse | null>(null);
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
   const [info, setInfo] = useState<SystemInfo | null>(null);
   const [apiErrors, setApiErrors] = useState<ApiError[]>([]);
@@ -145,11 +271,12 @@ export default function SystemPage() {
 
     async function load() {
       const since = formatSinceIso(24);
-      const [healthResult, metricsResult, infoResult, errorsResult] =
+      const [healthResult, metricsResult, infoResult, botHealthResult, errorsResult] =
         await Promise.allSettled([
           fetchSystemHealth(),
           fetchSystemMetrics(),
           fetchSystemInfo(),
+          fetchBotHealth(),
           fetchApiErrors(since, 400, 50),
         ]);
 
@@ -176,6 +303,13 @@ export default function SystemPage() {
       } else {
         setInfo(null);
         failedSystemCalls.push("info");
+      }
+
+      if (botHealthResult.status === "fulfilled") {
+        setBotHealth(botHealthResult.value);
+      } else {
+        setBotHealth(null);
+        failedSystemCalls.push("bot_health");
       }
 
       if (failedSystemCalls.length > 0) {
@@ -210,6 +344,26 @@ export default function SystemPage() {
   const status = normalizeSystemStatus(health?.status ?? null);
   const config = STATUS_CONFIG[status];
   const wsStatus = formatWebSocketStatus(metrics?.ws_connected);
+  const botVersionFromHealth = readHealthField(botHealth, [
+    "bot_version",
+    "version",
+    "app_version",
+  ]);
+  const vpsHead = readHealthField(botHealth, [
+    "vps_head",
+    "vps_git_head",
+    "vps_commit",
+    "git_head",
+    "commit",
+  ]);
+  const mainHead = readHealthField(botHealth, [
+    "main_head",
+    "main_git_head",
+    "origin_main_head",
+    "upstream_main_head",
+  ]);
+  const isHeadDrift = Boolean(vpsHead && mainHead && vpsHead !== mainHead);
+  const goLiveChecks = normalizeGoLiveChecks(botHealth);
 
   if (loading && !health && !metrics && !info && !systemError) {
     return <LoadingSpinner label="Loading system data..." />;
@@ -341,6 +495,102 @@ export default function SystemPage() {
                     {formatOpenPositions(metrics?.open_positions)}
                   </p>
                 </div>
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
+            <h2 className="text-lg font-semibold text-zinc-200 mb-4" data-testid="vps-version-heading">
+              VPS Version
+            </h2>
+            {loading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-6 animate-pulse rounded bg-zinc-800 w-64" />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3">
+                  <span className="text-sm text-zinc-400">Bot Version (/api/health)</span>
+                  <span className="font-mono text-sm text-zinc-200" data-testid="vps-bot-version-value">
+                    {botVersionFromHealth ?? "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3">
+                  <span className="text-sm text-zinc-400">VPS HEAD</span>
+                  <span className="font-mono text-sm text-zinc-200" data-testid="vps-head-value">
+                    {vpsHead ?? "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3">
+                  <span className="text-sm text-zinc-400">main HEAD</span>
+                  <span className="font-mono text-sm text-zinc-200" data-testid="main-head-value">
+                    {mainHead ?? "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3">
+                  <span className="text-sm text-zinc-400">Sync Status</span>
+                  <span
+                    className={`text-sm font-semibold ${
+                      isHeadDrift ? "text-yellow-300" : "text-emerald-300"
+                    }`}
+                    data-testid="head-sync-status"
+                  >
+                    {vpsHead && mainHead ? (isHeadDrift ? "DRIFT" : "IN_SYNC") : "UNKNOWN"}
+                  </span>
+                </div>
+                {isHeadDrift ? (
+                  <p className="text-sm text-yellow-300">
+                    Warning: VPS HEAD differs from main HEAD.
+                  </p>
+                ) : null}
+              </div>
+            )}
+          </div>
+
+          <div
+            className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6"
+            data-testid="go-live-checklist"
+          >
+            <h2 className="text-lg font-semibold text-zinc-200 mb-1">Go-Live Checklist</h2>
+            <p className="text-xs text-zinc-500 mb-4">Data source: /api/health checks</p>
+            {loading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-12 animate-pulse rounded-lg bg-zinc-800" />
+                ))}
+              </div>
+            ) : goLiveChecks.length === 0 ? (
+              <p className="text-sm text-zinc-400">No checks available from /api/health.</p>
+            ) : (
+              <div className="space-y-3">
+                {goLiveChecks.map((check, index) => {
+                  const statusConfig = GO_LIVE_STATUS_CONFIG[check.status];
+                  return (
+                    <div
+                      key={`${check.name}-${index}`}
+                      className={`rounded-lg border px-4 py-3 ${statusConfig.border} ${statusConfig.bg}`}
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="font-mono text-sm text-zinc-100">{check.name}</p>
+                          <p className="mt-1 text-sm text-zinc-300">{check.message}</p>
+                        </div>
+                        <span
+                          className={`inline-flex items-center gap-2 rounded-full border border-zinc-700/70 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider ${statusConfig.color}`}
+                        >
+                          <span className={`h-2.5 w-2.5 rounded-full ${statusConfig.dot}`} />
+                          {statusConfig.label}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-xs text-zinc-400">
+                        Latency:{" "}
+                        {check.latencyMs != null ? `${check.latencyMs.toFixed(2)} ms` : "—"}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

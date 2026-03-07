@@ -44,14 +44,6 @@ function TradesContent() {
     return <LoadingSpinner label="Loading trades..." />;
   }
 
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-red-400">Error: {error}</p>
-      </div>
-    );
-  }
-
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
@@ -62,6 +54,15 @@ function TradesContent() {
           <span className="text-sm text-zinc-500">{trades.length} trades</span>
         </div>
       </div>
+
+      {error && (
+        <div
+          className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+          role="alert"
+        >
+          Data unavailable: {error}
+        </div>
+      )}
 
       <div className="overflow-x-auto rounded-lg border border-zinc-800">
         <table className="w-full text-sm" aria-label="Trades table">
