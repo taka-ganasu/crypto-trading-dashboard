@@ -33,7 +33,8 @@ test.describe("Trades detail page", () => {
       "Entry Price",
       "Exit Price",
       "PnL",
-      "Date",
+      "Entry Date",
+      "Exit Date",
     ];
     for (const header of headers) {
       await expect(table.getByRole("columnheader", { name: header })).toBeVisible();
