@@ -3,6 +3,7 @@ export type RegimeType =
   | "ranging"
   | "high_vol"
   | "macro_driven"
+  | "no_data"
   | "unknown";
 
 export interface DisplayCycle {
@@ -21,6 +22,7 @@ const regimeLabelMap: Record<RegimeType, string> = {
   ranging: "Ranging",
   high_vol: "High Vol",
   macro_driven: "Macro Driven",
+  no_data: "No regime data",
   unknown: "Unknown",
 };
 
@@ -29,6 +31,7 @@ const regimeTextClassMap: Record<RegimeType, string> = {
   ranging: "text-zinc-300",
   high_vol: "text-red-400",
   macro_driven: "text-orange-400",
+  no_data: "text-zinc-500",
   unknown: "text-zinc-500",
 };
 

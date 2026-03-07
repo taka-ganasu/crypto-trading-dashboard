@@ -24,6 +24,11 @@ const regimeStyle: Record<
     barClass: "bg-orange-500/80",
     dotClass: "bg-orange-400",
   },
+  no_data: {
+    label: "No regime data",
+    barClass: "bg-zinc-700",
+    dotClass: "bg-zinc-500",
+  },
   unknown: {
     label: "Unknown",
     barClass: "bg-zinc-700",

@@ -158,6 +158,7 @@ export interface AnalysisCycle {
   duration_seconds: number | null;
   regime_info: string | null;
   created_at: string | null;
+  total_count?: number | null;
 }
 
 export interface MdseDetectorScore {
