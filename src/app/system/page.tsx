@@ -64,9 +64,9 @@ const GO_LIVE_CHECKLIST: GoLiveChecklistItem[] = [
   { id: 7, label: "SQLiteバックアップ", completed: true },
   { id: 8, label: "連絡先リスト", completed: true },
   { id: 9, label: "FR source HL切替", completed: true },
-  { id: 10, label: "testnet:false切替", completed: false, note: "殿判断待ち" },
-  { id: 11, label: "systemd設定", completed: false },
-  { id: 12, label: "Slack通知設定", completed: false },
+  { id: 10, label: "testnet:false切替", completed: true },
+  { id: 11, label: "systemd設定", completed: true },
+  { id: 12, label: "Slack通知設定", completed: true },
 ];
 
 function StatusBadge({ status }: { status: SysStatus }) {
