@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   fetchMdseSummary,
   fetchMdseEvents,
@@ -9,7 +10,7 @@ import {
 } from "@/lib/api";
 import DetailPanel from "@/components/DetailPanel";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import MdseTimelineChart from "@/components/MdseTimelineChart";
+const MdseTimelineChart = dynamic(() => import("@/components/MdseTimelineChart"), { ssr: false });
 import TimeRangeFilter, { useTimeRange } from "@/components/TimeRangeFilter";
 import { formatNumber, formatPnl, colorByPnl, formatTimestamp } from "@/lib/format";
 import type { MdseSummaryDetector, MdseEvent, MdseTrade, MdseTimeline } from "@/types";

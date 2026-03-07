@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { fetchPortfolioState, fetchEquityCurve, fetchStrategyPerformance } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import type { EquityCurveResponse, StrategyPerformance } from "@/types";
 import { formatNumber, formatCurrency, formatPercent, formatPnl, colorByPnl, formatTimestamp } from "@/lib/format";
 import DetailPanel from "@/components/DetailPanel";
-import DailyPnlChart from "@/components/DailyPnlChart";
-import StrategyAllocationPie from "@/components/StrategyAllocationPie";
+const DailyPnlChart = dynamic(() => import("@/components/DailyPnlChart"), { ssr: false });
+const StrategyAllocationPie = dynamic(() => import("@/components/StrategyAllocationPie"), { ssr: false });
 
 interface StrategyEntry {
   id: string;

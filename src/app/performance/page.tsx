@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   fetchPerformanceSummary,
   fetchExecutionQuality,
@@ -8,9 +9,9 @@ import {
   fetchEquityCurve,
   fetchTradesByStrategy,
 } from "@/lib/api";
-import DailyStrategyPnlChart from "@/components/DailyStrategyPnlChart";
+const DailyStrategyPnlChart = dynamic(() => import("@/components/DailyStrategyPnlChart"), { ssr: false });
 import DetailPanel from "@/components/DetailPanel";
-import EquityCurveChart from "@/components/EquityCurveChart";
+const EquityCurveChart = dynamic(() => import("@/components/EquityCurveChart"), { ssr: false });
 import ExecutionModeFilter, {
   useExecutionMode,
 } from "@/components/ExecutionModeFilter";
