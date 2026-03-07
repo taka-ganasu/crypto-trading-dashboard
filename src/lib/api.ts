@@ -38,11 +38,24 @@ function appendExecutionModeParam(
 }
 
 async function fetchJSON<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`);
-  if (!res.ok) {
-    throw new Error(`API error: ${res.status} ${res.statusText}`);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`API error: ${res.status} ${res.statusText}`);
+    }
+    return (await res.json()) as Promise<T>;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Request timed out (5s)");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-  return res.json() as Promise<T>;
 }
 
 export async function fetchTrades(
@@ -177,10 +190,20 @@ export async function fetchApiErrors(
   if (statusGte) params.set("status_gte", String(statusGte));
   if (limit) params.set("limit", String(limit));
   const query = params.toString();
-  const res = await fetch(`${BASE_URL}/errors${query ? `?${query}` : ""}`);
-  if (!res.ok) return [];
-  const payload: unknown = await res.json();
-  return Array.isArray(payload) ? (payload as ApiError[]) : [];
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+  try {
+    const res = await fetch(`${BASE_URL}/errors${query ? `?${query}` : ""}`, {
+      signal: controller.signal,
+    });
+    if (!res.ok) return [];
+    const payload: unknown = await res.json();
+    return Array.isArray(payload) ? (payload as ApiError[]) : [];
+  } catch {
+    return [];
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export async function fetchBotHealth(): Promise<BotHealthResponse> {

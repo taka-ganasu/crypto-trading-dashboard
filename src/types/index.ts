@@ -112,6 +112,13 @@ export interface ApiError {
   traceback: string | null;
 }
 
+export interface BotHealthCheckItem {
+  name?: string | null;
+  status?: string | null;
+  message?: string | null;
+  latency_ms?: number | null;
+}
+
 export interface BotHealthResponse {
   status?: string | null;
   health?: string | null;
@@ -121,6 +128,11 @@ export interface BotHealthResponse {
   updated_at?: string | null;
   last_updated?: string | null;
   timestamp?: string | null;
+  checks?: BotHealthCheckItem[] | null;
+  data?: {
+    checks?: BotHealthCheckItem[] | null;
+    [key: string]: unknown;
+  } | null;
   [key: string]: unknown;
 }
 
