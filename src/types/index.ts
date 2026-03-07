@@ -63,6 +63,7 @@ export interface PortfolioData {
   equity?: number | null;
   available_balance?: number | null;
   total_balance?: number | null;
+  open_trade_count?: number | null;
   timestamp?: string | null;
   daily_pnl?: number | null;
   daily_pnl_pct?: number | null;
