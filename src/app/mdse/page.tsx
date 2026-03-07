@@ -2,7 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import {
-  fetchMdseScores,
+  fetchMdseSummary,
   fetchMdseEvents,
   fetchMdseTrades,
   fetchMdseTimeline,
@@ -11,8 +11,8 @@ import DetailPanel from "@/components/DetailPanel";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import MdseTimelineChart from "@/components/MdseTimelineChart";
 import TimeRangeFilter, { useTimeRange } from "@/components/TimeRangeFilter";
-import { formatNumber, formatPnl, colorByPnl, formatTime } from "@/lib/format";
-import type { MdseDetectorScore, MdseEvent, MdseTrade, MdseTimeline } from "@/types";
+import { formatNumber, formatPnl, colorByPnl, formatTimestamp } from "@/lib/format";
+import type { MdseSummaryDetector, MdseEvent, MdseTrade, MdseTimeline } from "@/types";
 
 function winRateColor(rate: number): string {
   if (rate > 50) return "text-emerald-400";
@@ -50,7 +50,7 @@ export default function MdsePage() {
 }
 
 function MdseContent() {
-  const [scores, setScores] = useState<MdseDetectorScore[]>([]);
+  const [detectors, setDetectors] = useState<MdseSummaryDetector[]>([]);
   const [events, setEvents] = useState<MdseEvent[]>([]);
   const [trades, setTrades] = useState<MdseTrade[]>([]);
   const [timeline, setTimeline] = useState<MdseTimeline | null>(null);
@@ -65,9 +65,9 @@ function MdseContent() {
     setError(null);
     setWarning(null);
 
-    const [scoresResult, eventsResult, tradesResult, timelineResult] =
+    const [summaryResult, eventsResult, tradesResult, timelineResult] =
       await Promise.allSettled([
-        fetchMdseScores(),
+        fetchMdseSummary(),
         fetchMdseEvents(24, start, end),
         fetchMdseTrades(20, start, end),
         fetchMdseTimeline(24, start, end),
@@ -76,11 +76,11 @@ function MdseContent() {
     const failedSections: string[] = [];
     let criticalFailures = 0;
 
-    if (scoresResult.status === "fulfilled") {
-      setScores(scoresResult.value);
+    if (summaryResult.status === "fulfilled") {
+      setDetectors(summaryResult.value.detectors ?? []);
     } else {
-      setScores([]);
-      failedSections.push("detector scores");
+      setDetectors([]);
+      failedSections.push("detector summary");
       criticalFailures += 1;
     }
 
@@ -164,7 +164,7 @@ function MdseContent() {
           <TimeRangeFilter />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {scores.map((d) => (
+          {detectors.map((d) => (
             <div
               key={d.detector_name}
               className={`rounded-lg border bg-zinc-900 p-4 ${winRateBorder(toPercent(d.win_rate))}`}
@@ -173,30 +173,42 @@ function MdseContent() {
                 {d.detector_name}
               </h2>
               <div className="grid grid-cols-2 gap-y-2 text-sm">
+                <span className="text-zinc-500">Events</span>
+                <span className="text-right font-mono text-zinc-300">
+                  {d.event_count}
+                </span>
+                <span className="text-zinc-500">Validated</span>
+                <span className="text-right font-mono text-zinc-300">
+                  {d.validated_count}
+                </span>
                 <span className="text-zinc-500">Win Rate</span>
                 <span className={`text-right font-mono ${winRateColor(toPercent(d.win_rate))}`}>
-                  {toPercent(d.win_rate).toFixed(1)}%
+                  {d.win_rate != null ? `${toPercent(d.win_rate).toFixed(1)}%` : "—"}
                 </span>
                 <span className="text-zinc-500">Avg PnL</span>
                 <span
-                  className={`text-right font-mono ${colorByPnl(d.avg_pnl)}`}
+                  className={`text-right font-mono ${d.avg_pnl != null ? colorByPnl(d.avg_pnl) : "text-zinc-500"}`}
                 >
-                  {formatPnl(d.avg_pnl)}
+                  {d.avg_pnl != null ? formatPnl(d.avg_pnl) : "—"}
                 </span>
                 <span className="text-zinc-500">Weight</span>
                 <span className="text-right font-mono text-zinc-300">
-                  {d.weight.toFixed(2)}
+                  {d.weight != null ? d.weight.toFixed(2) : "—"}
                 </span>
                 <span className="text-zinc-500">Samples</span>
                 <span className="text-right font-mono text-zinc-300">
-                  {d.sample_count}
+                  {d.sample_count != null ? d.sample_count : "—"}
+                </span>
+                <span className="text-zinc-500">Last Event</span>
+                <span className="text-right font-mono text-zinc-400 text-xs">
+                  {d.last_event_at != null ? formatTimestamp(d.last_event_at) : "—"}
                 </span>
               </div>
             </div>
           ))}
-          {scores.length === 0 && (
+          {detectors.length === 0 && (
             <p className="col-span-full text-center text-zinc-500 py-8">
-              No detector scores available
+              No detector data available
             </p>
           )}
         </div>
@@ -267,8 +279,8 @@ function MdseContent() {
                   <span className="shrink-0 text-xs font-mono text-zinc-500">
                     {confidencePct.toFixed(1)}%
                   </span>
-                  <span className="shrink-0 text-xs text-zinc-500">
-                    {formatTime(ev.timestamp)}
+                  <span className="shrink-0 text-xs text-zinc-500 w-36 text-right">
+                    {formatTimestamp(ev.timestamp)}
                   </span>
                 </div>
               );
@@ -350,7 +362,7 @@ function MdseContent() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-zinc-300">
-                      {t.position_size.toFixed(4)}
+                      {t.position_size != null ? t.position_size.toFixed(4) : "—"}
                     </td>
                   </tr>
                 ))
@@ -413,7 +425,7 @@ function MdseTradeDetail({
       />
       <DetailRow
         label="Timestamp"
-        value={timestamp != null ? formatTime(timestamp) : "—"}
+        value={timestamp != null ? formatTimestamp(timestamp) : "—"}
       />
       <DetailRow
         label="PnL"

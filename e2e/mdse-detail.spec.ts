@@ -23,7 +23,8 @@ test.describe("MDSE detail page", () => {
     await expect(page.getByRole("heading", { name: "Recent Events" })).toBeVisible();
 
     await expect(page.getByText("detector-a").first()).toBeVisible();
-    await expect(page.getByText("61.0%")).toBeVisible();
+    // win_rate 0.61 → toPercent → 61.0%
+    await expect(page.getByText("61.0%").first()).toBeVisible();
 
     const timelineChart = page.getByTestId("mdse-timeline-chart");
     await expect(timelineChart).toBeVisible();
