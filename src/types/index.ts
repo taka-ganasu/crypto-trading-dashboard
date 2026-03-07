@@ -94,6 +94,7 @@ export interface SystemMetrics {
 export interface SystemInfo {
   db_path: string;
   api_version: string;
+  bot_version?: string | null;
   python_version: string;
   platform: string;
 }

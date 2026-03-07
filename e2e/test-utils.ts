@@ -137,6 +137,7 @@ export const defaultApiResponses: ApiResponseMap = {
     platform: "linux",
     db_path: "data/trades.db",
     api_version: "1.0.0",
+    bot_version: "0.2.0",
   },
   "/api/errors": [
     {
@@ -356,6 +357,7 @@ export const nullSafeApiResponses: ApiResponseMap = {
     platform: "linux",
     db_path: "data/trades.db",
     api_version: "1.0.0",
+    bot_version: null,
   },
   "/api/errors": [],
   "/api/health": {
