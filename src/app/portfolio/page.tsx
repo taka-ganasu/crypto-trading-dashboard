@@ -22,21 +22,35 @@ interface StrategyEntry {
   last_signal_time: string | null;
 }
 
+function toNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
 function parseStrategies(data: Record<string, unknown>): {
   strategies: StrategyEntry[];
   totalEquity: number;
   lastUpdated: string | null;
 } {
   const strategies: StrategyEntry[] = [];
-  let totalEquity = 0;
+  const totalFromApi =
+    toNumber(data.total_balance) ??
+    toNumber(data.equity) ??
+    toNumber(data.total_equity);
+  let totalEquity = totalFromApi ?? 0;
+  let derivedTotalEquity = 0;
   let lastUpdated: string | null = null;
 
   if (typeof data.last_updated === "string") {
     lastUpdated = data.last_updated;
   }
 
-  if (typeof data.total_equity === "number") {
-    totalEquity = data.total_equity;
+  if (lastUpdated == null && typeof data.timestamp === "string") {
+    lastUpdated = data.timestamp;
   }
 
   const strats =
@@ -45,8 +59,8 @@ function parseStrategies(data: Record<string, unknown>): {
 
   if (strats && typeof strats === "object") {
     for (const [id, s] of Object.entries(strats)) {
-      const equity = Number(s.equity ?? 0);
-      const initial = Number(s.initial_equity ?? equity);
+      const equity = toNumber(s.equity) ?? 0;
+      const initial = toNumber(s.initial_equity) ?? equity;
       const pnl = equity - initial;
       const pnlPct = initial > 0 ? (pnl / initial) * 100 : 0;
 
@@ -54,7 +68,7 @@ function parseStrategies(data: Record<string, unknown>): {
         id,
         symbol: String(s.symbol ?? id.replace(/_/g, " ").toUpperCase()),
         strategy: String(s.strategy ?? "unknown"),
-        allocation_pct: Number(s.allocation_pct ?? 0),
+        allocation_pct: toNumber(s.allocation_pct) ?? 0,
         equity,
         initial_equity: initial,
         pnl,
@@ -69,10 +83,12 @@ function parseStrategies(data: Record<string, unknown>): {
             : null,
       });
 
-      if (!totalEquity) {
-        totalEquity += equity;
-      }
+      derivedTotalEquity += equity;
     }
+  }
+
+  if (totalFromApi == null && derivedTotalEquity > 0) {
+    totalEquity = derivedTotalEquity;
   }
 
   return { strategies, totalEquity, lastUpdated };

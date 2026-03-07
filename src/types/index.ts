@@ -154,6 +154,22 @@ export interface SystemStatsResponse {
   [key: string]: unknown;
 }
 
+export interface StrategySnapshot {
+  id: string;
+  symbol: string;
+  strategy: string;
+  allocation_pct: number;
+  status: string;
+  trade_count?: number | null;
+  win_rate?: number | null;
+  recent_pnl?: number | null;
+}
+
+export interface StrategiesResponse {
+  active_plan?: string | null;
+  strategies: StrategySnapshot[];
+}
+
 export interface AnalysisCycle {
   id: number;
   start_time: string;
