@@ -5,6 +5,9 @@ import { fetchSignals } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import DetailPanel from "@/components/DetailPanel";
 import TimeRangeFilter, { useTimeRange } from "@/components/TimeRangeFilter";
+import ExecutionModeFilter, {
+  useExecutionMode,
+} from "@/components/ExecutionModeFilter";
 import type { Signal } from "@/types";
 
 function actionBadge(action: string) {
@@ -31,17 +34,18 @@ function SignalsContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { start, end } = useTimeRange();
+  const { apiExecutionMode } = useExecutionMode();
 
   useEffect(() => {
     setLoading(true);
-    fetchSignals(undefined, 1000, start, end)
+    fetchSignals(undefined, 1000, start, end, apiExecutionMode)
       .then((res) => {
         setSignals(res.signals);
         setTotalSignals(res.total);
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [start, end]);
+  }, [start, end, apiExecutionMode]);
 
   if (loading) {
     return <LoadingSpinner label="Loading signals..." />;
@@ -78,6 +82,7 @@ function SignalsContent() {
         <h1 className="text-xl font-bold text-zinc-100">Signals</h1>
         <div className="flex items-center gap-4">
           <TimeRangeFilter />
+          <ExecutionModeFilter />
           <span className="text-sm text-zinc-500">
             {displayed === totalSignals
               ? `${totalSignals} signals`

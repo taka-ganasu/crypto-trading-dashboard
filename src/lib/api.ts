@@ -1,4 +1,5 @@
 import type {
+  ExecutionMode,
   Trade,
   TradeSummary,
   SignalListResponse,
@@ -27,6 +28,15 @@ import type {
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
+function appendExecutionModeParam(
+  params: URLSearchParams,
+  executionMode?: ExecutionMode
+): void {
+  if (executionMode && executionMode !== "all") {
+    params.set("execution_mode", executionMode);
+  }
+}
+
 async function fetchJSON<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`);
   if (!res.ok) {
@@ -39,13 +49,15 @@ export async function fetchTrades(
   symbol?: string,
   limit: number = 50,
   start?: string,
-  end?: string
+  end?: string,
+  executionMode?: ExecutionMode
 ): Promise<Trade[]> {
   const params = new URLSearchParams();
   if (symbol) params.set("symbol", symbol);
   params.set("limit", String(limit));
   if (start) params.set("start", start);
   if (end) params.set("end", end);
+  appendExecutionModeParam(params, executionMode);
   const query = params.toString();
   return fetchJSON<Trade[]>(`/trades?${query}`);
 }
@@ -58,13 +70,15 @@ export async function fetchSignals(
   symbol?: string,
   limit: number = 1000,
   start?: string,
-  end?: string
+  end?: string,
+  executionMode?: ExecutionMode
 ): Promise<SignalListResponse> {
   const params = new URLSearchParams();
   if (symbol) params.set("symbol", symbol);
   params.set("limit", String(limit));
   if (start) params.set("start", start);
   if (end) params.set("end", end);
+  appendExecutionModeParam(params, executionMode);
   const query = params.toString();
   return fetchJSON<SignalListResponse>(`/signals?${query}`);
 }
@@ -80,12 +94,14 @@ export async function fetchCircuitBreakerState(): Promise<CircuitBreakerState> {
 export async function fetchAnalysisCycles(
   limit: number = 50,
   start?: string,
-  end?: string
+  end?: string,
+  executionMode?: ExecutionMode
 ): Promise<AnalysisCycle[]> {
   const params = new URLSearchParams();
   params.set("limit", String(limit));
   if (start) params.set("start", start);
   if (end) params.set("end", end);
+  appendExecutionModeParam(params, executionMode);
   return fetchJSON<AnalysisCycle[]>(`/cycles?${params.toString()}`);
 }
 
@@ -175,23 +191,38 @@ export async function fetchSystemStatsOverview(): Promise<SystemStatsResponse> {
   return fetchJSON<SystemStatsResponse>("/system/stats");
 }
 
-export async function fetchPerformanceSummary(): Promise<PerformanceSummary> {
-  return fetchJSON<PerformanceSummary>("/performance/summary");
+export async function fetchPerformanceSummary(
+  executionMode?: ExecutionMode
+): Promise<PerformanceSummary> {
+  const params = new URLSearchParams();
+  appendExecutionModeParam(params, executionMode);
+  const query = params.toString();
+  return fetchJSON<PerformanceSummary>(
+    `/performance/summary${query ? `?${query}` : ""}`
+  );
 }
 
 export async function fetchExecutionQuality(
-  limit: number = 50
+  limit: number = 50,
+  executionMode?: ExecutionMode
 ): Promise<ExecutionQuality[]> {
+  const params = new URLSearchParams();
+  params.set("limit", String(limit));
+  appendExecutionModeParam(params, executionMode);
   return fetchJSON<ExecutionQuality[]>(
-    `/performance/execution-quality?limit=${limit}`
+    `/performance/execution-quality?${params.toString()}`
   );
 }
 
 export async function fetchMarketSnapshots(
-  limit: number = 20
+  limit: number = 20,
+  executionMode?: ExecutionMode
 ): Promise<MarketSnapshot[]> {
+  const params = new URLSearchParams();
+  params.set("limit", String(limit));
+  appendExecutionModeParam(params, executionMode);
   return fetchJSON<MarketSnapshot[]>(
-    `/performance/market-snapshots?limit=${limit}`
+    `/performance/market-snapshots?${params.toString()}`
   );
 }
 
@@ -205,11 +236,13 @@ export async function fetchStrategies(): Promise<StrategiesResponse> {
 
 export async function fetchTradesByStrategy(
   startDate?: string,
-  endDate?: string
+  endDate?: string,
+  executionMode?: ExecutionMode
 ): Promise<TradeByStrategyDaily[]> {
   const params = new URLSearchParams();
   if (startDate) params.set("start_date", startDate);
   if (endDate) params.set("end_date", endDate);
+  appendExecutionModeParam(params, executionMode);
   const query = params.toString();
   return fetchJSON<TradeByStrategyDaily[]>(
     `/trades/by-strategy${query ? `?${query}` : ""}`
@@ -218,11 +251,13 @@ export async function fetchTradesByStrategy(
 
 export async function fetchEquityCurve(
   startDate?: string,
-  endDate?: string
+  endDate?: string,
+  executionMode?: ExecutionMode
 ): Promise<EquityCurveResponse> {
   const params = new URLSearchParams();
   if (startDate) params.set("start_date", startDate);
   if (endDate) params.set("end_date", endDate);
+  appendExecutionModeParam(params, executionMode);
   const query = params.toString();
 
   try {
