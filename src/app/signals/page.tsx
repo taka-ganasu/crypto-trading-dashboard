@@ -26,6 +26,7 @@ export default function SignalsPage() {
 
 function SignalsContent() {
   const [signals, setSignals] = useState<Signal[]>([]);
+  const [totalSignals, setTotalSignals] = useState(0);
   const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,8 +34,11 @@ function SignalsContent() {
 
   useEffect(() => {
     setLoading(true);
-    fetchSignals(undefined, 100, start, end)
-      .then(setSignals)
+    fetchSignals(undefined, 1000, start, end)
+      .then((res) => {
+        setSignals(res.signals);
+        setTotalSignals(res.total);
+      })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   }, [start, end]);
@@ -51,18 +55,18 @@ function SignalsContent() {
     );
   }
 
-  const total = signals.length;
+  const displayed = signals.length;
   const executedCount = signals.filter((s) => s.executed === 1).length;
-  const executionRate = total > 0 ? ((executedCount / total) * 100).toFixed(1) : "0.0";
+  const executionRate = displayed > 0 ? ((executedCount / displayed) * 100).toFixed(1) : "0.0";
   const avgConfidence =
-    total > 0
+    displayed > 0
       ? (
-          signals.reduce((sum, s) => sum + (s.confidence ?? 0), 0) / total
+          signals.reduce((sum, s) => sum + (s.confidence ?? 0), 0) / displayed
         ).toFixed(1)
       : "0.0";
 
   const stats = [
-    { label: "Total Signals", value: total },
+    { label: "Total Signals", value: totalSignals },
     { label: "Executed", value: executedCount },
     { label: "Execution Rate", value: `${executionRate}%` },
     { label: "Avg Confidence", value: `${avgConfidence}%` },
@@ -74,7 +78,11 @@ function SignalsContent() {
         <h1 className="text-xl font-bold text-zinc-100">Signals</h1>
         <div className="flex items-center gap-4">
           <TimeRangeFilter />
-          <span className="text-sm text-zinc-500">{total} signals</span>
+          <span className="text-sm text-zinc-500">
+            {displayed === totalSignals
+              ? `${totalSignals} signals`
+              : `${displayed} / ${totalSignals} signals`}
+          </span>
         </div>
       </div>
 

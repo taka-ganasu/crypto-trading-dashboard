@@ -202,6 +202,12 @@ test.describe("Dashboard E2E edge cases", () => {
     await installApiMocks(page, {
       ...defaultApiResponses,
       "/api/mdse/scores": [],
+      "/api/mdse/summary": {
+        total_events: 0,
+        validated_events: 0,
+        unvalidated_events: 0,
+        detectors: [],
+      },
       "/api/mdse/events": [],
       "/api/mdse/trades": [],
       "/api/mdse/timeline": { prices: [], events: [] },
@@ -209,7 +215,7 @@ test.describe("Dashboard E2E edge cases", () => {
 
     await page.goto("/mdse");
 
-    await expect(page.getByText("No detector scores available")).toBeVisible();
+    await expect(page.getByText("No detector data available")).toBeVisible();
     await expect(page.getByText("No events found")).toBeVisible();
     await expect(page.getByText("No MDSE trades found")).toBeVisible();
     await expect(page.getByText("No timeline data available")).toBeVisible();

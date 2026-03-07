@@ -1,13 +1,14 @@
 import type {
   Trade,
   TradeSummary,
-  Signal,
+  SignalListResponse,
   PortfolioState,
   CircuitBreakerState,
   AnalysisCycle,
   MdseDetectorScore,
   MdseEvent,
   MdseTrade,
+  MdseSummary,
   SystemHealth,
   SystemMetrics,
   SystemInfo,
@@ -54,17 +55,17 @@ export async function fetchTradeSummary(): Promise<TradeSummary> {
 
 export async function fetchSignals(
   symbol?: string,
-  limit: number = 50,
+  limit: number = 1000,
   start?: string,
   end?: string
-): Promise<Signal[]> {
+): Promise<SignalListResponse> {
   const params = new URLSearchParams();
   if (symbol) params.set("symbol", symbol);
   params.set("limit", String(limit));
   if (start) params.set("start", start);
   if (end) params.set("end", end);
   const query = params.toString();
-  return fetchJSON<Signal[]>(`/signals?${query}`);
+  return fetchJSON<SignalListResponse>(`/signals?${query}`);
 }
 
 export async function fetchPortfolioState(): Promise<PortfolioState> {
@@ -89,6 +90,10 @@ export async function fetchAnalysisCycles(
 
 export async function fetchMdseScores(): Promise<MdseDetectorScore[]> {
   return fetchJSON<MdseDetectorScore[]>("/mdse/scores");
+}
+
+export async function fetchMdseSummary(): Promise<MdseSummary> {
+  return fetchJSON<MdseSummary>("/mdse/summary");
 }
 
 export async function fetchMdseEvents(
