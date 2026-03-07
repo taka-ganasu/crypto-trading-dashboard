@@ -18,6 +18,7 @@ const KNOWN_REGIMES: RegimeType[] = [
   "ranging",
   "high_vol",
   "macro_driven",
+  "no_data",
   "unknown",
 ];
 
@@ -98,12 +99,12 @@ function parseRegimeFromObject(obj: Record<string, unknown>): ParsedRegime {
 
 function parseRegimeInfo(value: string | null): ParsedRegime {
   if (!value) {
-    return { regime: "unknown", confidence: null };
+    return { regime: "no_data", confidence: null };
   }
 
   const trimmed = value.trim();
   if (!trimmed) {
-    return { regime: "unknown", confidence: null };
+    return { regime: "no_data", confidence: null };
   }
 
   try {
@@ -174,7 +175,8 @@ function AnalysisContent() {
   }, [cycles]);
 
   const stats = useMemo(() => {
-    const totalCycles = displayCycles.length;
+    const totalCycles =
+      asFiniteNumber(cycles[0]?.total_count) ?? displayCycles.length;
     const totalSignals = displayCycles.reduce((sum, cycle) => sum + cycle.signalsGenerated, 0);
     const totalExecuted = displayCycles.reduce((sum, cycle) => sum + cycle.tradesExecuted, 0);
 
