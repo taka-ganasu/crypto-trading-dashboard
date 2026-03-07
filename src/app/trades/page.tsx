@@ -6,6 +6,9 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { formatNumber, formatPnl, colorByPnl, formatDateTime } from "@/lib/format";
 import DetailPanel from "@/components/DetailPanel";
 import TimeRangeFilter, { useTimeRange } from "@/components/TimeRangeFilter";
+import ExecutionModeFilter, {
+  useExecutionMode,
+} from "@/components/ExecutionModeFilter";
 import type { Trade } from "@/types";
 
 export default function TradesPage() {
@@ -23,6 +26,7 @@ function TradesContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { start, end } = useTimeRange();
+  const { apiExecutionMode } = useExecutionMode();
 
   useEffect(() => {
     const tradeIdRaw = new URLSearchParams(window.location.search).get("tradeId");
@@ -30,11 +34,11 @@ function TradesContent() {
     setHighlightTradeId(Number.isFinite(parsedTradeId) ? parsedTradeId : null);
 
     setLoading(true);
-    fetchTrades(undefined, 100, start, end)
+    fetchTrades(undefined, 100, start, end, apiExecutionMode)
       .then(setTrades)
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [start, end]);
+  }, [start, end, apiExecutionMode]);
 
   if (loading) {
     return <LoadingSpinner label="Loading trades..." />;
@@ -54,6 +58,7 @@ function TradesContent() {
         <h1 className="text-xl font-bold text-zinc-100">Trade History</h1>
         <div className="flex items-center gap-4">
           <TimeRangeFilter />
+          <ExecutionModeFilter />
           <span className="text-sm text-zinc-500">{trades.length} trades</span>
         </div>
       </div>

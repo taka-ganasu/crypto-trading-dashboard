@@ -1,3 +1,5 @@
+export type ExecutionMode = "all" | "live" | "paper" | "dry_run";
+
 export interface Trade {
   id: number;
   symbol: string;

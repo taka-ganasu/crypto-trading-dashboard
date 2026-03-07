@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import {
   fetchPerformanceSummary,
   fetchExecutionQuality,
@@ -11,6 +11,9 @@ import {
 import DailyStrategyPnlChart from "@/components/DailyStrategyPnlChart";
 import DetailPanel from "@/components/DetailPanel";
 import EquityCurveChart from "@/components/EquityCurveChart";
+import ExecutionModeFilter, {
+  useExecutionMode,
+} from "@/components/ExecutionModeFilter";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import {
   formatNumber,
@@ -48,6 +51,14 @@ function formatPrice(value: number): string {
 }
 
 export default function PerformancePage() {
+  return (
+    <Suspense fallback={<LoadingSpinner label="Loading performance data..." />}>
+      <PerformanceContent />
+    </Suspense>
+  );
+}
+
+function PerformanceContent() {
   const [summary, setSummary] = useState<PerformanceSummary | null>(null);
   const [execQuality, setExecQuality] = useState<ExecutionQuality[]>([]);
   const [snapshots, setSnapshots] = useState<MarketSnapshot[]>([]);
@@ -57,6 +68,7 @@ export default function PerformancePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
+  const { apiExecutionMode } = useExecutionMode();
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -65,11 +77,11 @@ export default function PerformancePage() {
 
     const [summaryResult, eqResult, snapshotsResult, curveResult, strategyPnlResult] =
       await Promise.allSettled([
-        fetchPerformanceSummary(),
-        fetchExecutionQuality(50),
-        fetchMarketSnapshots(20),
-        fetchEquityCurve(),
-        fetchTradesByStrategy(),
+        fetchPerformanceSummary(apiExecutionMode),
+        fetchExecutionQuality(50, apiExecutionMode),
+        fetchMarketSnapshots(20, apiExecutionMode),
+        fetchEquityCurve(undefined, undefined, apiExecutionMode),
+        fetchTradesByStrategy(undefined, undefined, apiExecutionMode),
       ]);
 
     const failedSections: string[] = [];
@@ -124,7 +136,7 @@ export default function PerformancePage() {
     }
 
     setLoading(false);
-  }, []);
+  }, [apiExecutionMode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -165,7 +177,10 @@ export default function PerformancePage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-zinc-100">Performance</h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-xl font-bold text-zinc-100">Performance</h1>
+          <ExecutionModeFilter />
+        </div>
       </div>
 
       {warning && (

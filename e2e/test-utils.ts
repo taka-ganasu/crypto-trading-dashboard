@@ -290,6 +290,20 @@ export const defaultApiResponses: ApiResponseMap = {
       max_dd: 80.0,
     },
   ],
+  "/api/trades/by-strategy": [
+    {
+      date: "2026-01-01",
+      strategy: "trend_following",
+      trade_count: 2,
+      daily_pnl: 55,
+    },
+    {
+      date: "2026-01-01",
+      strategy: "mean_reversion",
+      trade_count: 1,
+      daily_pnl: -5,
+    },
+  ],
   "/api/mdse/timeline": {
     prices: [
       { timestamp: "2026-01-01T00:00:00Z", price: 100000, symbol: "BTC/USDT" },
@@ -410,6 +424,7 @@ export const nullSafeApiResponses: ApiResponseMap = {
     end_date: null,
   },
   "/api/performance/by-strategy": [],
+  "/api/trades/by-strategy": [],
   "/api/mdse/timeline": { prices: [], events: [] },
 };
 

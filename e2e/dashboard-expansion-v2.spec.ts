@@ -184,7 +184,10 @@ test.describe("Dashboard E2E expansion v2 — time range filter", () => {
     });
 
     await page.goto("/mdse?range=24h");
-    await page.getByRole("button", { name: "All" }).click();
+    await page
+      .getByRole("group", { name: "Time range filter" })
+      .getByRole("button", { name: "All" })
+      .click();
     await expect(page).toHaveURL(/range=all/);
 
     const lastEventsCall = mdseCalls
@@ -220,7 +223,10 @@ test.describe("Dashboard E2E expansion v2 — trades interactions", () => {
     await expect(page.getByText("1 trades")).toBeVisible();
     await expect(page.getByRole("cell", { name: "BTC/USDT" })).toBeVisible();
 
-    await page.getByRole("button", { name: "All" }).click();
+    await page
+      .getByRole("group", { name: "Time range filter" })
+      .getByRole("button", { name: "All" })
+      .click();
     await expect(page).toHaveURL(/range=all/);
     await expect(page.getByText("2 trades")).toBeVisible();
     await expect(page.getByRole("cell", { name: "ETH/USDT" })).toBeVisible();
@@ -245,7 +251,10 @@ test.describe("Dashboard E2E expansion v2 — trades interactions", () => {
     await page.goto("/trades?range=30d");
     await expect(page.getByText("2 trades")).toBeVisible();
 
-    await page.getByRole("button", { name: "All" }).click();
+    await page
+      .getByRole("group", { name: "Time range filter" })
+      .getByRole("button", { name: "All" })
+      .click();
     await expect(page.getByText("0 trades")).toBeVisible();
     await expect(page.getByText("No trades found")).toBeVisible();
 
