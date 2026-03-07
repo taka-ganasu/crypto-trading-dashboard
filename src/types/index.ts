@@ -11,6 +11,7 @@ export interface Trade {
   entry_time: string;
   exit_time: string | null;
   exit_reason: string | null;
+  dry_run?: boolean | null;
   strategy: string | null;
   cycle_id: number | null;
   created_at: string | null;
