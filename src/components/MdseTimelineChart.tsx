@@ -42,6 +42,15 @@ function formatTime(ts: string): string {
   });
 }
 
+function detectorName(event: MdseTimelineEvent): string {
+  return event.detector ?? event.detector_name ?? "unknown";
+}
+
+function isLongDirection(direction: string | null | undefined): boolean {
+  const normalized = (direction ?? "").toLowerCase();
+  return normalized === "long" || normalized === "buy";
+}
+
 interface ChartDataPoint {
   time: number;
   timestamp: string;
@@ -77,8 +86,8 @@ function EventDot({
   cx: number;
   cy: number;
 }) {
-  const color = getDetectorColor(event.detector);
-  const isLong = event.direction === "long";
+  const color = getDetectorColor(detectorName(event));
+  const isLong = isLongDirection(event.direction);
   return (
     <g>
       <circle cx={cx} cy={cy} r={6} fill={color} fillOpacity={0.8} stroke={color} strokeWidth={1.5} />
@@ -115,29 +124,33 @@ export default function MdseTimelineChart({ data }: MdseTimelineChartProps) {
     );
   }
 
-  const chartData: ChartDataPoint[] = data.prices.map((p) => ({
-    time: new Date(p.timestamp).getTime(),
-    timestamp: p.timestamp,
-    price: p.price,
-  }));
+  const chartData: ChartDataPoint[] = data.prices
+    .filter((p) => typeof p.price === "number" && Number.isFinite(p.price))
+    .map((p) => ({
+      time: new Date(p.timestamp).getTime(),
+      timestamp: p.timestamp,
+      price: p.price as number,
+    }))
+    .filter((p) => Number.isFinite(p.time));
 
-  const eventMap = new Map<number, MdseTimelineEvent>();
-  for (const ev of data.events) {
-    const t = new Date(ev.timestamp).getTime();
-    // Find closest price point
-    let closest = chartData[0];
-    let minDiff = Math.abs(closest.time - t);
-    for (const pt of chartData) {
-      const diff = Math.abs(pt.time - t);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closest = pt;
-      }
-    }
-    eventMap.set(closest.time, ev);
+  if (chartData.length === 0) {
+    return (
+      <div
+        className="flex h-64 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900"
+        data-testid="mdse-timeline-chart"
+        role="img"
+        aria-label="Detector timeline chart"
+      >
+        <p className="text-zinc-500">No timeline data available</p>
+      </div>
+    );
   }
 
-  const detectors = [...new Set(data.events.map((e) => e.detector))];
+  const detectors = [
+    ...new Set(
+      data.events.map((e) => detectorName(e)).filter((name) => name !== "unknown")
+    ),
+  ];
 
   return (
     <div data-testid="mdse-timeline-chart" role="img" aria-label="Detector timeline chart">
@@ -200,15 +213,15 @@ export default function MdseTimelineChart({ data }: MdseTimelineChartProps) {
       {/* Legend */}
       {detectors.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-3" data-testid="mdse-timeline-legend">
-          {detectors.map((det) => (
-            <div key={det} className="flex items-center gap-1.5 text-xs text-zinc-400">
-              <span
-                className="inline-block h-2.5 w-2.5 rounded-full"
-                style={{ backgroundColor: getDetectorColor(det) }}
-              />
-              {det}
-            </div>
-          ))}
+              {detectors.map((det) => (
+                <div key={det} className="flex items-center gap-1.5 text-xs text-zinc-400">
+                  <span
+                    className="inline-block h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: getDetectorColor(det) }}
+                  />
+                  {det}
+                </div>
+              ))}
         </div>
       )}
     </div>

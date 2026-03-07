@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   fetchPerformanceSummary,
   fetchExecutionQuality,
@@ -10,7 +10,13 @@ import {
 import DetailPanel from "@/components/DetailPanel";
 import EquityCurveChart from "@/components/EquityCurveChart";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { formatNumber, formatPercent, formatPnl, colorByPnl, formatTimestamp } from "@/lib/format";
+import {
+  formatNumber,
+  formatPercent,
+  formatPnl,
+  colorByPnl,
+  formatTimestamp,
+} from "@/lib/format";
 import type {
   PerformanceSummary,
   ExecutionQuality,
@@ -31,6 +37,13 @@ function rsiColor(rsi: number | null): string {
   return "text-zinc-300";
 }
 
+function formatPrice(value: number): string {
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 6,
+  });
+}
+
 export default function PerformancePage() {
   const [summary, setSummary] = useState<PerformanceSummary | null>(null);
   const [execQuality, setExecQuality] = useState<ExecutionQuality[]>([]);
@@ -39,23 +52,81 @@ export default function PerformancePage() {
   const [selectedExecution, setSelectedExecution] = useState<ExecutionQuality | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setWarning(null);
+
+    const [summaryResult, eqResult, snapshotsResult, curveResult] =
+      await Promise.allSettled([
+        fetchPerformanceSummary(),
+        fetchExecutionQuality(50),
+        fetchMarketSnapshots(20),
+        fetchEquityCurve(),
+      ]);
+
+    const failedSections: string[] = [];
+    let successCount = 0;
+
+    if (summaryResult.status === "fulfilled") {
+      setSummary(summaryResult.value);
+      successCount += 1;
+    } else {
+      setSummary(null);
+      failedSections.push("summary");
+    }
+
+    if (eqResult.status === "fulfilled") {
+      setExecQuality(eqResult.value);
+      successCount += 1;
+    } else {
+      setExecQuality([]);
+      failedSections.push("execution quality");
+    }
+
+    if (snapshotsResult.status === "fulfilled") {
+      setSnapshots(snapshotsResult.value);
+      successCount += 1;
+    } else {
+      setSnapshots([]);
+      failedSections.push("market snapshots");
+    }
+
+    if (curveResult.status === "fulfilled") {
+      setEquityCurve(curveResult.value.data ?? []);
+      successCount += 1;
+    } else {
+      setEquityCurve([]);
+      failedSections.push("equity curve");
+    }
+
+    if (successCount === 0) {
+      setError("Failed to load performance data.");
+    } else if (failedSections.length > 0) {
+      setWarning(
+        `Some sections failed to load: ${failedSections.join(", ")}. Showing available data.`
+      );
+    }
+
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
-    Promise.all([
-      fetchPerformanceSummary(),
-      fetchExecutionQuality(50),
-      fetchMarketSnapshots(20),
-      fetchEquityCurve(),
-    ])
-      .then(([s, eq, ms, ec]) => {
-        setSummary(s);
-        setExecQuality(eq);
-        setSnapshots(ms);
-        setEquityCurve(ec.data);
-      })
-      .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, []);
+    let cancelled = false;
+
+    async function run(): Promise<void> {
+      await loadData();
+      if (cancelled) return;
+    }
+
+    void run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loadData]);
 
   if (loading) {
     return <LoadingSpinner label="Loading performance data..." />;
@@ -64,7 +135,16 @@ export default function PerformancePage() {
   if (error) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-red-400">Error: {error}</p>
+        <div className="text-center" role="alert" aria-live="assertive">
+          <p className="text-red-400">Error: {error}</p>
+          <button
+            type="button"
+            onClick={() => void loadData()}
+            className="mt-3 rounded border border-zinc-700 bg-zinc-900 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
@@ -75,65 +155,54 @@ export default function PerformancePage() {
         <h1 className="text-xl font-bold text-zinc-100">Performance</h1>
       </div>
 
-      {/* Summary Cards */}
+      {warning && (
+        <div
+          className="mb-6 rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-2 text-sm text-yellow-300"
+          role="status"
+          aria-live="polite"
+        >
+          {warning}
+        </div>
+      )}
+
       {summary && (
         <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
-            <p className="text-xs uppercase tracking-wider text-zinc-500">
-              Total PnL
-            </p>
-            <p
-              className={`mt-1 text-2xl font-mono font-bold ${colorByPnl(summary.total_pnl ?? 0)}`}
-            >
+            <p className="text-xs uppercase tracking-wider text-zinc-500">Total PnL</p>
+            <p className={`mt-1 text-2xl font-mono font-bold ${colorByPnl(summary.total_pnl ?? 0)}`}>
               {formatPnl(summary.total_pnl ?? 0)}
             </p>
           </div>
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
-            <p className="text-xs uppercase tracking-wider text-zinc-500">
-              Win Rate
-            </p>
+            <p className="text-xs uppercase tracking-wider text-zinc-500">Win Rate</p>
             <p className="mt-1 text-2xl font-mono font-bold text-zinc-100">
               {summary.win_rate != null ? formatPercent(summary.win_rate * 100, 1) : "—"}
             </p>
           </div>
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
-            <p className="text-xs uppercase tracking-wider text-zinc-500">
-              Profit Factor
-            </p>
+            <p className="text-xs uppercase tracking-wider text-zinc-500">Profit Factor</p>
             <p className="mt-1 text-2xl font-mono font-bold text-zinc-100">
               {summary.profit_factor != null ? summary.profit_factor.toFixed(2) : "—"}
             </p>
           </div>
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
-            <p className="text-xs uppercase tracking-wider text-zinc-500">
-              Avg Slippage
-            </p>
-            <p
-              className={`mt-1 text-2xl font-mono font-bold ${slippageColor(
-                summary.avg_slippage ?? 0
-              )}`}
-            >
+            <p className="text-xs uppercase tracking-wider text-zinc-500">Avg Slippage</p>
+            <p className={`mt-1 text-2xl font-mono font-bold ${slippageColor(summary.avg_slippage ?? 0)}`}>
               {summary.avg_slippage != null ? formatPercent(summary.avg_slippage, 3) : "—"}
             </p>
           </div>
         </div>
       )}
 
-      {/* Equity Curve Chart */}
       <div className="mb-8">
-        <h2 className="mb-3 text-lg font-semibold text-zinc-100">
-          Equity Curve
-        </h2>
+        <h2 className="mb-3 text-lg font-semibold text-zinc-100">Equity Curve</h2>
         <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
           <EquityCurveChart data={equityCurve} />
         </div>
       </div>
 
-      {/* Execution Quality Table */}
       <div className="mb-8">
-        <h2 className="mb-3 text-lg font-semibold text-zinc-100">
-          Execution Quality
-        </h2>
+        <h2 className="mb-3 text-lg font-semibold text-zinc-100">Execution Quality</h2>
         <div className="overflow-x-auto rounded-lg border border-zinc-800">
           <table className="w-full text-sm" aria-label="Execution quality table">
             <thead>
@@ -149,10 +218,7 @@ export default function PerformancePage() {
             <tbody className="divide-y divide-zinc-800">
               {execQuality.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-8 text-center text-zinc-500"
-                  >
+                  <td colSpan={6} className="px-4 py-8 text-center text-zinc-500">
                     No execution data
                   </td>
                 </tr>
@@ -163,87 +229,44 @@ export default function PerformancePage() {
                     onClick={() => setSelectedExecution(eq)}
                     className="hover:bg-zinc-900/50 transition-colors cursor-pointer"
                   >
-                    <td className="px-4 py-3 font-medium text-zinc-200">
-                      #{eq.trade_id}
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono text-zinc-300">
-                      {eq.expected_price.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 6,
-                      })}
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono text-zinc-300">
-                      {eq.actual_price.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 6,
-                      })}
-                    </td>
-                    <td
-                      className={`px-4 py-3 text-right font-mono ${slippageColor(
-                        eq.slippage_pct
-                      )}`}
-                    >
+                    <td className="px-4 py-3 font-medium text-zinc-200">#{eq.trade_id}</td>
+                    <td className="px-4 py-3 text-right font-mono text-zinc-300">{formatPrice(eq.expected_price)}</td>
+                    <td className="px-4 py-3 text-right font-mono text-zinc-300">{formatPrice(eq.actual_price)}</td>
+                    <td className={`px-4 py-3 text-right font-mono ${slippageColor(eq.slippage_pct)}`}>
                       {eq.slippage_pct.toFixed(3)}%
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-zinc-300">
-                      {eq.api_latency_ms}
-                    </td>
-                    <td className="px-4 py-3 text-zinc-400">
-                      {formatTimestamp(eq.timestamp)}
-                    </td>
+                    <td className="px-4 py-3 text-right font-mono text-zinc-300">{eq.api_latency_ms}</td>
+                    <td className="px-4 py-3 text-zinc-400">{formatTimestamp(eq.timestamp)}</td>
                   </tr>
                 ))
               )}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
+
+        <DetailPanel
+          isOpen={selectedExecution != null}
+          onClose={() => setSelectedExecution(null)}
+          title="Execution Quality Details"
+        >
+          {selectedExecution && (
+            <div className="space-y-3 text-sm">
+              <DetailRow label="Trade ID" value={`#${selectedExecution.trade_id}`} />
+              <DetailRow label="Expected Price" value={formatPrice(selectedExecution.expected_price)} />
+              <DetailRow label="Actual Price" value={formatPrice(selectedExecution.actual_price)} />
+              <DetailRow
+                label="Slippage"
+                value={(selectedExecution.actual_price - selectedExecution.expected_price).toFixed(6)}
+              />
+              <DetailRow label="Slippage %" value={`${selectedExecution.slippage_pct.toFixed(3)}%`} />
+              <DetailRow label="Timestamp" value={formatTimestamp(selectedExecution.timestamp)} />
+            </div>
+          )}
+        </DetailPanel>
       </div>
 
-      <DetailPanel
-        isOpen={selectedExecution != null}
-        onClose={() => setSelectedExecution(null)}
-        title="Execution Quality Details"
-      >
-        {selectedExecution && (
-          <div className="space-y-3 text-sm">
-            <DetailRow label="Trade ID" value={`#${selectedExecution.trade_id}`} />
-            <DetailRow
-              label="Expected Price"
-              value={selectedExecution.expected_price.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 6,
-              })}
-            />
-            <DetailRow
-              label="Actual Price"
-              value={selectedExecution.actual_price.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 6,
-              })}
-            />
-            <DetailRow
-              label="Slippage"
-              value={(
-                selectedExecution.actual_price - selectedExecution.expected_price
-              ).toFixed(6)}
-            />
-            <DetailRow
-              label="Slippage %"
-              value={`${selectedExecution.slippage_pct.toFixed(3)}%`}
-            />
-            <DetailRow
-              label="Timestamp"
-              value={formatTimestamp(selectedExecution.timestamp)}
-            />
-          </div>
-        )}
-      </DetailPanel>
-    </div>
-
-      {/* Market Snapshots Table */}
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-zinc-100">
-          Market Snapshots
-        </h2>
+        <h2 className="mb-3 text-lg font-semibold text-zinc-100">Market Snapshots</h2>
         <div className="overflow-x-auto rounded-lg border border-zinc-800">
           <table className="w-full text-sm" aria-label="Market snapshots table">
             <thead>
@@ -260,30 +283,18 @@ export default function PerformancePage() {
             <tbody className="divide-y divide-zinc-800">
               {snapshots.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-8 text-center text-zinc-500"
-                  >
+                  <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
                     No snapshots
                   </td>
                 </tr>
               ) : (
                 snapshots.map((snap, i) => (
-                  <tr
-                    key={`${snap.symbol}-${snap.timestamp}-${i}`}
-                    className="hover:bg-zinc-900/50 transition-colors"
-                  >
-                    <td className="px-4 py-3 font-medium text-zinc-200">
-                      {snap.symbol}
-                    </td>
+                  <tr key={`${snap.symbol}-${snap.timestamp}-${i}`} className="hover:bg-zinc-900/50 transition-colors">
+                    <td className="px-4 py-3 font-medium text-zinc-200">{snap.symbol}</td>
                     <td className="px-4 py-3 text-right font-mono text-zinc-300">
                       {snap.price != null ? formatNumber(snap.price) : "—"}
                     </td>
-                    <td
-                      className={`px-4 py-3 text-right font-mono ${rsiColor(
-                        snap.rsi
-                      )}`}
-                    >
+                    <td className={`px-4 py-3 text-right font-mono ${rsiColor(snap.rsi)}`}>
                       {snap.rsi != null ? snap.rsi.toFixed(1) : "-"}
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-zinc-300">
@@ -295,9 +306,7 @@ export default function PerformancePage() {
                     <td className="px-4 py-3 text-right font-mono text-zinc-300">
                       {snap.volume != null ? snap.volume.toLocaleString() : "—"}
                     </td>
-                    <td className="px-4 py-3 text-zinc-400">
-                      {formatTimestamp(snap.timestamp)}
-                    </td>
+                    <td className="px-4 py-3 text-zinc-400">{formatTimestamp(snap.timestamp)}</td>
                   </tr>
                 ))
               )}

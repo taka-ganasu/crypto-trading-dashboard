@@ -40,8 +40,28 @@ export interface Signal {
   created_at: string | null;
 }
 
+export interface PortfolioPosition {
+  side?: string | null;
+  size?: number | null;
+  entry_price?: number | null;
+  mark_price?: number | null;
+  unrealized_pnl?: number | null;
+  [key: string]: unknown;
+}
+
+export interface PortfolioData {
+  positions?: Record<string, PortfolioPosition>;
+  equity?: number | null;
+  available_balance?: number | null;
+  total_balance?: number | null;
+  timestamp?: string | null;
+  daily_pnl?: number | null;
+  daily_pnl_pct?: number | null;
+  [key: string]: unknown;
+}
+
 export interface PortfolioState {
-  data: Record<string, unknown>;
+  data: PortfolioData;
 }
 
 export interface CircuitBreakerState {
@@ -49,23 +69,26 @@ export interface CircuitBreakerState {
 }
 
 export interface SystemHealth {
-  status: "OK" | "DEGRADED" | "DOWN";
-  uptime_seconds: number;
-  pid: number;
+  status: string;
+  db_connected?: boolean | null;
+  exchange_connected?: boolean | null;
+  [key: string]: unknown;
 }
 
 export interface SystemMetrics {
-  memory_mb: number;
-  cpu_percent: number;
-  ws_connected: boolean;
-  last_fr_fetch: string | null;
-  open_positions: number;
+  memory_mb?: number | null;
+  cpu_percent?: number | null;
+  ws_connected?: boolean | null;
+  last_fr_fetch?: string | null;
+  open_positions?: number | null;
+  [key: string]: unknown;
 }
 
 export interface SystemInfo {
   db_path: string;
   api_version: string;
   python_version: string;
+  platform: string;
 }
 
 export interface ApiError {
@@ -91,12 +114,27 @@ export interface BotHealthResponse {
 }
 
 export interface SystemStatsResponse {
+  total_endpoints?: number | null;
+  db_stats?: {
+    total_trades?: number | null;
+    total_signals?: number | null;
+    total_distortion_events?: number | null;
+    db_size_mb?: number | null;
+  } | null;
+  strategy_config?: Array<{
+    id: string;
+    symbol: string;
+    strategy: string;
+    allocation_pct: number;
+  }> | null;
+  active_plan?: string | null;
   recent_trades?: number | null;
   trades_24h?: number | null;
   trade_count?: number | null;
   recent_signals?: number | null;
   signals_24h?: number | null;
   signal_count?: number | null;
+  recent_mdse_events?: number | null;
   mdse_events?: number | null;
   mdse_event_count?: number | null;
   events_24h?: number | null;
@@ -132,21 +170,34 @@ export interface MdseDetectorScore {
 
 export interface MdseEvent {
   id: number;
-  detector: string;
+  detector_name?: string;
+  detector?: string;
   symbol: string;
-  direction: "long" | "short";
+  direction: string;
   confidence: number;
   timestamp: string;
+  ttl?: number;
+  metadata_json?: string | null;
+  confluence_score?: number | null;
+  validated?: number;
+  trade_id?: number | null;
+  alert_sent?: boolean;
+  alert_type?: string | null;
+  created_at?: string | null;
 }
 
 export interface MdseTrade {
+  id: number;
   event_id: number;
   symbol: string;
-  direction: "long" | "short";
+  direction: string;
   entry_price: number;
   exit_price: number | null;
+  entry_time: string;
+  exit_time: string | null;
   pnl: number | null;
   position_size: number;
+  created_at?: string | null;
 }
 
 export interface PerformanceSummary {
@@ -190,19 +241,11 @@ export interface EquityCurveResponse {
 }
 export interface MdseTimelinePoint {
   timestamp: string;
-  price: number;
-  symbol: string;
+  price: number | null;
+  symbol: string | null;
 }
 
-export interface MdseTimelineEvent {
-  id: number;
-  timestamp: string;
-  price: number;
-  detector: string;
-  symbol: string;
-  direction: "long" | "short";
-  confidence: number;
-}
+export type MdseTimelineEvent = MdseEvent;
 
 export interface MdseTimeline {
   prices: MdseTimelinePoint[];

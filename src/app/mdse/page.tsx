@@ -26,6 +26,21 @@ function winRateBorder(rate: number): string {
   return "border-yellow-500/30";
 }
 
+function toPercent(value: number | null | undefined): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return 0;
+  return value <= 1 ? value * 100 : value;
+}
+
+function isLongDirection(direction: string | null | undefined): boolean {
+  const normalized = (direction ?? "").toLowerCase();
+  return normalized === "long" || normalized === "buy";
+}
+
+function detectorLabel(event: MdseEvent | null | undefined): string {
+  if (!event) return "—";
+  return event.detector ?? event.detector_name ?? "—";
+}
+
 export default function MdsePage() {
   return (
     <Suspense fallback={<LoadingSpinner label="Loading MDSE data..." />}>
@@ -152,15 +167,15 @@ function MdseContent() {
           {scores.map((d) => (
             <div
               key={d.detector_name}
-              className={`rounded-lg border bg-zinc-900 p-4 ${winRateBorder(d.win_rate)}`}
+              className={`rounded-lg border bg-zinc-900 p-4 ${winRateBorder(toPercent(d.win_rate))}`}
             >
               <h2 className="text-sm font-semibold text-zinc-300 mb-3 truncate">
                 {d.detector_name}
               </h2>
               <div className="grid grid-cols-2 gap-y-2 text-sm">
                 <span className="text-zinc-500">Win Rate</span>
-                <span className={`text-right font-mono ${winRateColor(d.win_rate)}`}>
-                  {d.win_rate.toFixed(1)}%
+                <span className={`text-right font-mono ${winRateColor(toPercent(d.win_rate))}`}>
+                  {toPercent(d.win_rate).toFixed(1)}%
                 </span>
                 <span className="text-zinc-500">Avg PnL</span>
                 <span
@@ -213,48 +228,51 @@ function MdseContent() {
               No events found
             </p>
           ) : (
-            events.map((ev) => (
-              <div
-                key={ev.id}
-                className="flex items-center gap-4 rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3"
-              >
-                <span className="shrink-0 rounded bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-300">
-                  {ev.detector}
-                </span>
-                <span className="text-sm font-medium text-zinc-200 w-20">
-                  {ev.symbol}
-                </span>
-                <span
-                  className={`text-sm font-medium w-14 ${
-                    ev.direction === "long"
-                      ? "text-emerald-400"
-                      : "text-red-400"
-                  }`}
+            events.map((ev) => {
+              const confidencePct = Math.min(Math.max(toPercent(ev.confidence), 0), 100);
+              return (
+                <div
+                  key={ev.id}
+                  className="flex items-center gap-4 rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3"
                 >
-                  {ev.direction.toUpperCase()}
-                </span>
-                <div className="flex-1">
-                  <div className="h-2 rounded-full bg-zinc-800">
-                    <div
-                      className={`h-2 rounded-full ${
-                        ev.confidence >= 70
-                          ? "bg-emerald-500"
-                          : ev.confidence >= 40
-                            ? "bg-yellow-500"
-                            : "bg-red-500"
-                      }`}
-                      style={{ width: `${Math.min(ev.confidence, 100)}%` }}
-                    />
+                  <span className="shrink-0 rounded bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-300">
+                    {detectorLabel(ev)}
+                  </span>
+                  <span className="text-sm font-medium text-zinc-200 w-20">
+                    {ev.symbol}
+                  </span>
+                  <span
+                    className={`text-sm font-medium w-14 ${
+                      isLongDirection(ev.direction)
+                        ? "text-emerald-400"
+                        : "text-red-400"
+                    }`}
+                  >
+                    {ev.direction.toUpperCase()}
+                  </span>
+                  <div className="flex-1">
+                    <div className="h-2 rounded-full bg-zinc-800">
+                      <div
+                        className={`h-2 rounded-full ${
+                          confidencePct >= 70
+                            ? "bg-emerald-500"
+                            : confidencePct >= 40
+                              ? "bg-yellow-500"
+                              : "bg-red-500"
+                        }`}
+                        style={{ width: `${confidencePct}%` }}
+                      />
+                    </div>
                   </div>
+                  <span className="shrink-0 text-xs font-mono text-zinc-500">
+                    {confidencePct.toFixed(1)}%
+                  </span>
+                  <span className="shrink-0 text-xs text-zinc-500">
+                    {formatTime(ev.timestamp)}
+                  </span>
                 </div>
-                <span className="shrink-0 text-xs font-mono text-zinc-500">
-                  {ev.confidence.toFixed(0)}%
-                </span>
-                <span className="shrink-0 text-xs text-zinc-500">
-                  {formatTime(ev.timestamp)}
-                </span>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </section>
@@ -306,7 +324,7 @@ function MdseContent() {
                     <td className="px-4 py-3">
                       <span
                         className={
-                          t.direction === "long"
+                          isLongDirection(t.direction)
                             ? "text-emerald-400"
                             : "text-red-400"
                         }
@@ -373,7 +391,7 @@ function MdseTradeDetail({
     confluence_score?: number;
   }) ?? null;
 
-  const detectorName = tradeWithExtra.detector_name ?? relatedEvent?.detector ?? "—";
+  const detectorName = tradeWithExtra.detector_name ?? detectorLabel(relatedEvent);
   const confidence = tradeWithExtra.confidence ?? relatedEvent?.confidence ?? null;
   const timestamp = tradeWithExtra.timestamp ?? relatedEvent?.timestamp ?? null;
   const confluenceScore =
@@ -387,7 +405,7 @@ function MdseTradeDetail({
       <DetailRow label="Direction" value={trade.direction.toUpperCase()} />
       <DetailRow
         label="Confidence"
-        value={confidence != null ? `${confidence.toFixed(1)}%` : "—"}
+        value={confidence != null ? `${toPercent(confidence).toFixed(1)}%` : "—"}
       />
       <DetailRow
         label="Confluence Score"
