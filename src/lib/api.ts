@@ -14,6 +14,7 @@ import type {
   ApiError,
   BotHealthResponse,
   SystemStatsResponse,
+  StrategiesResponse,
   PerformanceSummary,
   ExecutionQuality,
   MarketSnapshot,
@@ -190,6 +191,10 @@ export async function fetchMarketSnapshots(
 
 export async function fetchStrategyPerformance(): Promise<StrategyPerformance[]> {
   return fetchJSON<StrategyPerformance[]>("/performance/by-strategy");
+}
+
+export async function fetchStrategies(): Promise<StrategiesResponse> {
+  return fetchJSON<StrategiesResponse>("/strategies");
 }
 
 export async function fetchEquityCurve(
