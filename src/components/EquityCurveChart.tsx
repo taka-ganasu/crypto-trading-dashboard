@@ -77,7 +77,6 @@ export default function EquityCurveChart({ data }: EquityCurveChartProps) {
 
   const hasProfit = data[data.length - 1].cumulative_pnl >= 0;
   const strokeColor = hasProfit ? "#34d399" : "#f87171";
-  const fillColor = hasProfit ? "#34d39920" : "#f8717120";
 
   return (
     <div
