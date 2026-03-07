@@ -77,6 +77,23 @@ export const defaultApiResponses: ApiResponseMap = {
       sample_count: 10,
     },
   ],
+  "/api/mdse/summary": {
+    total_events: 1,
+    validated_events: 0,
+    unvalidated_events: 1,
+    detectors: [
+      {
+        detector_name: "detector-a",
+        event_count: 1,
+        validated_count: 0,
+        win_rate: 0.61,
+        avg_pnl: 12.5,
+        weight: 0.5,
+        sample_count: 10,
+        last_event_at: "2026-01-01T00:00:00Z",
+      },
+    ],
+  },
   "/api/mdse/events": [
     {
       id: 1,
@@ -313,6 +330,12 @@ export const nullSafeApiResponses: ApiResponseMap = {
   "/api/portfolio/state": { data: {} },
   "/api/cb/state": { data: { status: "inactive" } },
   "/api/mdse/scores": [],
+  "/api/mdse/summary": {
+    total_events: 0,
+    validated_events: 0,
+    unvalidated_events: 0,
+    detectors: [],
+  },
   "/api/mdse/events": [],
   "/api/mdse/trades": [],
   "/api/system/health": { status: "unreachable" },

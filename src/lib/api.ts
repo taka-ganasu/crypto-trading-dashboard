@@ -8,6 +8,7 @@ import type {
   MdseDetectorScore,
   MdseEvent,
   MdseTrade,
+  MdseSummary,
   SystemHealth,
   SystemMetrics,
   SystemInfo,
@@ -88,6 +89,10 @@ export async function fetchAnalysisCycles(
 
 export async function fetchMdseScores(): Promise<MdseDetectorScore[]> {
   return fetchJSON<MdseDetectorScore[]>("/mdse/scores");
+}
+
+export async function fetchMdseSummary(): Promise<MdseSummary> {
+  return fetchJSON<MdseSummary>("/mdse/summary");
 }
 
 export async function fetchMdseEvents(

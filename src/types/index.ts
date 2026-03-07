@@ -162,10 +162,28 @@ export interface AnalysisCycle {
 
 export interface MdseDetectorScore {
   detector_name: string;
-  win_rate: number;
-  avg_pnl: number;
-  weight: number;
-  sample_count: number;
+  win_rate: number | null;
+  avg_pnl: number | null;
+  weight: number | null;
+  sample_count: number | null;
+}
+
+export interface MdseSummaryDetector {
+  detector_name: string;
+  event_count: number;
+  validated_count: number;
+  win_rate: number | null;
+  avg_pnl: number | null;
+  weight: number | null;
+  sample_count: number | null;
+  last_event_at: string | null;
+}
+
+export interface MdseSummary {
+  total_events: number;
+  validated_events: number;
+  unvalidated_events: number;
+  detectors: MdseSummaryDetector[];
 }
 
 export interface MdseEvent {
