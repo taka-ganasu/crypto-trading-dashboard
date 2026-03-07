@@ -282,6 +282,13 @@ export interface EquityCurveResponse {
   start_date: string | null;
   end_date: string | null;
 }
+export interface TradeByStrategyDaily {
+  date: string;
+  strategy: string;
+  trade_count: number;
+  daily_pnl: number;
+}
+
 export interface MdseTimelinePoint {
   timestamp: string;
   price: number | null;
