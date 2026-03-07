@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { fetchTrades } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { formatNumber, formatPnl, colorByPnl, formatDate } from "@/lib/format";
+import { formatNumber, formatPnl, colorByPnl, formatDateTime } from "@/lib/format";
 import DetailPanel from "@/components/DetailPanel";
 import TimeRangeFilter, { useTimeRange } from "@/components/TimeRangeFilter";
 import type { Trade } from "@/types";
@@ -125,10 +125,10 @@ function TradesContent() {
                     )}
                   </td>
                   <td className="px-4 py-3 text-zinc-400">
-                    {formatDate(trade.entry_time)}
+                    {formatDateTime(trade.entry_time)}
                   </td>
                   <td className="px-4 py-3 text-zinc-400">
-                    {trade.exit_time ? formatDate(trade.exit_time) : <span className="text-zinc-500 italic">Open</span>}
+                    {trade.exit_time ? formatDateTime(trade.exit_time) : <span className="text-zinc-500 italic">Open</span>}
                   </td>
                 </tr>
               ))
@@ -181,13 +181,13 @@ function TradesContent() {
             />
             <DetailRow
               label="Entry Date"
-              value={formatDate(selectedTrade.entry_time)}
+              value={formatDateTime(selectedTrade.entry_time)}
             />
             <DetailRow
               label="Exit Date"
               value={
                 selectedTrade.exit_time
-                  ? formatDate(selectedTrade.exit_time)
+                  ? formatDateTime(selectedTrade.exit_time)
                   : "Open"
               }
             />
