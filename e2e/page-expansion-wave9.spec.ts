@@ -140,34 +140,39 @@ test.describe("Wave9 expansion - trades page", () => {
 test.describe("Wave9 expansion - signals page", () => {
   test("renders stats summary with multiple signal rows", async ({ page }) => {
     await installApiMocksWithOverrides(page, {
-      "/api/signals": [
-        {
-          id: 1,
-          timestamp: "2026-01-01T00:00:00Z",
-          symbol: "BTC/USDT",
-          action: "buy",
-          score: 0.8,
-          confidence: 80,
-          executed: 1,
-          skip_reason: null,
-          strategy_type: "trend",
-          cycle_id: 1,
-          created_at: "2026-01-01",
-        },
-        {
-          id: 2,
-          timestamp: "2026-01-01T00:10:00Z",
-          symbol: "ETH/USDT",
-          action: "sell",
-          score: 0.6,
-          confidence: 40,
-          executed: 0,
-          skip_reason: "risk_filter",
-          strategy_type: "mean_reversion",
-          cycle_id: 1,
-          created_at: "2026-01-01",
-        },
-      ],
+      "/api/signals": {
+        signals: [
+          {
+            id: 1,
+            timestamp: "2026-01-01T00:00:00Z",
+            symbol: "BTC/USDT",
+            action: "buy",
+            score: 0.8,
+            confidence: 80,
+            executed: 1,
+            skip_reason: null,
+            strategy_type: "trend",
+            cycle_id: 1,
+            created_at: "2026-01-01",
+          },
+          {
+            id: 2,
+            timestamp: "2026-01-01T00:10:00Z",
+            symbol: "ETH/USDT",
+            action: "sell",
+            score: 0.6,
+            confidence: 40,
+            executed: 0,
+            skip_reason: "risk_filter",
+            strategy_type: "mean_reversion",
+            cycle_id: 1,
+            created_at: "2026-01-01",
+          },
+        ],
+        total: 2,
+        offset: 0,
+        limit: 1000,
+      },
     });
     const errors = trackConsoleErrors(page);
 

@@ -45,8 +45,8 @@ function readPath(payload: SystemStatsResponse | null, path: string[]): unknown 
   return cursor;
 }
 
-function readNumber(payload: SystemStatsResponse | null, paths: string[][]): number {
-  if (!payload) return 0;
+function readNumber(payload: SystemStatsResponse | null, paths: string[][]): number | null {
+  if (!payload) return null;
 
   for (const path of paths) {
     const value = asNumber(readPath(payload, path));
@@ -55,7 +55,7 @@ function readNumber(payload: SystemStatsResponse | null, paths: string[][]): num
     }
   }
 
-  return 0;
+  return null;
 }
 
 function readText(payload: SystemStatsResponse | null, paths: string[][]): string | null {
@@ -156,9 +156,9 @@ export default function StatsOverviewCards() {
         </div>
       ) : (
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <StatCard label="Recent Trades" value={String(view.recentTrades)} valueTestId="stats-recent-trades" />
-          <StatCard label="Recent Signals" value={String(view.recentSignals)} valueTestId="stats-recent-signals" />
-          <StatCard label="MDSE Events" value={String(view.mdseEvents)} valueTestId="stats-mdse-events" />
+          <StatCard label="Recent Trades" value={view.recentTrades != null ? String(view.recentTrades) : "No data"} valueTestId="stats-recent-trades" />
+          <StatCard label="Recent Signals" value={view.recentSignals != null ? String(view.recentSignals) : "No data"} valueTestId="stats-recent-signals" />
+          <StatCard label="MDSE Events" value={view.mdseEvents != null ? String(view.mdseEvents) : "No data"} valueTestId="stats-mdse-events" />
         </div>
       )}
 

@@ -68,13 +68,14 @@ function TradesContent() {
               <th className="px-4 py-3 text-right">Entry Price</th>
               <th className="px-4 py-3 text-right">Exit Price</th>
               <th className="px-4 py-3 text-right">PnL</th>
-              <th className="px-4 py-3">Date</th>
+              <th className="px-4 py-3">Entry Date</th>
+              <th className="px-4 py-3">Exit Date</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800">
             {trades.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-zinc-500">
                   No trades found
                 </td>
               </tr>
@@ -112,7 +113,7 @@ function TradesContent() {
                   <td className="px-4 py-3 text-right font-mono text-zinc-300">
                     {trade.exit_price != null
                       ? formatNumber(trade.exit_price)
-                      : "-"}
+                      : <span className="text-zinc-500 italic">Dry-run</span>}
                   </td>
                   <td className="px-4 py-3 text-right font-mono">
                     {trade.pnl != null ? (
@@ -125,6 +126,9 @@ function TradesContent() {
                   </td>
                   <td className="px-4 py-3 text-zinc-400">
                     {formatDate(trade.entry_time)}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-400">
+                    {trade.exit_time ? formatDate(trade.exit_time) : <span className="text-zinc-500 italic">Open</span>}
                   </td>
                 </tr>
               ))
@@ -152,7 +156,7 @@ function TradesContent() {
               value={
                 selectedTrade.exit_price != null
                   ? formatNumber(selectedTrade.exit_price)
-                  : "—"
+                  : "Dry-run"
               }
             />
             <DetailRow
@@ -176,8 +180,16 @@ function TradesContent() {
               value={selectedTrade.strategy ?? "—"}
             />
             <DetailRow
-              label="Timestamp"
+              label="Entry Date"
               value={formatDate(selectedTrade.entry_time)}
+            />
+            <DetailRow
+              label="Exit Date"
+              value={
+                selectedTrade.exit_time
+                  ? formatDate(selectedTrade.exit_time)
+                  : "Open"
+              }
             />
             <DetailRow
               label="Duration"

@@ -40,6 +40,13 @@ export interface Signal {
   created_at: string | null;
 }
 
+export interface SignalListResponse {
+  signals: Signal[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
 export interface PortfolioPosition {
   side?: string | null;
   size?: number | null;
