@@ -205,14 +205,6 @@ function AnalysisContent() {
     return <LoadingSpinner label="Loading analysis..." />;
   }
 
-  if (error) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <p className="text-red-400">Error: {error}</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -222,6 +214,15 @@ function AnalysisContent() {
           <span className="text-sm text-zinc-500">{stats.totalCycles} cycles</span>
         </div>
       </div>
+
+      {error && (
+        <div
+          className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+          role="alert"
+        >
+          Data unavailable: {error}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="Total Cycles" value={String(stats.totalCycles)} />

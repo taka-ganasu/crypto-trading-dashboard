@@ -133,7 +133,7 @@ test.describe("Wave9 expansion - trades page", () => {
 
     await page.goto("/trades");
 
-    await expect(page.getByText("Error: API error: 500")).toBeVisible();
+    await expect(page.getByText(/Data unavailable:.*API error: 500/)).toBeVisible();
   });
 });
 
@@ -206,7 +206,7 @@ test.describe("Wave9 expansion - signals page", () => {
 
     await page.goto("/signals");
 
-    await expect(page.getByText("Error: API error: 500")).toBeVisible();
+    await expect(page.getByText(/Data unavailable:.*API error: 500/)).toBeVisible();
   });
 });
 

@@ -51,14 +51,6 @@ function SignalsContent() {
     return <LoadingSpinner label="Loading signals..." />;
   }
 
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-red-400">Error: {error}</p>
-      </div>
-    );
-  }
-
   const displayed = signals.length;
   const executedCount = signals.filter((s) => s.executed === 1).length;
   const executionRate = displayed > 0 ? ((executedCount / displayed) * 100).toFixed(1) : "0.0";
@@ -90,6 +82,15 @@ function SignalsContent() {
           </span>
         </div>
       </div>
+
+      {error && (
+        <div
+          className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+          role="alert"
+        >
+          Data unavailable: {error}
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
