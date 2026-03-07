@@ -78,7 +78,8 @@ test.describe("System page error log tab", () => {
 
     await page.goto("/system");
     await expect(page.getByRole("heading", { level: 1, name: "System" })).toBeVisible();
-    await expect(page.getByTestId("go-live-widget")).toBeVisible();
+    await expect(page.getByTestId("api-info-heading")).toBeVisible();
+    await expect(page.getByTestId("dashboard-version-value")).toBeVisible();
 
     await page.getByTestId("system-tab-error-log").click();
     await expect(page.getByText("Failed to load API error logs.")).toBeVisible();

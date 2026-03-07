@@ -42,13 +42,15 @@ for (const target of smokeTargets) {
   });
 }
 
-test("smoke: /system go-live widget", async ({ page }) => {
+test("smoke: /system version panel", async ({ page }) => {
   const errors = trackConsoleErrors(page);
 
   await page.goto("/system");
-  await expect(page.getByTestId("go-live-widget")).toBeVisible();
-  await expect(page.getByText("75% (9/12)")).toBeVisible();
-  await expect(page.getByTestId("go-live-item")).toHaveCount(12);
+  await expect(page.getByTestId("api-info-heading")).toBeVisible();
+  await expect(page.getByTestId("api-version-value")).toBeVisible();
+  await expect(page.getByTestId("bot-version-value")).toBeVisible();
+  await expect(page.getByTestId("dashboard-version-value")).toBeVisible();
+  await expect(page.getByTestId("go-live-widget")).toHaveCount(0);
 
   expectNoConsoleErrors(errors);
 });

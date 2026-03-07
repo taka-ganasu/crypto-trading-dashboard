@@ -9,16 +9,10 @@ import {
 } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import type { ApiError, SystemHealth, SystemInfo, SystemMetrics } from "@/types";
+import packageJson from "../../../package.json";
 
 type SysStatus = "OK" | "DEGRADED" | "DOWN" | "unreachable";
 type ActiveTab = "info" | "errors";
-
-type GoLiveChecklistItem = {
-  id: number;
-  label: string;
-  completed: boolean;
-  note?: string;
-};
 
 const STATUS_CONFIG: Record<
   SysStatus,
@@ -54,20 +48,7 @@ const STATUS_CONFIG: Record<
   },
 };
 
-const GO_LIVE_CHECKLIST: GoLiveChecklistItem[] = [
-  { id: 1, label: "HL本番接続", completed: true },
-  { id: 2, label: "入金確認($656)", completed: true },
-  { id: 3, label: "注文テスト", completed: true },
-  { id: 4, label: "緊急停止テスト", completed: true },
-  { id: 5, label: "--once実行", completed: true },
-  { id: 6, label: "WS安定テスト", completed: true },
-  { id: 7, label: "SQLiteバックアップ", completed: true },
-  { id: 8, label: "連絡先リスト", completed: true },
-  { id: 9, label: "FR source HL切替", completed: true },
-  { id: 10, label: "testnet:false切替", completed: true },
-  { id: 11, label: "systemd設定", completed: true },
-  { id: 12, label: "Slack通知設定", completed: true },
-];
+const DASHBOARD_VERSION = packageJson.version as string;
 
 function StatusBadge({ status }: { status: SysStatus }) {
   const config = STATUS_CONFIG[status];
@@ -125,6 +106,26 @@ function normalizeSystemStatus(status: string | null | undefined): SysStatus {
 function formatConnectivity(value: boolean | null | undefined): string {
   if (value === true) return "Connected";
   if (value === false) return "Disconnected";
+  return "—";
+}
+
+function formatWebSocketStatus(value: boolean | null | undefined): {
+  label: string;
+  dotClass: string;
+} {
+  if (value === true) {
+    return { label: "Connected", dotClass: "bg-emerald-400" };
+  }
+  if (value === false) {
+    return { label: "Disconnected", dotClass: "bg-red-400" };
+  }
+  return { label: "Unknown", dotClass: "bg-zinc-500" };
+}
+
+function formatOpenPositions(value: number | null | undefined): string {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
   return "—";
 }
 
@@ -208,9 +209,7 @@ export default function SystemPage() {
 
   const status = normalizeSystemStatus(health?.status ?? null);
   const config = STATUS_CONFIG[status];
-  const completedCount = GO_LIVE_CHECKLIST.filter((item) => item.completed).length;
-  const totalCount = GO_LIVE_CHECKLIST.length;
-  const progressPercent = Math.round((completedCount / totalCount) * 100);
+  const wsStatus = formatWebSocketStatus(metrics?.ws_connected);
 
   if (loading && !health && !metrics && !info && !systemError) {
     return <LoadingSpinner label="Loading system data..." />;
@@ -289,63 +288,6 @@ export default function SystemPage() {
             )}
           </div>
 
-          <div
-            className="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-6"
-            data-testid="go-live-widget"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-zinc-100">Go-Live Progress</h2>
-                <p className="mt-1 text-sm text-zinc-400">
-                  Deployment readiness checklist for production cutover
-                </p>
-              </div>
-              <div className="rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 text-right">
-                <p className="text-xs uppercase tracking-wider text-cyan-300">Progress</p>
-                <p className="text-xl font-bold text-cyan-200">
-                  {progressPercent}% ({completedCount}/{totalCount})
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-zinc-800">
-              <div
-                className="h-full rounded-full bg-cyan-400"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-
-            <p className="mt-3 text-xs text-zinc-500">
-              Remaining blockers: testnet:false切替（殿判断）、systemd設定、Slack Webhook
-            </p>
-
-            <ul className="mt-5 grid gap-3 md:grid-cols-2">
-              {GO_LIVE_CHECKLIST.map((item) => (
-                <li
-                  key={item.id}
-                  className={`rounded-lg border p-3 ${
-                    item.completed
-                      ? "border-emerald-500/30 bg-emerald-500/10"
-                      : "border-zinc-700 bg-zinc-900/60"
-                  }`}
-                  data-testid="go-live-item"
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="text-base leading-none" aria-hidden="true">
-                      {item.completed ? "✅" : "⬜"}
-                    </span>
-                    <div>
-                      <p className="text-sm text-zinc-100">
-                        {item.id}. {item.label}
-                      </p>
-                      {item.note ? <p className="mt-1 text-xs text-zinc-400">{item.note}</p> : null}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
             <h2 className="text-lg font-semibold text-zinc-200 mb-4">Resource Metrics</h2>
             {loading ? (
@@ -375,13 +317,9 @@ export default function SystemPage() {
                 <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
                   <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">WebSocket</p>
                   <div className="mt-2 flex items-center gap-2">
-                    <span
-                      className={`h-3 w-3 rounded-full ${
-                        metrics?.ws_connected ? "bg-emerald-400" : "bg-red-400"
-                      }`}
-                    />
+                    <span className={`h-3 w-3 rounded-full ${wsStatus.dotClass}`} />
                     <span className="text-xl font-bold text-zinc-100">
-                      {metrics?.ws_connected ? "Connected" : "Disconnected"}
+                      {wsStatus.label}
                     </span>
                   </div>
                 </div>
@@ -399,14 +337,18 @@ export default function SystemPage() {
                   <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
                     Open Positions
                   </p>
-                  <p className="mt-2 text-xl font-bold text-zinc-100">{metrics?.open_positions ?? 0}</p>
+                  <p className="mt-2 text-xl font-bold text-zinc-100">
+                    {formatOpenPositions(metrics?.open_positions)}
+                  </p>
                 </div>
               </div>
             )}
           </div>
 
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-            <h2 className="text-lg font-semibold text-zinc-200 mb-4">API Information</h2>
+            <h2 className="text-lg font-semibold text-zinc-200 mb-4" data-testid="api-info-heading">
+              API Information
+            </h2>
             {loading ? (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
@@ -416,14 +358,28 @@ export default function SystemPage() {
             ) : (
               <div className="space-y-3">
                 <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3">
+                  <span className="text-sm text-zinc-400">API Version</span>
+                  <span className="font-mono text-sm text-zinc-200" data-testid="api-version-value">
+                    {info?.api_version ?? "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3">
+                  <span className="text-sm text-zinc-400">Bot Version</span>
+                  <span className="font-mono text-sm text-zinc-200" data-testid="bot-version-value">
+                    {info?.bot_version ?? "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3">
+                  <span className="text-sm text-zinc-400">Dashboard Version</span>
+                  <span className="font-mono text-sm text-zinc-200" data-testid="dashboard-version-value">
+                    {DASHBOARD_VERSION}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3">
                   <span className="text-sm text-zinc-400">Database Path</span>
                   <span className="font-mono text-sm text-zinc-200 truncate ml-4 max-w-xs">
                     {info?.db_path ?? "—"}
                   </span>
-                </div>
-                <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3">
-                  <span className="text-sm text-zinc-400">API Version</span>
-                  <span className="font-mono text-sm text-zinc-200">{info?.api_version ?? "—"}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3">
                   <span className="text-sm text-zinc-400">Python Version</span>
