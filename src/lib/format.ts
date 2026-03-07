@@ -40,6 +40,23 @@ export function formatDate(ts: string): string {
   return new Date(ts).toLocaleDateString();
 }
 
+/** Format an ISO timestamp as YYYY-MM-DD HH:mm in local time. */
+export function formatDateTime(ts: string): string {
+  const date = new Date(ts);
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  const pad = (value: number): string => String(value).padStart(2, "0");
+  const yyyy = date.getFullYear();
+  const mm = pad(date.getMonth() + 1);
+  const dd = pad(date.getDate());
+  const hh = pad(date.getHours());
+  const min = pad(date.getMinutes());
+
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+}
+
 /** Format an ISO timestamp as a locale time string. */
 export function formatTime(ts: string): string {
   return new Date(ts).toLocaleTimeString();
