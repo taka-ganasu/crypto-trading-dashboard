@@ -1,6 +1,7 @@
 import type {
   ExecutionMode,
   Trade,
+  TradeListResponse,
   TradeSummary,
   SignalListResponse,
   PortfolioState,
@@ -63,16 +64,18 @@ export async function fetchTrades(
   limit: number = 50,
   start?: string,
   end?: string,
-  executionMode?: ExecutionMode
-): Promise<Trade[]> {
+  executionMode?: ExecutionMode,
+  offset: number = 0
+): Promise<TradeListResponse> {
   const params = new URLSearchParams();
   if (symbol) params.set("symbol", symbol);
   params.set("limit", String(limit));
+  if (offset > 0) params.set("offset", String(offset));
   if (start) params.set("start", start);
   if (end) params.set("end", end);
   appendExecutionModeParam(params, executionMode);
   const query = params.toString();
-  return fetchJSON<Trade[]>(`/trades?${query}`);
+  return fetchJSON<TradeListResponse>(`/trades?${query}`);
 }
 
 export async function fetchTradeSummary(): Promise<TradeSummary> {

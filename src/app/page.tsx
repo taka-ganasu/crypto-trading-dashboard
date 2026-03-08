@@ -111,7 +111,7 @@ export default function Home() {
     }
 
     if (tradesResult.status === "fulfilled") {
-      setTrades(tradesResult.value);
+      setTrades(tradesResult.value.trades);
     } else {
       setTrades([]);
       failedSections.push("recent trades");

@@ -42,6 +42,13 @@ export interface Signal {
   created_at: string | null;
 }
 
+export interface TradeListResponse {
+  trades: Trade[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
 export interface SignalListResponse {
   signals: Signal[];
   total: number;
