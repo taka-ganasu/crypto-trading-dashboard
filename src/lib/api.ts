@@ -87,11 +87,13 @@ export async function fetchSignals(
   limit: number = 1000,
   start?: string,
   end?: string,
-  executionMode?: ExecutionMode
+  executionMode?: ExecutionMode,
+  offset?: number
 ): Promise<SignalListResponse> {
   const params = new URLSearchParams();
   if (symbol) params.set("symbol", symbol);
   params.set("limit", String(limit));
+  if (offset != null) params.set("offset", String(offset));
   if (start) params.set("start", start);
   if (end) params.set("end", end);
   appendExecutionModeParam(params, executionMode);
@@ -199,11 +201,11 @@ export async function fetchApiErrors(
     const res = await fetch(`${BASE_URL}/errors${query ? `?${query}` : ""}`, {
       signal: controller.signal,
     });
-    if (!res.ok) return [];
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
     const payload: unknown = await res.json();
     return Array.isArray(payload) ? (payload as ApiError[]) : [];
-  } catch {
-    return [];
+  } catch (err) {
+    throw err instanceof Error ? err : new Error("Failed to fetch error logs");
   } finally {
     clearTimeout(timeoutId);
   }

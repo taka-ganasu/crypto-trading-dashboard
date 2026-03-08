@@ -121,7 +121,7 @@ test.describe("Dashboard E2E edge cases", () => {
   });
 
   test("error state: dashboard retry recovers after initial full failure", async ({ page }) => {
-    const failOnce = new Set(["/api/portfolio/state", "/api/cb/state", "/api/trades"]);
+    const failOnce = new Set(["/api/portfolio/state", "/api/cb/state", "/api/trades", "/api/health", "/api/system/stats"]);
     const failedAlready = new Set<string>();
 
     await page.route("**/api/**", async (route) => {
@@ -165,7 +165,7 @@ test.describe("Dashboard E2E edge cases", () => {
   });
 
   test("warning state: portfolio page keeps rendering when chart section fails", async ({ page }) => {
-    await installSingleFailure(page, "/api/performance/equity-curve");
+    await installSingleFailure(page, "/api/equity-curve");
 
     await page.goto("/portfolio");
 
@@ -180,6 +180,12 @@ test.describe("Dashboard E2E edge cases", () => {
       ...defaultApiResponses,
       "/api/performance/execution-quality": [],
       "/api/performance/market-snapshots": [],
+      "/api/equity-curve": {
+        data: [],
+        total_days: 0,
+        start_date: null,
+        end_date: null,
+      },
       "/api/performance/equity-curve": {
         data: [],
         total_days: 0,

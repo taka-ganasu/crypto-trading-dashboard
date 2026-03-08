@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   fetchStrategies,
   fetchStrategyPerformance,
   fetchSystemStatsOverview,
 } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import DetailPanel from "@/components/DetailPanel";
 import { colorByPnl, formatPercent, formatPnl } from "@/lib/format";
 import type {
   StrategyPerformance,
@@ -15,16 +16,17 @@ import type {
 } from "@/types";
 
 interface StrategyRow {
-  id: string;
-  symbol: string;
   strategy: string;
-  status: string;
-  allocation_pct: number;
   trade_count: number;
   win_rate: number | null;
-  recent_pnl: number | null;
   profit_factor: number | null;
+  sharpe: number | null;
+  avg_pnl: number | null;
+  max_dd: number | null;
 }
+
+type SortKey = "win_rate" | "profit_factor" | "sharpe";
+type SortDir = "desc" | "asc";
 
 function toNumber(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -35,87 +37,23 @@ function toNumber(value: unknown): number | null {
   return null;
 }
 
-function normalizeSnapshot(snapshot: StrategySnapshot): StrategyRow {
+function perfToRow(perf: StrategyPerformance): StrategyRow {
   return {
-    id: snapshot.id,
-    symbol: snapshot.symbol,
-    strategy: snapshot.strategy,
-    status: snapshot.status,
-    allocation_pct: toNumber(snapshot.allocation_pct) ?? 0,
-    trade_count: Math.max(0, Math.floor(toNumber(snapshot.trade_count) ?? 0)),
-    win_rate: toNumber(snapshot.win_rate),
-    recent_pnl: toNumber(snapshot.recent_pnl),
-    profit_factor: null,
-  };
-}
-
-function buildFallbackRows(stats: SystemStatsResponse): StrategyRow[] {
-  const configs = Array.isArray(stats.strategy_config) ? stats.strategy_config : [];
-  return configs.map((cfg) => {
-    const allocationPct = toNumber(cfg.allocation_pct) ?? 0;
-    return {
-      id: cfg.id,
-      symbol: cfg.symbol,
-      strategy: cfg.strategy,
-      status: allocationPct > 0 ? "active" : "disabled",
-      allocation_pct: allocationPct,
-      trade_count: 0,
-      win_rate: null,
-      recent_pnl: null,
-      profit_factor: null,
-    };
-  });
-}
-
-function mergePerformance(
-  baseRows: StrategyRow[],
-  performanceRows: StrategyPerformance[]
-): StrategyRow[] {
-  const perfByStrategy = new Map(
-    performanceRows.map((row) => [row.strategy, row])
-  );
-
-  if (baseRows.length > 0) {
-    return baseRows.map((base) => {
-      const perf = perfByStrategy.get(base.strategy);
-      return {
-        ...base,
-        trade_count: perf?.trade_count ?? base.trade_count,
-        win_rate: perf?.win_rate ?? base.win_rate,
-        recent_pnl: base.recent_pnl ?? perf?.avg_pnl ?? null,
-        profit_factor: perf?.profit_factor ?? null,
-      };
-    });
-  }
-
-  return performanceRows.map((perf, index) => ({
-    id: `perf_${index + 1}`,
-    symbol: "—",
     strategy: perf.strategy,
-    status: "active",
-    allocation_pct: 0,
     trade_count: perf.trade_count,
     win_rate: perf.win_rate,
-    recent_pnl: perf.avg_pnl,
     profit_factor: perf.profit_factor,
-  }));
-}
-
-function statusClass(status: string): string {
-  const lower = status.toLowerCase();
-  if (lower === "active") {
-    return "bg-emerald-950/50 text-emerald-400 border border-emerald-700/40";
-  }
-  if (lower === "disabled") {
-    return "bg-zinc-800 text-zinc-400 border border-zinc-700";
-  }
-  return "bg-yellow-950/40 text-yellow-300 border border-yellow-700/40";
+    sharpe: perf.sharpe ?? null,
+    avg_pnl: perf.avg_pnl ?? null,
+    max_dd: perf.max_dd ?? null,
+  };
 }
 
 export default function StrategiesPage() {
   const [rows, setRows] = useState<StrategyRow[]>([]);
-  const [activePlan, setActivePlan] = useState<string>("unknown");
-  const [sourceLabel, setSourceLabel] = useState<string>("/api/strategies");
+  const [selectedRow, setSelectedRow] = useState<StrategyRow | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
@@ -138,38 +76,15 @@ export default function StrategiesPage() {
       if (performanceResult.status !== "fulfilled") warningParts.push("/api/performance/by-strategy");
       if (statsResult.status !== "fulfilled") warningParts.push("/api/system/stats");
 
-      const performanceRows =
+      const performanceRows: StrategyPerformance[] =
         performanceResult.status === "fulfilled" ? performanceResult.value : [];
 
-      let baseRows: StrategyRow[] = [];
-      let nextPlan = "unknown";
-      let nextSource = "/api/strategies";
+      const finalRows = performanceRows.map(perfToRow);
 
-      if (
-        strategiesResult.status === "fulfilled" &&
-        Array.isArray(strategiesResult.value.strategies) &&
-        strategiesResult.value.strategies.length > 0
-      ) {
-        baseRows = strategiesResult.value.strategies.map(normalizeSnapshot);
-        nextPlan = strategiesResult.value.active_plan ?? "unknown";
-      } else if (
-        statsResult.status === "fulfilled" &&
-        Array.isArray(statsResult.value.strategy_config) &&
-        statsResult.value.strategy_config.length > 0
-      ) {
-        baseRows = buildFallbackRows(statsResult.value);
-        nextPlan = statsResult.value.active_plan ?? "unknown";
-        nextSource = "fallback: /api/system/stats";
-      }
-
-      const mergedRows = mergePerformance(baseRows, performanceRows);
-
-      if (mergedRows.length === 0) {
+      if (finalRows.length === 0) {
         setError("No strategy data available from API.");
       } else {
-        setRows(mergedRows);
-        setActivePlan(nextPlan);
-        setSourceLabel(nextSource);
+        setRows(finalRows);
         if (warningParts.length > 0) {
           setWarning(
             `Some sources failed to load: ${warningParts.join(", ")}. Showing available data.`
@@ -183,15 +98,40 @@ export default function StrategiesPage() {
     void load();
   }, []);
 
+  function handleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "desc" ? "asc" : "desc"));
+    } else {
+      setSortKey(key);
+      setSortDir("desc");
+    }
+  }
+
+  const sortedRows = useMemo(() => {
+    if (!sortKey) return rows;
+    return [...rows].sort((a, b) => {
+      const aVal = a[sortKey];
+      const bVal = b[sortKey];
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+      return sortDir === "desc" ? bVal - aVal : aVal - bVal;
+    });
+  }, [rows, sortKey, sortDir]);
+
   if (loading) {
     return <LoadingSpinner label="Loading strategy data..." />;
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center" role="alert" aria-live="assertive">
-          <p className="text-red-400 text-sm">{error}</p>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-bold text-zinc-100">Strategies</h1>
+          <p className="text-xs text-zinc-500">0 strategies</p>
+        </div>
+        <div className="text-center py-8" role="alert" aria-live="assertive">
+          <p className="text-red-400 text-sm">No strategy data available from API.</p>
           <p className="text-zinc-500 text-xs mt-1">
             Ensure the bot API server is running and reachable.
           </p>
@@ -202,15 +142,9 @@ export default function StrategiesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-zinc-100">Strategies</h1>
-          <p className="text-xs text-zinc-500 mt-1">Source: {sourceLabel}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-sm text-zinc-300">Active Plan: {activePlan}</p>
-          <p className="text-xs text-zinc-500">{rows.length} strategies</p>
-        </div>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold text-zinc-100">Strategies</h1>
+        <p className="text-xs text-zinc-500">{rows.length} strategies</p>
       </div>
 
       {warning && (
@@ -223,62 +157,180 @@ export default function StrategiesPage() {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-900">
-        <table className="w-full text-sm" aria-label="Strategies table">
-          <thead>
-            <tr className="border-b border-zinc-800 text-zinc-500 text-xs uppercase tracking-wide">
-              <th className="text-left px-4 py-3 font-medium">ID</th>
-              <th className="text-left px-4 py-3 font-medium">Symbol</th>
-              <th className="text-left px-4 py-3 font-medium">Strategy</th>
-              <th className="text-left px-4 py-3 font-medium">Status</th>
-              <th className="text-right px-4 py-3 font-medium">Allocation %</th>
-              <th className="text-right px-4 py-3 font-medium">Recent PnL</th>
-              <th className="text-right px-4 py-3 font-medium">Trades</th>
-              <th className="text-right px-4 py-3 font-medium">Win Rate</th>
-              <th className="text-right px-4 py-3 font-medium">PF</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-b border-zinc-800/60">
-                <td className="px-4 py-3 font-mono text-zinc-200">{row.id}</td>
-                <td className="px-4 py-3 text-zinc-300">{row.symbol}</td>
-                <td className="px-4 py-3 text-zinc-300">{row.strategy}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusClass(
-                      row.status
-                    )}`}
-                  >
-                    {row.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right font-mono text-zinc-200">
-                  {formatPercent(row.allocation_pct, 1)}
-                </td>
-                <td
-                  className={`px-4 py-3 text-right font-mono ${
-                    row.recent_pnl != null
-                      ? colorByPnl(row.recent_pnl)
-                      : "text-zinc-500"
-                  }`}
-                >
-                  {row.recent_pnl != null ? formatPnl(row.recent_pnl) : "—"}
-                </td>
-                <td className="px-4 py-3 text-right font-mono text-zinc-300">
-                  {row.trade_count}
-                </td>
-                <td className="px-4 py-3 text-right font-mono text-zinc-300">
-                  {row.win_rate != null ? formatPercent(row.win_rate * 100, 1) : "—"}
-                </td>
-                <td className="px-4 py-3 text-right font-mono text-zinc-300">
-                  {row.profit_factor != null ? row.profit_factor.toFixed(2) : "—"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Strategy Cards */}
+      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {rows.map((row) => (
+          <button
+            key={row.strategy}
+            type="button"
+            onClick={() => setSelectedRow(row)}
+            className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-left transition-colors hover:bg-zinc-800/70"
+          >
+            <p className="text-sm font-semibold text-zinc-100">{row.strategy}</p>
+            <p className="mt-1 text-xs text-zinc-500">{row.trade_count} trades</p>
+            <div className="mt-2 flex items-center gap-3 text-xs">
+              <span className="text-zinc-400">
+                WR: {row.win_rate != null ? formatPercent(row.win_rate * 100, 1) : "—"}
+              </span>
+              <span className="text-zinc-400">
+                PF: {row.profit_factor != null ? row.profit_factor.toFixed(2) : "—"}
+              </span>
+              <span className={row.avg_pnl != null ? colorByPnl(row.avg_pnl) : "text-zinc-500"}>
+                {row.avg_pnl != null ? formatPnl(row.avg_pnl) : "—"}
+              </span>
+            </div>
+          </button>
+        ))}
       </div>
+
+      {/* Detail Comparison Table */}
+      <div>
+        <h2 className="mb-3 text-lg font-semibold text-zinc-100">Detail Comparison</h2>
+        <div className="overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-900">
+          <table className="w-full text-sm" aria-label="Strategy comparison table">
+            <thead>
+              <tr className="border-b border-zinc-800 text-zinc-500 text-xs uppercase tracking-wide">
+                <th className="text-left px-4 py-3 font-medium">Strategy</th>
+                <th className="text-right px-4 py-3 font-medium">Trades</th>
+                <SortableHeader label="Win Rate" sortKey="win_rate" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
+                <SortableHeader label="Profit Factor" sortKey="profit_factor" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
+                <SortableHeader label="Sharpe" sortKey="sharpe" currentKey={sortKey} dir={sortDir} onSort={handleSort} />
+                <th className="text-right px-4 py-3 font-medium">Avg PnL</th>
+                <th className="text-right px-4 py-3 font-medium">Max DD</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedRows.map((row) => (
+                <tr
+                  key={row.strategy}
+                  onClick={() => setSelectedRow(row)}
+                  className="border-b border-zinc-800/60 cursor-pointer hover:bg-zinc-800/40 transition-colors"
+                >
+                  <td className="px-4 py-3 text-zinc-200">{row.strategy}</td>
+                  <td className="px-4 py-3 text-right font-mono text-zinc-300">
+                    {row.trade_count}
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono text-zinc-300">
+                    {row.win_rate != null ? formatPercent(row.win_rate * 100, 1) : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono text-zinc-300">
+                    {row.profit_factor != null ? row.profit_factor.toFixed(2) : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono text-zinc-300">
+                    {row.sharpe != null ? row.sharpe.toFixed(2) : "—"}
+                  </td>
+                  <td
+                    className={`px-4 py-3 text-right font-mono ${
+                      row.avg_pnl != null ? colorByPnl(row.avg_pnl) : "text-zinc-500"
+                    }`}
+                  >
+                    {row.avg_pnl != null ? formatPnl(row.avg_pnl) : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono text-zinc-300">
+                    {row.max_dd != null ? formatPnl(-Math.abs(row.max_dd)) : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Detail Panel */}
+      <DetailPanel
+        isOpen={selectedRow != null}
+        onClose={() => setSelectedRow(null)}
+        title="Strategy Details"
+      >
+        {selectedRow && (
+          <div className="space-y-3 text-sm">
+            <DetailRow label="Strategy" value={selectedRow.strategy} />
+            <DetailRow label="Trades" value={String(selectedRow.trade_count)} />
+            <DetailRow
+              label="Win Rate"
+              value={
+                selectedRow.win_rate != null
+                  ? formatPercent(selectedRow.win_rate * 100, 1)
+                  : "—"
+              }
+            />
+            <DetailRow
+              label="Profit Factor"
+              value={
+                selectedRow.profit_factor != null
+                  ? selectedRow.profit_factor.toFixed(2)
+                  : "—"
+              }
+            />
+            <DetailRow
+              label="Sharpe Ratio"
+              value={
+                selectedRow.sharpe != null
+                  ? selectedRow.sharpe.toFixed(2)
+                  : "—"
+              }
+            />
+            <DetailRow
+              label="Avg PnL"
+              value={
+                selectedRow.avg_pnl != null
+                  ? formatPnl(selectedRow.avg_pnl)
+                  : "—"
+              }
+            />
+            <DetailRow
+              label="Max Drawdown"
+              value={
+                selectedRow.max_dd != null
+                  ? formatPnl(-Math.abs(selectedRow.max_dd))
+                  : "—"
+              }
+            />
+          </div>
+        )}
+      </DetailPanel>
+    </div>
+  );
+}
+
+function SortableHeader({
+  label,
+  sortKey,
+  currentKey,
+  dir,
+  onSort,
+}: {
+  label: string;
+  sortKey: SortKey;
+  currentKey: SortKey | null;
+  dir: SortDir;
+  onSort: (key: SortKey) => void;
+}) {
+  const isActive = currentKey === sortKey;
+  const indicator = isActive ? (dir === "desc" ? "DESC" : "ASC") : "SORT";
+
+  return (
+    <th className="text-right px-4 py-3 font-medium">
+      <button
+        type="button"
+        aria-label={label}
+        onClick={() => onSort(sortKey)}
+        className="inline-flex items-center gap-1 hover:text-zinc-300 transition-colors"
+      >
+        {label}
+        <span className="text-zinc-400 text-[10px] ml-1" aria-hidden="true">
+          {indicator}
+        </span>
+      </button>
+    </th>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-4 border-b border-zinc-800/70 pb-2">
+      <span className="text-zinc-500">{label}</span>
+      <span className="text-right text-zinc-200 font-mono">{value}</span>
     </div>
   );
 }

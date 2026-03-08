@@ -50,7 +50,7 @@ test.describe("Dashboard page", () => {
     const errors = trackConsoleErrors(page);
 
     await page.goto("/");
-    await expect(page.getByText("Recent Trades")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Recent Trades" })).toBeVisible();
     await expect(page.getByText("BTC/USDT").first()).toBeVisible();
     await expect(page.getByText("BUY")).toBeVisible();
 

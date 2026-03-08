@@ -15,7 +15,7 @@ type RouteDecision = {
 
 const apiResponses = defaultApiResponses as ApiPayloadMap;
 
-const singleTradeResponse = [
+const singleTradeData = [
   {
     id: 11,
     symbol: "BTC/USDT",
@@ -32,29 +32,45 @@ const singleTradeResponse = [
     strategy: "trend",
     cycle_id: 1,
     created_at: "2026-01-01",
+    execution_mode: "paper",
   },
 ];
 
-const multiTradeResponse = [
-  ...singleTradeResponse,
-  {
-    id: 12,
-    symbol: "ETH/USDT",
-    side: "SELL",
-    entry_price: 3000,
-    exit_price: 2950,
-    quantity: 1.2,
-    pnl: 60,
-    pnl_pct: 2.0,
-    fees: 2,
-    entry_time: "2026-01-02T00:00:00Z",
-    exit_time: "2026-01-02T02:00:00Z",
-    exit_reason: "tp",
-    strategy: "mean_reversion",
-    cycle_id: 2,
-    created_at: "2026-01-02",
-  },
-];
+const singleTradeResponse = {
+  trades: singleTradeData,
+  total: 1,
+  offset: 0,
+  limit: 50,
+};
+
+const multiTradeResponse = {
+  trades: [
+    ...singleTradeData,
+    {
+      id: 12,
+      symbol: "ETH/USDT",
+      side: "SELL",
+      entry_price: 3000,
+      exit_price: 2950,
+      quantity: 1.2,
+      pnl: 60,
+      pnl_pct: 2.0,
+      fees: 2,
+      entry_time: "2026-01-02T00:00:00Z",
+      exit_time: "2026-01-02T02:00:00Z",
+      exit_reason: "tp",
+      strategy: "mean_reversion",
+      cycle_id: 2,
+      created_at: "2026-01-02",
+      execution_mode: "paper",
+    },
+  ],
+  total: 2,
+  offset: 0,
+  limit: 50,
+};
+
+const emptyTradeResponse = { trades: [], total: 0, offset: 0, limit: 50 };
 
 async function fulfillApiRoute(
   route: Route,
@@ -244,7 +260,7 @@ test.describe("Dashboard E2E expansion v2 — trades interactions", () => {
         if (url.pathname !== "/api/trades") return null;
         const hasTimeWindow =
           url.searchParams.has("start") && url.searchParams.has("end");
-        return { body: hasTimeWindow ? multiTradeResponse : [] };
+        return { body: hasTimeWindow ? multiTradeResponse : emptyTradeResponse };
       });
     });
 
