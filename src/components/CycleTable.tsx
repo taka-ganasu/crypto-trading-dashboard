@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 export type RegimeType =
   | "trending"
   | "ranging"
@@ -62,17 +64,33 @@ function formatDuration(value: number | null): string {
   return `${hours}h ${remainingMinutes}m`;
 }
 
+const PAGE_SIZE = 25;
+
 export default function CycleTable({ cycles }: { cycles: DisplayCycle[] }) {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.max(1, Math.ceil(cycles.length / PAGE_SIZE));
+  const paginatedCycles = cycles.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
+  // Reset to page 1 when cycles change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [cycles]);
+
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-900">
-      <div className="border-b border-zinc-800 px-4 py-3">
+      <div className="border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-zinc-200">Cycle Table</h2>
+        <span className="text-xs text-zinc-500">{cycles.length} cycles</span>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
         <table className="w-full text-sm" aria-label="Cycle table">
-          <thead>
-            <tr className="border-b border-zinc-800 bg-zinc-900/90 text-left text-xs uppercase tracking-wider text-zinc-500">
+          <thead className="sticky top-0 z-10">
+            <tr className="border-b border-zinc-800 bg-zinc-900 text-left text-xs uppercase tracking-wider text-zinc-500">
               <th className="px-4 py-3">Cycle</th>
               <th className="px-4 py-3">Start</th>
               <th className="px-4 py-3">End</th>
@@ -84,14 +102,14 @@ export default function CycleTable({ cycles }: { cycles: DisplayCycle[] }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800">
-            {cycles.length === 0 ? (
+            {paginatedCycles.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-4 py-8 text-center text-zinc-500">
                   No analysis cycles found
                 </td>
               </tr>
             ) : (
-              cycles.map((cycle) => (
+              paginatedCycles.map((cycle) => (
                 <tr key={cycle.id} className="hover:bg-zinc-900/50 transition-colors">
                   <td className="px-4 py-3 font-mono text-zinc-300">#{cycle.id}</td>
                   <td className="px-4 py-3 text-zinc-400">{formatDateTime(cycle.startTime)}</td>
@@ -115,6 +133,30 @@ export default function CycleTable({ cycles }: { cycles: DisplayCycle[] }) {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="border-t border-zinc-800 px-4 py-3 flex items-center justify-between">
+          <span className="text-sm text-zinc-500">
+            Page {currentPage} of {totalPages}
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              className="rounded border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Prev
+            </button>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+              className="rounded border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

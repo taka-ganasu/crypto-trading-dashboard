@@ -304,8 +304,23 @@ export default function Home() {
                     {trade.side.toUpperCase()}
                   </span>
                   <div>
-                    <p className="text-sm font-medium text-zinc-200">
+                    <p className="text-sm font-medium text-zinc-200 flex items-center gap-2">
                       {trade.symbol}
+                      {trade.execution_mode != null && (
+                        <span
+                          className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-medium leading-none ${
+                            trade.execution_mode === "live"
+                              ? "bg-emerald-950/50 text-emerald-400"
+                              : trade.execution_mode === "paper"
+                                ? "bg-blue-950/50 text-blue-400"
+                                : "bg-zinc-800 text-zinc-400"
+                          }`}
+                        >
+                          {trade.execution_mode === "dry_run"
+                            ? "DRY"
+                            : trade.execution_mode.toUpperCase()}
+                        </span>
+                      )}
                     </p>
                     <p className="text-xs text-zinc-500">
                       {trade.entry_time ? formatDate(trade.entry_time) : "—"}

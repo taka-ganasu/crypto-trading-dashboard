@@ -86,6 +86,7 @@ function TradesContent() {
             <tr className="border-b border-zinc-800 bg-zinc-900 text-left text-xs uppercase tracking-wider text-zinc-500">
               <th className="px-4 py-3">Symbol</th>
               <th className="px-4 py-3">Side</th>
+              <th className="px-4 py-3">Mode</th>
               <th className="px-4 py-3">Strategy</th>
               <th className="px-4 py-3 text-right">Entry Price</th>
               <th className="px-4 py-3 text-right">Exit Price</th>
@@ -97,7 +98,7 @@ function TradesContent() {
           <tbody className="divide-y divide-zinc-800">
             {trades.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-zinc-500">
+                <td colSpan={9} className="px-4 py-8 text-center text-zinc-500">
                   No trades found
                 </td>
               </tr>
@@ -125,6 +126,26 @@ function TradesContent() {
                     >
                       {trade.side}
                     </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {trade.execution_mode != null ? (
+                      <span
+                        className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${
+                          trade.execution_mode === "live"
+                            ? "bg-emerald-900/50 text-emerald-400"
+                            : trade.execution_mode === "paper"
+                              ? "bg-blue-900/50 text-blue-400"
+                              : "bg-zinc-800 text-zinc-400"
+                        }`}
+                      >
+                        {trade.execution_mode === "dry_run"
+                          ? "Dry Run"
+                          : trade.execution_mode.charAt(0).toUpperCase() +
+                            trade.execution_mode.slice(1)}
+                      </span>
+                    ) : (
+                      <span className="text-zinc-500">-</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-zinc-400">
                     {trade.strategy ?? "-"}
@@ -224,6 +245,17 @@ function TradesContent() {
             <DetailRow
               label="Strategy"
               value={selectedTrade.strategy ?? "—"}
+            />
+            <DetailRow
+              label="Mode"
+              value={
+                selectedTrade.execution_mode != null
+                  ? selectedTrade.execution_mode === "dry_run"
+                    ? "Dry Run"
+                    : selectedTrade.execution_mode.charAt(0).toUpperCase() +
+                      selectedTrade.execution_mode.slice(1)
+                  : "—"
+              }
             />
             <DetailRow
               label="Entry Date"

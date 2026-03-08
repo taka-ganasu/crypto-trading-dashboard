@@ -30,6 +30,16 @@ const chartComponentResponses = {
       },
     },
   },
+  "/api/equity-curve": {
+    data: [
+      { date: "2026-01-01", balance: 10120, daily_pnl: 120, cumulative_pnl: 120 },
+      { date: "2026-01-02", balance: 10040, daily_pnl: -80, cumulative_pnl: 40 },
+      { date: "2026-01-03", balance: 10180, daily_pnl: 140, cumulative_pnl: 180 },
+    ],
+    total_days: 3,
+    start_date: "2026-01-01",
+    end_date: "2026-01-03",
+  },
   "/api/performance/equity-curve": {
     data: [
       { date: "2026-01-01", balance: 10120, daily_pnl: 120, cumulative_pnl: 120 },

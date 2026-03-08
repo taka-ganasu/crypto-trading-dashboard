@@ -9,6 +9,7 @@ import {
   fetchEquityCurve,
   fetchTradesByStrategy,
 } from "@/lib/api";
+const CumulativePnlChart = dynamic(() => import("@/components/CumulativePnlChart"), { ssr: false });
 const DailyStrategyPnlChart = dynamic(() => import("@/components/DailyStrategyPnlChart"), { ssr: false });
 import DetailPanel from "@/components/DetailPanel";
 const EquityCurveChart = dynamic(() => import("@/components/EquityCurveChart"), { ssr: false });
@@ -226,6 +227,19 @@ function PerformanceContent() {
           </div>
         </div>
       )}
+
+      <div className="mb-8">
+        <h2 className="mb-3 text-lg font-semibold text-zinc-100">Cumulative PnL</h2>
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+          <CumulativePnlChart
+            data={equityCurve.map((p) => ({
+              date: p.date,
+              cumulative_pnl: p.cumulative_pnl ?? 0,
+              daily_pnl: p.daily_pnl ?? 0,
+            }))}
+          />
+        </div>
+      </div>
 
       <div className="mb-8">
         <h2 className="mb-3 text-lg font-semibold text-zinc-100">Equity Curve</h2>

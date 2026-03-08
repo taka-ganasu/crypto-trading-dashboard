@@ -89,9 +89,12 @@ test.describe("Wave11 Analysis E2E", () => {
     await page.getByRole("button", { name: "All" }).click();
     await expect(page).toHaveURL(/range=all/);
 
-    const allRangeCall = cyclesCalls[cyclesCalls.length - 1] ?? "";
-    expect(allRangeCall).not.toContain("start=");
-    expect(allRangeCall).not.toContain("end=");
+    await expect
+      .poll(() => {
+        const last = cyclesCalls[cyclesCalls.length - 1] ?? "";
+        return !last.includes("start=") && !last.includes("end=");
+      })
+      .toBe(true);
 
     expectNoConsoleErrors(errors);
   });
@@ -112,7 +115,7 @@ test.describe("Wave11 Analysis E2E", () => {
 
     await page.goto("/analysis");
 
-    await expect(page.getByText("0 cycles")).toBeVisible();
+    await expect(page.getByText("0 cycles").first()).toBeVisible();
     await expect(page.getByTestId("regime-timeline")).toContainText(
       "No analysis cycles found"
     );

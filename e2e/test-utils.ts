@@ -5,25 +5,31 @@ type JsonValue = unknown;
 type ApiResponseMap = Record<string, JsonValue>;
 
 export const defaultApiResponses: ApiResponseMap = {
-  "/api/trades": [
-    {
-      id: 1,
-      symbol: "BTC/USDT",
-      side: "BUY",
-      entry_price: 100000,
-      exit_price: 100500,
-      quantity: 0.1,
-      pnl: 50,
-      pnl_pct: 0.5,
-      fees: 1,
-      entry_time: "2026-01-01T00:00:00Z",
-      exit_time: "2026-01-01T01:00:00Z",
-      exit_reason: "tp",
-      strategy: "trend",
-      cycle_id: 1,
-      created_at: "2026-01-01",
-    },
-  ],
+  "/api/trades": {
+    trades: [
+      {
+        id: 1,
+        symbol: "BTC/USDT",
+        side: "BUY",
+        entry_price: 100000,
+        exit_price: 100500,
+        quantity: 0.1,
+        pnl: 50,
+        pnl_pct: 0.5,
+        fees: 1,
+        entry_time: "2026-01-01T00:00:00Z",
+        exit_time: "2026-01-01T01:00:00Z",
+        exit_reason: "tp",
+        strategy: "trend",
+        cycle_id: 1,
+        created_at: "2026-01-01",
+        execution_mode: "paper",
+      },
+    ],
+    total: 1,
+    offset: 0,
+    limit: 50,
+  },
   "/api/trades/summary": {
     total_trades: 1,
     winning_trades: 1,
@@ -260,6 +266,16 @@ export const defaultApiResponses: ApiResponseMap = {
       created_at: "2026-01-01T00:15:10Z",
     },
   ],
+  "/api/equity-curve": {
+    data: [
+      { date: "2026-01-01", balance: 10100, daily_pnl: 100, cumulative_pnl: 100 },
+      { date: "2026-01-02", balance: 10120, daily_pnl: 20, cumulative_pnl: 120 },
+      { date: "2026-01-03", balance: 10320, daily_pnl: 200, cumulative_pnl: 320 },
+    ],
+    total_days: 3,
+    start_date: "2026-01-01",
+    end_date: "2026-01-03",
+  },
   "/api/performance/equity-curve": {
     data: [
       { date: "2026-01-01", balance: 10100, daily_pnl: 100, cumulative_pnl: 100 },
@@ -337,7 +353,7 @@ export const defaultApiResponses: ApiResponseMap = {
 };
 
 export const nullSafeApiResponses: ApiResponseMap = {
-  "/api/trades": [],
+  "/api/trades": { trades: [], total: 0, offset: 0, limit: 50 },
   "/api/trades/summary": {
     total_trades: 0,
     winning_trades: null,
@@ -417,6 +433,12 @@ export const nullSafeApiResponses: ApiResponseMap = {
     },
   ],
   "/api/cycles": [],
+  "/api/equity-curve": {
+    data: [],
+    total_days: 0,
+    start_date: null,
+    end_date: null,
+  },
   "/api/performance/equity-curve": {
     data: [],
     total_days: 0,

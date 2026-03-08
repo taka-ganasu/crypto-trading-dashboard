@@ -10,6 +10,8 @@ import ExecutionModeFilter, {
 } from "@/components/ExecutionModeFilter";
 import type { Signal } from "@/types";
 
+type ExecutedFilter = "all" | "executed" | "not_executed";
+
 function actionBadge(action: string) {
   const lower = action.toLowerCase();
   if (lower === "buy")
@@ -27,9 +29,13 @@ export default function SignalsPage() {
   );
 }
 
+const PAGE_SIZE = 25;
+
 function SignalsContent() {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [totalSignals, setTotalSignals] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [executedFilter, setExecutedFilter] = useState<ExecutedFilter>("all");
   const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,23 +43,37 @@ function SignalsContent() {
   const { apiExecutionMode } = useExecutionMode();
 
   useEffect(() => {
+    setCurrentPage(1);
+  }, [start, end, apiExecutionMode, executedFilter]);
+
+  useEffect(() => {
+    const offset = (currentPage - 1) * PAGE_SIZE;
     setLoading(true);
-    fetchSignals(undefined, 1000, start, end, apiExecutionMode)
+    fetchSignals(undefined, PAGE_SIZE, start, end, apiExecutionMode, offset)
       .then((res) => {
-        setSignals(res.signals);
+        const filtered =
+          executedFilter === "all"
+            ? res.signals
+            : executedFilter === "executed"
+              ? res.signals.filter((s) => s.executed === 1)
+              : res.signals.filter((s) => s.executed !== 1);
+        setSignals(filtered);
         setTotalSignals(res.total);
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [start, end, apiExecutionMode]);
+  }, [start, end, apiExecutionMode, currentPage, executedFilter]);
 
-  if (loading) {
+  const totalPages = Math.max(1, Math.ceil(totalSignals / PAGE_SIZE));
+
+  if (loading && currentPage === 1 && signals.length === 0) {
     return <LoadingSpinner label="Loading signals..." />;
   }
 
   const displayed = signals.length;
   const executedCount = signals.filter((s) => s.executed === 1).length;
-  const executionRate = displayed > 0 ? ((executedCount / displayed) * 100).toFixed(1) : "0.0";
+  const executionRate =
+    displayed > 0 ? ((executedCount / displayed) * 100).toFixed(1) : "0.0";
   const avgConfidence =
     displayed > 0
       ? (
@@ -70,15 +90,25 @@ function SignalsContent() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-xl font-bold text-zinc-100">Signals</h1>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           <TimeRangeFilter />
           <ExecutionModeFilter />
+          <select
+            value={executedFilter}
+            onChange={(e) =>
+              setExecutedFilter(e.target.value as ExecutedFilter)
+            }
+            className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-300"
+            aria-label="Filter by execution status"
+          >
+            <option value="all">All</option>
+            <option value="executed">Executed</option>
+            <option value="not_executed">Not Executed</option>
+          </select>
           <span className="text-sm text-zinc-500">
-            {displayed === totalSignals
-              ? `${totalSignals} signals`
-              : `${displayed} / ${totalSignals} signals`}
+            {totalSignals} signals
           </span>
         </div>
       </div>
@@ -110,9 +140,9 @@ function SignalsContent() {
       </div>
 
       {/* Signal History Table */}
-      <div className="overflow-x-auto rounded-lg border border-zinc-800">
+      <div className="overflow-x-auto rounded-lg border border-zinc-800 max-h-[70vh] overflow-y-auto">
         <table className="w-full text-sm" aria-label="Signals table">
-          <thead>
+          <thead className="sticky top-0 z-10">
             <tr className="border-b border-zinc-800 bg-zinc-900 text-left text-xs uppercase tracking-wider text-zinc-500">
               <th className="px-4 py-3">Timestamp</th>
               <th className="px-4 py-3">Symbol</th>
@@ -179,6 +209,32 @@ function SignalsContent() {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between">
+          <span className="text-sm text-zinc-500">
+            Page {currentPage} of {totalPages}
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              className="rounded border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Prev
+            </button>
+            <button
+              onClick={() =>
+                setCurrentPage((p) => Math.min(totalPages, p + 1))
+              }
+              disabled={currentPage >= totalPages}
+              className="rounded border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       <DetailPanel
         isOpen={selectedSignal != null}

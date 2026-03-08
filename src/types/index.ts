@@ -16,6 +16,7 @@ export interface Trade {
   strategy: string | null;
   cycle_id: number | null;
   created_at: string | null;
+  execution_mode: string | null;
 }
 
 export interface TradeSummary {
