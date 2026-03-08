@@ -19,8 +19,12 @@ export default function TradesPage() {
   );
 }
 
+const PAGE_SIZE = 25;
+
 function TradesContent() {
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [totalTrades, setTotalTrades] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [highlightTradeId, setHighlightTradeId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,13 +36,25 @@ function TradesContent() {
     const tradeIdRaw = new URLSearchParams(window.location.search).get("tradeId");
     const parsedTradeId = tradeIdRaw ? Number(tradeIdRaw) : NaN;
     setHighlightTradeId(Number.isFinite(parsedTradeId) ? parsedTradeId : null);
+  }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [start, end, apiExecutionMode]);
+
+  useEffect(() => {
+    const offset = (currentPage - 1) * PAGE_SIZE;
     setLoading(true);
-    fetchTrades(undefined, 100, start, end, apiExecutionMode)
-      .then(setTrades)
+    fetchTrades(undefined, PAGE_SIZE, start, end, apiExecutionMode, offset)
+      .then((res) => {
+        setTrades(res.trades);
+        setTotalTrades(res.total);
+      })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [start, end, apiExecutionMode]);
+  }, [start, end, apiExecutionMode, currentPage]);
+
+  const totalPages = Math.max(1, Math.ceil(totalTrades / PAGE_SIZE));
 
   if (loading) {
     return <LoadingSpinner label="Loading trades..." />;
@@ -51,7 +67,7 @@ function TradesContent() {
         <div className="flex items-center gap-4">
           <TimeRangeFilter />
           <ExecutionModeFilter />
-          <span className="text-sm text-zinc-500">{trades.length} trades</span>
+          <span className="text-sm text-zinc-500">{totalTrades} trades</span>
         </div>
       </div>
 
@@ -142,6 +158,30 @@ function TradesContent() {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between">
+          <span className="text-sm text-zinc-500">
+            Page {currentPage} of {totalPages}
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              className="rounded border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Prev
+            </button>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+              className="rounded border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       <DetailPanel
         isOpen={selectedTrade != null}
