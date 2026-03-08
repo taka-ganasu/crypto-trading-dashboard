@@ -119,7 +119,7 @@ function TradesContent() {
                   <td className="px-4 py-3 text-right font-mono text-zinc-300">
                     {trade.exit_price != null
                       ? formatNumber(trade.exit_price)
-                      : <span className="text-zinc-500 italic">Dry-run</span>}
+                      : <span className="text-zinc-500 italic">Open</span>}
                   </td>
                   <td className="px-4 py-3 text-right font-mono">
                     {trade.pnl != null ? (
@@ -162,7 +162,7 @@ function TradesContent() {
               value={
                 selectedTrade.exit_price != null
                   ? formatNumber(selectedTrade.exit_price)
-                  : "Dry-run"
+                  : "Open"
               }
             />
             <DetailRow
