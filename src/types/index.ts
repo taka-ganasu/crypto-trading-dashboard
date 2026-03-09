@@ -267,28 +267,28 @@ export interface MdseTrade {
 }
 
 export interface PerformanceSummary {
-  total_pnl: number;
-  win_rate: number;
-  profit_factor: number;
-  avg_slippage: number;
+  total_pnl: number | null;
+  win_rate: number | null;
+  profit_factor: number | null;
+  avg_slippage: number | null;
 }
 
 export interface ExecutionQuality {
-  trade_id: number;
-  expected_price: number;
-  actual_price: number;
-  slippage_pct: number;
-  api_latency_ms: number;
+  trade_id: number | null;
+  expected_price: number | null;
+  actual_price: number | null;
+  slippage_pct: number | null;
+  api_latency_ms: number | null;
   timestamp: string;
 }
 
 export interface MarketSnapshot {
   symbol: string;
-  price: number;
+  price: number | null;
   rsi: number | null;
   adx: number | null;
   macd: number | null;
-  volume: number;
+  volume: number | null;
   timestamp: string;
 }
 
