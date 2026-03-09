@@ -32,7 +32,8 @@ import type {
   TradeByStrategyDaily,
 } from "@/types";
 
-function slippageColor(pct: number): string {
+function slippageColor(pct: number | null): string {
+  if (pct == null) return "text-zinc-500";
   if (pct > 0.5) return "text-red-400";
   if (pct >= 0.1) return "text-yellow-400";
   return "text-emerald-400";
@@ -45,7 +46,8 @@ function rsiColor(rsi: number | null): string {
   return "text-zinc-300";
 }
 
-function formatPrice(value: number): string {
+function formatPrice(value: number | null): string {
+  if (value == null) return "—";
   return value.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 6,
@@ -279,11 +281,11 @@ function PerformanceContent() {
               ) : (
                 execQuality.map((eq) => (
                   <tr
-                    key={`${eq.trade_id}-${eq.timestamp}`}
+                    key={`${eq.trade_id ?? "unknown"}-${eq.timestamp}`}
                     onClick={() => setSelectedExecution(eq)}
                     className="cursor-pointer transition-colors hover:bg-zinc-900/50"
                   >
-                    <td className="px-4 py-3 font-medium text-zinc-200">#{eq.trade_id}</td>
+                    <td className="px-4 py-3 font-medium text-zinc-200">{eq.trade_id != null ? `#${eq.trade_id}` : "—"}</td>
                     <td className="px-4 py-3 text-right font-mono text-zinc-300">
                       {formatPrice(eq.expected_price)}
                     </td>
@@ -291,9 +293,9 @@ function PerformanceContent() {
                       {formatPrice(eq.actual_price)}
                     </td>
                     <td className={`px-4 py-3 text-right font-mono ${slippageColor(eq.slippage_pct)}`}>
-                      {eq.slippage_pct.toFixed(3)}%
+                      {eq.slippage_pct != null ? `${eq.slippage_pct.toFixed(3)}%` : "—"}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-zinc-300">{eq.api_latency_ms}</td>
+                    <td className="px-4 py-3 text-right font-mono text-zinc-300">{eq.api_latency_ms ?? "—"}</td>
                     <td className="px-4 py-3 text-zinc-400">{formatTimestamp(eq.timestamp)}</td>
                   </tr>
                 ))
@@ -309,16 +311,16 @@ function PerformanceContent() {
         >
           {selectedExecution && (
             <div className="space-y-3 text-sm">
-              <DetailRow label="Trade ID" value={`#${selectedExecution.trade_id}`} />
+              <DetailRow label="Trade ID" value={selectedExecution.trade_id != null ? `#${selectedExecution.trade_id}` : "—"} />
               <DetailRow label="Expected Price" value={formatPrice(selectedExecution.expected_price)} />
               <DetailRow label="Actual Price" value={formatPrice(selectedExecution.actual_price)} />
               <DetailRow
                 label="Slippage"
-                value={(
-                  selectedExecution.actual_price - selectedExecution.expected_price
-                ).toFixed(6)}
+                value={selectedExecution.actual_price != null && selectedExecution.expected_price != null
+                  ? (selectedExecution.actual_price - selectedExecution.expected_price).toFixed(6)
+                  : "—"}
               />
-              <DetailRow label="Slippage %" value={`${selectedExecution.slippage_pct.toFixed(3)}%`} />
+              <DetailRow label="Slippage %" value={selectedExecution.slippage_pct != null ? `${selectedExecution.slippage_pct.toFixed(3)}%` : "—"} />
               <DetailRow label="Timestamp" value={formatTimestamp(selectedExecution.timestamp)} />
             </div>
           )}
