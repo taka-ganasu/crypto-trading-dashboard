@@ -32,11 +32,16 @@ function formatPnl(value: number): string {
 }
 
 function getWeekKey(dateStr: string): string {
-  const d = new Date(dateStr);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(d.setDate(diff));
-  return monday.toISOString().split("T")[0];
+  // Parse date string as local date (not UTC) to avoid timezone shift
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  date.setDate(diff);
+  const my = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const md = String(date.getDate()).padStart(2, "0");
+  return `${my}-${mm}-${md}`;
 }
 
 function aggregateWeekly(

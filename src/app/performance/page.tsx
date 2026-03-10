@@ -24,6 +24,7 @@ import {
   colorByPnl,
   formatTimestamp,
 } from "@/lib/format";
+import { fillEquityCurveGaps, fillStrategyPnlGaps } from "@/lib/chartUtils";
 import type {
   PerformanceSummary,
   ExecutionQuality,
@@ -116,7 +117,7 @@ function PerformanceContent() {
     }
 
     if (curveResult.status === "fulfilled") {
-      setEquityCurve(curveResult.value.data ?? []);
+      setEquityCurve(fillEquityCurveGaps(curveResult.value.data ?? []));
       successCount += 1;
     } else {
       setEquityCurve([]);
@@ -124,7 +125,7 @@ function PerformanceContent() {
     }
 
     if (strategyPnlResult.status === "fulfilled") {
-      setDailyStrategyPnl(strategyPnlResult.value);
+      setDailyStrategyPnl(fillStrategyPnlGaps(strategyPnlResult.value));
       successCount += 1;
     } else {
       setDailyStrategyPnl([]);
