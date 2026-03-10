@@ -6,6 +6,7 @@ import { fetchPortfolioState, fetchEquityCurve, fetchStrategyPerformance } from 
 import LoadingSpinner from "@/components/LoadingSpinner";
 import type { EquityCurveResponse, StrategyPerformance } from "@/types";
 import { formatCurrency, formatPercent, formatPnl, colorByPnl, formatTimestamp } from "@/lib/format";
+import { fillEquityCurveGaps } from "@/lib/chartUtils";
 import DetailPanel from "@/components/DetailPanel";
 const DailyPnlChart = dynamic(() => import("@/components/DailyPnlChart"), { ssr: false });
 const StrategyAllocationPie = dynamic(() => import("@/components/StrategyAllocationPie"), { ssr: false });
@@ -140,7 +141,10 @@ export default function PortfolioPage() {
     const failedSections: string[] = [];
 
     if (curveResult.status === "fulfilled") {
-      setEquityCurve(curveResult.value);
+      const filled = curveResult.value
+        ? { ...curveResult.value, data: fillEquityCurveGaps(curveResult.value.data ?? []) }
+        : null;
+      setEquityCurve(filled);
     } else {
       setEquityCurve(null);
       failedSections.push("daily PnL chart");
