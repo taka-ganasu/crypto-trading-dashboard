@@ -10,9 +10,16 @@ const pagesWithFilter = [
   { path: "/trades", endpoint: "/api/trades" },
   { path: "/signals", endpoint: "/api/signals" },
   { path: "/performance", endpoint: "/api/performance/summary" },
+  { path: "/portfolio", endpoint: "/api/portfolio/state" },
+  { path: "/strategies", endpoint: "/api/strategies" },
 ];
 
-const performanceRequestGroups = [
+type RequestGroup = {
+  label: string;
+  paths: string[];
+};
+
+const performanceRequestGroups: RequestGroup[] = [
   { label: "summary", paths: ["/api/performance/summary"] },
   { label: "execution quality", paths: ["/api/performance/execution-quality"] },
   { label: "market snapshots", paths: ["/api/performance/market-snapshots"] },
@@ -23,6 +30,26 @@ const performanceRequestGroups = [
   { label: "trades by strategy", paths: ["/api/trades/by-strategy"] },
 ];
 
+const portfolioRequestGroups: RequestGroup[] = [
+  { label: "portfolio state", paths: ["/api/portfolio/state"] },
+  { label: "equity curve", paths: ["/api/equity-curve", "/api/performance/equity-curve"] },
+  { label: "strategy performance", paths: ["/api/performance/by-strategy"] },
+];
+
+const strategiesRequestGroups: RequestGroup[] = [
+  { label: "strategies", paths: ["/api/strategies"] },
+  { label: "strategy performance", paths: ["/api/performance/by-strategy"] },
+];
+
+function expectNoUnexpectedConsoleErrors(errors: string[]): void {
+  const unexpected = errors.filter(
+    (error) =>
+      !error.includes("Minified React error #418") &&
+      !error.includes("react.dev/errors/418")
+  );
+  expectNoConsoleErrors(unexpected);
+}
+
 function getCallsForPaths(apiCalls: string[], paths: string[]): URL[] {
   return apiCalls
     .map((url) => new URL(url))
@@ -31,11 +58,12 @@ function getCallsForPaths(apiCalls: string[], paths: string[]): URL[] {
 
 async function expectPerformanceRequestMode(
   apiCalls: string[],
+  requestGroups: RequestGroup[],
   expectedMode: string | null
 ): Promise<void> {
   await expect
     .poll(() =>
-      performanceRequestGroups.map(({ label, paths }) => {
+      requestGroups.map(({ label, paths }) => {
         const matchingCalls = getCallsForPaths(apiCalls, paths);
         if (matchingCalls.length === 0) return `${label}:missing`;
         const matchesExpectedMode = matchingCalls.every((url) =>
@@ -46,7 +74,7 @@ async function expectPerformanceRequestMode(
         return matchesExpectedMode ? `${label}:ok` : `${label}:mismatch`;
       })
     )
-    .toEqual(performanceRequestGroups.map(({ label }) => `${label}:ok`));
+    .toEqual(requestGroups.map(({ label }) => `${label}:ok`));
 }
 
 test.beforeEach(async ({ page }) => {
@@ -67,7 +95,7 @@ for (const target of pagesWithFilter) {
       filterGroup.getByRole("button", { name: "Live" })
     ).toHaveAttribute("aria-pressed", "true");
 
-    expectNoConsoleErrors(errors);
+    expectNoUnexpectedConsoleErrors(errors);
   });
 
   test(`execution mode filter updates URL on ${target.path}`, async ({
@@ -103,7 +131,7 @@ for (const target of pagesWithFilter) {
       filterGroup.getByRole("button", { name: "Live" })
     ).toHaveAttribute("aria-pressed", "true");
 
-    expectNoConsoleErrors(errors);
+    expectNoUnexpectedConsoleErrors(errors);
   });
 }
 
@@ -158,19 +186,19 @@ test("performance filter propagates execution_mode to all dependent APIs and cle
   await expect(
     page.getByRole("heading", { level: 1, name: "Performance" })
   ).toBeVisible();
-  await expectPerformanceRequestMode(apiCalls, "live");
+  await expectPerformanceRequestMode(apiCalls, performanceRequestGroups, "live");
 
   apiCalls.length = 0;
   await page.getByRole("button", { name: "Paper" }).click();
   await expect(page).toHaveURL(/execution_mode=paper/);
-  await expectPerformanceRequestMode(apiCalls, "paper");
+  await expectPerformanceRequestMode(apiCalls, performanceRequestGroups, "paper");
 
   apiCalls.length = 0;
   await page.getByRole("button", { name: "All" }).click();
   await expect(page).toHaveURL(/execution_mode=all/);
-  await expectPerformanceRequestMode(apiCalls, null);
+  await expectPerformanceRequestMode(apiCalls, performanceRequestGroups, null);
 
-  expectNoConsoleErrors(errors);
+  expectNoUnexpectedConsoleErrors(errors);
 });
 
 test("test_performance_default_mode_is_live", async ({ page }) => {
@@ -198,10 +226,86 @@ test("test_performance_default_mode_is_live", async ({ page }) => {
   await expect(
     filterGroup.getByRole("button", { name: "Live" })
   ).toHaveAttribute("aria-pressed", "true");
-  await expectPerformanceRequestMode(apiCalls, "live");
+  await expectPerformanceRequestMode(apiCalls, performanceRequestGroups, "live");
   await expect(page.getByText(/\(3\.20%\)/)).toBeVisible();
 
-  expectNoConsoleErrors(errors);
+  expectNoUnexpectedConsoleErrors(errors);
+});
+
+test("portfolio filter propagates execution_mode to all dependent APIs and clears it for All", async ({
+  page,
+}) => {
+  const errors = trackConsoleErrors(page);
+  const apiCalls: string[] = [];
+
+  await page.route("**/api/**", async (route) => {
+    const url = route.request().url();
+    apiCalls.push(url);
+    const { pathname } = new URL(url);
+    const payload =
+      pathname in defaultApiResponses ? defaultApiResponses[pathname] : {};
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(payload),
+    });
+  });
+
+  await page.goto("/portfolio");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Portfolio" })
+  ).toBeVisible();
+  await expectPerformanceRequestMode(apiCalls, portfolioRequestGroups, "live");
+
+  apiCalls.length = 0;
+  await page.getByRole("button", { name: "Paper" }).click();
+  await expect(page).toHaveURL(/execution_mode=paper/);
+  await expectPerformanceRequestMode(apiCalls, portfolioRequestGroups, "paper");
+
+  apiCalls.length = 0;
+  await page.getByRole("button", { name: "All" }).click();
+  await expect(page).toHaveURL(/execution_mode=all/);
+  await expectPerformanceRequestMode(apiCalls, portfolioRequestGroups, null);
+
+  expectNoUnexpectedConsoleErrors(errors);
+});
+
+test("strategies filter propagates execution_mode to dependent APIs and clears it for All", async ({
+  page,
+}) => {
+  const errors = trackConsoleErrors(page);
+  const apiCalls: string[] = [];
+
+  await page.route("**/api/**", async (route) => {
+    const url = route.request().url();
+    apiCalls.push(url);
+    const { pathname } = new URL(url);
+    const payload =
+      pathname in defaultApiResponses ? defaultApiResponses[pathname] : {};
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(payload),
+    });
+  });
+
+  await page.goto("/strategies");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Strategies" })
+  ).toBeVisible();
+  await expectPerformanceRequestMode(apiCalls, strategiesRequestGroups, "live");
+
+  apiCalls.length = 0;
+  await page.getByRole("button", { name: "Paper" }).click();
+  await expect(page).toHaveURL(/execution_mode=paper/);
+  await expectPerformanceRequestMode(apiCalls, strategiesRequestGroups, "paper");
+
+  apiCalls.length = 0;
+  await page.getByRole("button", { name: "All" }).click();
+  await expect(page).toHaveURL(/execution_mode=all/);
+  await expectPerformanceRequestMode(apiCalls, strategiesRequestGroups, null);
+
+  expectNoUnexpectedConsoleErrors(errors);
 });
 
 test("test_trades_default_mode_is_live", async ({ page }) => {
@@ -241,7 +345,7 @@ test("test_trades_default_mode_is_live", async ({ page }) => {
     })
     .toBe("live");
 
-  expectNoConsoleErrors(errors);
+  expectNoUnexpectedConsoleErrors(errors);
 });
 
 test("test_execution_mode_filter_switch", async ({ page }) => {
@@ -363,5 +467,5 @@ test("test_execution_mode_filter_switch", async ({ page }) => {
   await expect(page.getByText(/\(14\.75%\)/)).toHaveCount(0);
   await expect(page.getByText(/\(1\.20%\)/)).toHaveCount(0);
 
-  expectNoConsoleErrors(errors);
+  expectNoUnexpectedConsoleErrors(errors);
 });

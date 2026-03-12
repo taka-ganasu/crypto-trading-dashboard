@@ -1,8 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { fetchPortfolioState, fetchEquityCurve, fetchStrategyPerformance } from "@/lib/api";
+import ExecutionModeFilter, {
+  useExecutionMode,
+} from "@/components/ExecutionModeFilter";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import type { EquityCurveResponse, StrategyPerformance } from "@/types";
 import { formatCurrency, formatPercent, formatPnl, colorByPnl, formatTimestamp } from "@/lib/format";
@@ -97,6 +100,14 @@ function parseStrategies(data: Record<string, unknown>): {
 }
 
 export default function PortfolioPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner label="Loading portfolio..." />}>
+      <PortfolioContent />
+    </Suspense>
+  );
+}
+
+function PortfolioContent() {
   const [strategies, setStrategies] = useState<StrategyEntry[]>([]);
   const [selectedStrategy, setSelectedStrategy] = useState<StrategyEntry | null>(null);
   const [totalEquity, setTotalEquity] = useState(0);
@@ -106,16 +117,18 @@ export default function PortfolioPage() {
   const [warning, setWarning] = useState<string | null>(null);
   const [equityCurve, setEquityCurve] = useState<EquityCurveResponse | null>(null);
   const [strategyPerf, setStrategyPerf] = useState<StrategyPerformance[]>([]);
+  const { apiExecutionMode } = useExecutionMode();
 
   const loadPortfolio = useCallback(async () => {
     setLoading(true);
     setError(null);
     setWarning(null);
+    setSelectedStrategy(null);
 
     const [stateResult, curveResult, perfResult] = await Promise.allSettled([
-      fetchPortfolioState(),
-      fetchEquityCurve(),
-      fetchStrategyPerformance(),
+      fetchPortfolioState(apiExecutionMode),
+      fetchEquityCurve(undefined, undefined, apiExecutionMode),
+      fetchStrategyPerformance(apiExecutionMode),
     ]);
 
     if (stateResult.status !== "fulfilled") {
@@ -164,7 +177,7 @@ export default function PortfolioPage() {
     }
 
     setLoading(false);
-  }, []);
+  }, [apiExecutionMode]);
 
   useEffect(() => {
     void loadPortfolio();
@@ -174,21 +187,31 @@ export default function PortfolioPage() {
     return <LoadingSpinner label="Loading portfolio..." />;
   }
 
+  const pageHeader = (
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <h1 className="text-xl font-bold text-zinc-100">Portfolio</h1>
+      <ExecutionModeFilter />
+    </div>
+  );
+
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center" role="alert" aria-live="assertive">
-          <p className="text-red-400 text-sm">{error}</p>
-          <p className="text-zinc-600 text-xs mt-1">
-            Make sure the API server is running on port 8000
-          </p>
-          <button
-            type="button"
-            onClick={() => void loadPortfolio()}
-            className="mt-3 rounded border border-zinc-700 bg-zinc-900 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800"
-          >
-            Retry
-          </button>
+      <div className="space-y-6">
+        {pageHeader}
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center" role="alert" aria-live="assertive">
+            <p className="text-red-400 text-sm">{error}</p>
+            <p className="text-zinc-600 text-xs mt-1">
+              Make sure the API server is running on port 8000
+            </p>
+            <button
+              type="button"
+              onClick={() => void loadPortfolio()}
+              className="mt-3 rounded border border-zinc-700 bg-zinc-900 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800"
+            >
+              Retry
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -200,6 +223,8 @@ export default function PortfolioPage() {
 
   return (
     <div className="space-y-6">
+      {pageHeader}
+
       {warning && (
         <div
           className="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-2 text-sm text-yellow-300"
