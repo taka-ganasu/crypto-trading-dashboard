@@ -88,6 +88,7 @@ function TradesContent() {
               <th className="px-4 py-3">Side</th>
               <th className="px-4 py-3">Mode</th>
               <th className="px-4 py-3">Strategy</th>
+              <th className="px-4 py-3 text-right">Size</th>
               <th className="px-4 py-3 text-right">Entry Price</th>
               <th className="px-4 py-3 text-right">Exit Price</th>
               <th className="px-4 py-3 text-right">PnL</th>
@@ -98,7 +99,7 @@ function TradesContent() {
           <tbody className="divide-y divide-zinc-800">
             {trades.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-zinc-500">
+                <td colSpan={10} className="px-4 py-8 text-center text-zinc-500">
                   No trades found
                 </td>
               </tr>
@@ -149,6 +150,9 @@ function TradesContent() {
                   </td>
                   <td className="px-4 py-3 text-zinc-400">
                     {trade.strategy ?? "-"}
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono text-zinc-300">
+                    {trade.quantity}
                   </td>
                   <td className="px-4 py-3 text-right font-mono text-zinc-300">
                     {formatNumber(trade.entry_price)}
@@ -214,6 +218,10 @@ function TradesContent() {
             <DetailRow label="Trade ID" value={`#${selectedTrade.id}`} />
             <DetailRow label="Symbol" value={selectedTrade.symbol} />
             <DetailRow label="Side" value={selectedTrade.side} />
+            <DetailRow
+              label="Size"
+              value={String(selectedTrade.quantity)}
+            />
             <DetailRow
               label="Entry Price"
               value={formatNumber(selectedTrade.entry_price)}
