@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
   fetchStrategies,
   fetchStrategyPerformance,
   fetchSystemStatsOverview,
 } from "@/lib/api";
+import ExecutionModeFilter, {
+  useExecutionMode,
+} from "@/components/ExecutionModeFilter";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import DetailPanel from "@/components/DetailPanel";
 import { colorByPnl, formatPercent, formatPnl } from "@/lib/format";
@@ -50,6 +53,14 @@ function perfToRow(perf: StrategyPerformance): StrategyRow {
 }
 
 export default function StrategiesPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner label="Loading strategy data..." />}>
+      <StrategiesContent />
+    </Suspense>
+  );
+}
+
+function StrategiesContent() {
   const [rows, setRows] = useState<StrategyRow[]>([]);
   const [selectedRow, setSelectedRow] = useState<StrategyRow | null>(null);
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
@@ -57,46 +68,48 @@ export default function StrategiesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
+  const { apiExecutionMode } = useExecutionMode();
 
-  useEffect(() => {
-    async function load(): Promise<void> {
-      setLoading(true);
-      setError(null);
-      setWarning(null);
+  const load = useCallback(async (): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    setWarning(null);
+    setSelectedRow(null);
 
-      const [strategiesResult, performanceResult, statsResult] =
-        await Promise.allSettled([
-          fetchStrategies(),
-          fetchStrategyPerformance(),
-          fetchSystemStatsOverview(),
-        ]);
+    const [strategiesResult, performanceResult, statsResult] = await Promise.allSettled([
+      fetchStrategies(apiExecutionMode),
+      fetchStrategyPerformance(apiExecutionMode),
+      fetchSystemStatsOverview(),
+    ]);
 
-      const warningParts: string[] = [];
-      if (strategiesResult.status !== "fulfilled") warningParts.push("/api/strategies");
-      if (performanceResult.status !== "fulfilled") warningParts.push("/api/performance/by-strategy");
-      if (statsResult.status !== "fulfilled") warningParts.push("/api/system/stats");
+    const warningParts: string[] = [];
+    if (strategiesResult.status !== "fulfilled") warningParts.push("/api/strategies");
+    if (performanceResult.status !== "fulfilled") warningParts.push("/api/performance/by-strategy");
+    if (statsResult.status !== "fulfilled") warningParts.push("/api/system/stats");
 
-      const performanceRows: StrategyPerformance[] =
-        performanceResult.status === "fulfilled" ? performanceResult.value : [];
+    const performanceRows: StrategyPerformance[] =
+      performanceResult.status === "fulfilled" ? performanceResult.value : [];
 
-      const finalRows = performanceRows.map(perfToRow);
+    const finalRows = performanceRows.map(perfToRow);
 
-      if (finalRows.length === 0) {
-        setError("No strategy data available from API.");
-      } else {
-        setRows(finalRows);
-        if (warningParts.length > 0) {
-          setWarning(
-            `Some sources failed to load: ${warningParts.join(", ")}. Showing available data.`
-          );
-        }
+    if (finalRows.length === 0) {
+      setRows([]);
+      setError("No strategy data available from API.");
+    } else {
+      setRows(finalRows);
+      if (warningParts.length > 0) {
+        setWarning(
+          `Some sources failed to load: ${warningParts.join(", ")}. Showing available data.`
+        );
       }
-
-      setLoading(false);
     }
 
+    setLoading(false);
+  }, [apiExecutionMode]);
+
+  useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   function handleSort(key: SortKey) {
     if (sortKey === key) {
@@ -123,13 +136,20 @@ export default function StrategiesPage() {
     return <LoadingSpinner label="Loading strategy data..." />;
   }
 
+  const pageHeader = (
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex items-center gap-3">
+        <h1 className="text-xl font-bold text-zinc-100">Strategies</h1>
+        <p className="text-xs text-zinc-500">{rows.length} strategies</p>
+      </div>
+      <ExecutionModeFilter />
+    </div>
+  );
+
   if (error) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-zinc-100">Strategies</h1>
-          <p className="text-xs text-zinc-500">0 strategies</p>
-        </div>
+        {pageHeader}
         <div className="text-center py-8" role="alert" aria-live="assertive">
           <p className="text-red-400 text-sm">No strategy data available from API.</p>
           <p className="text-zinc-500 text-xs mt-1">
@@ -142,10 +162,7 @@ export default function StrategiesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-zinc-100">Strategies</h1>
-        <p className="text-xs text-zinc-500">{rows.length} strategies</p>
-      </div>
+      {pageHeader}
 
       {warning && (
         <div

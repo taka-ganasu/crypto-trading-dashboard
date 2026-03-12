@@ -101,8 +101,13 @@ export async function fetchSignals(
   return fetchJSON<SignalListResponse>(`/signals?${query}`);
 }
 
-export async function fetchPortfolioState(): Promise<PortfolioState> {
-  return fetchJSON<PortfolioState>("/portfolio/state");
+export async function fetchPortfolioState(
+  executionMode?: ExecutionMode
+): Promise<PortfolioState> {
+  const params = new URLSearchParams();
+  appendExecutionModeParam(params, executionMode);
+  const query = params.toString();
+  return fetchJSON<PortfolioState>(`/portfolio/state${query ? `?${query}` : ""}`);
 }
 
 export async function fetchCircuitBreakerState(): Promise<CircuitBreakerState> {
@@ -254,12 +259,24 @@ export async function fetchMarketSnapshots(
   );
 }
 
-export async function fetchStrategyPerformance(): Promise<StrategyPerformance[]> {
-  return fetchJSON<StrategyPerformance[]>("/performance/by-strategy");
+export async function fetchStrategyPerformance(
+  executionMode?: ExecutionMode
+): Promise<StrategyPerformance[]> {
+  const params = new URLSearchParams();
+  appendExecutionModeParam(params, executionMode);
+  const query = params.toString();
+  return fetchJSON<StrategyPerformance[]>(
+    `/performance/by-strategy${query ? `?${query}` : ""}`
+  );
 }
 
-export async function fetchStrategies(): Promise<StrategiesResponse> {
-  return fetchJSON<StrategiesResponse>("/strategies");
+export async function fetchStrategies(
+  executionMode?: ExecutionMode
+): Promise<StrategiesResponse> {
+  const params = new URLSearchParams();
+  appendExecutionModeParam(params, executionMode);
+  const query = params.toString();
+  return fetchJSON<StrategiesResponse>(`/strategies${query ? `?${query}` : ""}`);
 }
 
 export async function fetchTradesByStrategy(
