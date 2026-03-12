@@ -271,6 +271,7 @@ export interface PerformanceSummary {
   win_rate: number | null;
   profit_factor: number | null;
   avg_slippage: number | null;
+  initial_balance?: number | null;
 }
 
 export interface ExecutionQuality {
@@ -304,6 +305,7 @@ export interface EquityCurveResponse {
   total_days: number;
   start_date: string | null;
   end_date: string | null;
+  initial_balance?: number | null;
 }
 export interface TradeByStrategyDaily {
   date: string;

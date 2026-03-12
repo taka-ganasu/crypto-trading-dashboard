@@ -185,6 +185,7 @@ export const defaultApiResponses: ApiResponseMap = {
     total_pnl: 50,
     profit_factor: 2,
     avg_slippage: 0.05,
+    initial_balance: 10000,
   },
   "/api/performance/execution-quality": [
     {
@@ -275,6 +276,7 @@ export const defaultApiResponses: ApiResponseMap = {
     total_days: 3,
     start_date: "2026-01-01",
     end_date: "2026-01-03",
+    initial_balance: 10000,
   },
   "/api/performance/equity-curve": {
     data: [
@@ -285,6 +287,7 @@ export const defaultApiResponses: ApiResponseMap = {
     total_days: 3,
     start_date: "2026-01-01",
     end_date: "2026-01-03",
+    initial_balance: 10000,
   },
   "/api/performance/by-strategy": [
     {
