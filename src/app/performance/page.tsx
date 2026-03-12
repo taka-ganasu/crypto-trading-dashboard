@@ -68,6 +68,7 @@ function PerformanceContent() {
   const [execQuality, setExecQuality] = useState<ExecutionQuality[]>([]);
   const [snapshots, setSnapshots] = useState<MarketSnapshot[]>([]);
   const [equityCurve, setEquityCurve] = useState<EquityCurvePoint[]>([]);
+  const [equityInitialBalance, setEquityInitialBalance] = useState<number | null>(null);
   const [dailyStrategyPnl, setDailyStrategyPnl] = useState<TradeByStrategyDaily[]>([]);
   const [selectedExecution, setSelectedExecution] = useState<ExecutionQuality | null>(null);
   const [loading, setLoading] = useState(true);
@@ -118,9 +119,11 @@ function PerformanceContent() {
 
     if (curveResult.status === "fulfilled") {
       setEquityCurve(fillEquityCurveGaps(curveResult.value.data ?? []));
+      setEquityInitialBalance(curveResult.value.initial_balance ?? null);
       successCount += 1;
     } else {
       setEquityCurve([]);
+      setEquityInitialBalance(null);
       failedSections.push("equity curve");
     }
 
@@ -179,6 +182,15 @@ function PerformanceContent() {
     );
   }
 
+  const latestBalance = equityCurve[equityCurve.length - 1]?.balance ?? null;
+  const initialBalance = equityInitialBalance ?? summary?.initial_balance ?? null;
+  const cumulativePnlPct =
+    initialBalance != null &&
+    initialBalance > 0 &&
+    latestBalance != null
+      ? ((latestBalance - initialBalance) / initialBalance) * 100
+      : null;
+
   return (
     <div>
       <div className="mb-6">
@@ -206,6 +218,11 @@ function PerformanceContent() {
               className={`mt-1 text-2xl font-mono font-bold ${colorByPnl(summary.total_pnl ?? 0)}`}
             >
               {formatPnl(summary.total_pnl ?? 0)}
+              {cumulativePnlPct != null ? (
+                <span className="ml-2 text-base font-medium text-zinc-300">
+                  ({formatPercent(cumulativePnlPct)})
+                </span>
+              ) : null}
             </p>
           </div>
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">

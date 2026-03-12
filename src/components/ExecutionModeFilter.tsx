@@ -21,12 +21,11 @@ export function useExecutionMode(): {
 } {
   const searchParams = useSearchParams();
   const raw = searchParams.get("execution_mode");
-  const executionMode: ExecutionMode = isExecutionMode(raw) ? raw : "all";
+  const executionMode: ExecutionMode = isExecutionMode(raw) ? raw : "live";
 
   return {
     executionMode,
-    apiExecutionMode:
-      executionMode === "all" ? undefined : executionMode,
+    apiExecutionMode: executionMode === "all" ? undefined : executionMode,
   };
 }
 
@@ -35,12 +34,12 @@ export default function ExecutionModeFilter() {
   const router = useRouter();
   const pathname = usePathname();
   const raw = searchParams.get("execution_mode");
-  const currentMode: ExecutionMode = isExecutionMode(raw) ? raw : "all";
+  const currentMode: ExecutionMode = isExecutionMode(raw) ? raw : "live";
 
   const setMode = useCallback(
     (mode: ExecutionMode) => {
       const params = new URLSearchParams(searchParams.toString());
-      if (mode === "all") {
+      if (mode === "live") {
         params.delete("execution_mode");
       } else {
         params.set("execution_mode", mode);
