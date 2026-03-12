@@ -91,17 +91,14 @@ function StrategiesContent() {
       performanceResult.status === "fulfilled" ? performanceResult.value : [];
 
     const finalRows = performanceRows.map(perfToRow);
+    setRows(finalRows);
 
-    if (finalRows.length === 0) {
-      setRows([]);
-      setError("No strategy data available from API.");
-    } else {
-      setRows(finalRows);
-      if (warningParts.length > 0) {
-        setWarning(
-          `Some sources failed to load: ${warningParts.join(", ")}. Showing available data.`
-        );
-      }
+    if (finalRows.length === 0 && warningParts.length > 0) {
+      setError("Failed to load strategy data from API. Ensure the bot API server is running and reachable.");
+    } else if (warningParts.length > 0) {
+      setWarning(
+        `Some sources failed to load: ${warningParts.join(", ")}. Showing available data.`
+      );
     }
 
     setLoading(false);
@@ -151,9 +148,20 @@ function StrategiesContent() {
       <div className="space-y-6">
         {pageHeader}
         <div className="text-center py-8" role="alert" aria-live="assertive">
-          <p className="text-red-400 text-sm">No strategy data available from API.</p>
+          <p className="text-red-400 text-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <div className="space-y-6">
+        {pageHeader}
+        <div className="text-center py-8">
+          <p className="text-zinc-400 text-sm">No trades yet for this execution mode.</p>
           <p className="text-zinc-500 text-xs mt-1">
-            Ensure the bot API server is running and reachable.
+            Strategy metrics will appear after trades are closed.
           </p>
         </div>
       </div>
