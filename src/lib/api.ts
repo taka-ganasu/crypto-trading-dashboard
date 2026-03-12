@@ -208,6 +208,10 @@ export async function fetchApiErrors(
     });
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     const payload: unknown = await res.json();
+    if (payload && typeof payload === "object" && "errors" in payload) {
+      const inner = (payload as { errors: unknown }).errors;
+      return Array.isArray(inner) ? (inner as ApiError[]) : [];
+    }
     return Array.isArray(payload) ? (payload as ApiError[]) : [];
   } catch (err) {
     throw err instanceof Error ? err : new Error("Failed to fetch error logs");
