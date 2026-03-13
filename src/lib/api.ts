@@ -283,6 +283,10 @@ export async function fetchStrategies(
   return fetchJSON<StrategiesResponse>(`/strategies${query ? `?${query}` : ""}`);
 }
 
+function getBrowserTzOffsetHours(): number {
+  return -(new Date().getTimezoneOffset() / 60);
+}
+
 export async function fetchTradesByStrategy(
   startDate?: string,
   endDate?: string,
@@ -292,6 +296,8 @@ export async function fetchTradesByStrategy(
   if (startDate) params.set("start_date", startDate);
   if (endDate) params.set("end_date", endDate);
   appendExecutionModeParam(params, executionMode);
+  const tzOffset = getBrowserTzOffsetHours();
+  if (tzOffset !== 0) params.set("tz_offset", String(tzOffset));
   const query = params.toString();
   return fetchJSON<TradeByStrategyDaily[]>(
     `/trades/by-strategy${query ? `?${query}` : ""}`
@@ -307,6 +313,8 @@ export async function fetchEquityCurve(
   if (startDate) params.set("start_date", startDate);
   if (endDate) params.set("end_date", endDate);
   appendExecutionModeParam(params, executionMode);
+  const tzOffset = getBrowserTzOffsetHours();
+  if (tzOffset !== 0) params.set("tz_offset", String(tzOffset));
   const query = params.toString();
 
   try {
