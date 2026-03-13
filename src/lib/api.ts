@@ -286,12 +286,14 @@ export async function fetchStrategies(
 export async function fetchTradesByStrategy(
   startDate?: string,
   endDate?: string,
-  executionMode?: ExecutionMode
+  executionMode?: ExecutionMode,
+  tzOffset?: number
 ): Promise<TradeByStrategyDaily[]> {
   const params = new URLSearchParams();
   if (startDate) params.set("start_date", startDate);
   if (endDate) params.set("end_date", endDate);
   appendExecutionModeParam(params, executionMode);
+  if (tzOffset != null) params.set("tz_offset", String(tzOffset));
   const query = params.toString();
   return fetchJSON<TradeByStrategyDaily[]>(
     `/trades/by-strategy${query ? `?${query}` : ""}`
@@ -301,12 +303,14 @@ export async function fetchTradesByStrategy(
 export async function fetchEquityCurve(
   startDate?: string,
   endDate?: string,
-  executionMode?: ExecutionMode
+  executionMode?: ExecutionMode,
+  tzOffset?: number
 ): Promise<EquityCurveResponse> {
   const params = new URLSearchParams();
   if (startDate) params.set("start_date", startDate);
   if (endDate) params.set("end_date", endDate);
   appendExecutionModeParam(params, executionMode);
+  if (tzOffset != null) params.set("tz_offset", String(tzOffset));
   const query = params.toString();
 
   try {
