@@ -19,7 +19,7 @@ export default function TradesPage() {
   );
 }
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 50;
 
 function TradesContent() {
   const [trades, setTrades] = useState<Trade[]>([]);
@@ -187,7 +187,7 @@ function TradesContent() {
       {totalPages > 1 && (
         <div className="mt-4 flex items-center justify-between">
           <span className="text-sm text-zinc-500">
-            Page {currentPage} of {totalPages}
+            {(currentPage - 1) * PAGE_SIZE + 1}-{Math.min(currentPage * PAGE_SIZE, totalTrades)} / {totalTrades}
           </span>
           <div className="flex gap-2">
             <button
