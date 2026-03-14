@@ -81,13 +81,15 @@ function PerformanceContent() {
     setError(null);
     setWarning(null);
 
+    const tzOffset = -new Date().getTimezoneOffset() / 60;
+
     const [summaryResult, eqResult, snapshotsResult, curveResult, strategyPnlResult] =
       await Promise.allSettled([
         fetchPerformanceSummary(apiExecutionMode),
         fetchExecutionQuality(50, apiExecutionMode),
         fetchMarketSnapshots(20, apiExecutionMode),
-        fetchEquityCurve(undefined, undefined, apiExecutionMode),
-        fetchTradesByStrategy(undefined, undefined, apiExecutionMode),
+        fetchEquityCurve(undefined, undefined, apiExecutionMode, tzOffset),
+        fetchTradesByStrategy(undefined, undefined, apiExecutionMode, tzOffset),
       ]);
 
     const failedSections: string[] = [];
