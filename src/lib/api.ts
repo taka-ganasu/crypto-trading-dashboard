@@ -38,7 +38,7 @@ function appendExecutionModeParam(
   }
 }
 
-const MAX_RETRIES = 3;
+const MAX_RETRIES = parseInt(process.env.NEXT_PUBLIC_FETCH_MAX_RETRIES ?? '3', 10);
 const BACKOFF_MS = [1000, 2000, 4000];
 
 function isRetryable(error: unknown): boolean {
