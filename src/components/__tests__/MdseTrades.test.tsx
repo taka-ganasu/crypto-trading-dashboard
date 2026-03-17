@@ -139,4 +139,72 @@ describe("MdseTrades", () => {
     expect(screen.getByText("0.88")).toBeDefined();
     expect(screen.getByText("TS:2026-03-18T02:30:00Z")).toBeDefined();
   });
+
+  it("closes the detail panel when close button is clicked", () => {
+    render(<MdseTrades trades={[trades[0]]} events={relatedEvents} />);
+
+    fireEvent.click(screen.getByText("#100"));
+    expect(screen.getByTestId("detail-panel")).toBeDefined();
+
+    fireEvent.click(screen.getByText("close panel"));
+    expect(screen.queryByTestId("detail-panel")).toBeNull();
+  });
+
+  it("shows fallback values when trade has no matching event and null confidence", () => {
+    const orphanTrade: MdseTrade = {
+      id: 3,
+      event_id: 999,
+      symbol: "DOGE/USDT",
+      direction: "long",
+      entry_price: 0.15,
+      exit_price: 0.16,
+      entry_time: "2026-03-18T04:00:00Z",
+      exit_time: "2026-03-18T05:00:00Z",
+      pnl: -2.5,
+      position_size: 100,
+    };
+    render(<MdseTrades trades={[orphanTrade]} events={[]} />);
+
+    expect(screen.getByText("PNL:-2.50").className).toContain("loss");
+    expect(screen.getByText("100.0000")).toBeDefined();
+
+    fireEvent.click(screen.getByText("#999"));
+
+    expect(screen.getByTestId("detail-panel")).toBeDefined();
+    // detectorLabel(undefined) returns "—", confidence null → "—", timestamp null → "—"
+    const dashes = screen.getAllByText("—");
+    expect(dashes.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("handles trade with null confidence and no confluence_score in detail", () => {
+    const tradeNoExtras: MdseTrade = {
+      id: 4,
+      event_id: 100,
+      symbol: "BTC/USDT",
+      direction: "short",
+      entry_price: 70000,
+      exit_price: null,
+      entry_time: "2026-03-18T06:00:00Z",
+      exit_time: null,
+      pnl: null,
+      position_size: 0.5,
+    };
+    // Event has null confidence and no confluence_score
+    const eventsNoScore: MdseEvent[] = [
+      {
+        id: 100,
+        symbol: "BTC/USDT",
+        direction: "long",
+        confidence: null as unknown as number,
+        timestamp: "2026-03-18T00:30:00Z",
+      },
+    ];
+    render(<MdseTrades trades={[tradeNoExtras]} events={eventsNoScore} />);
+
+    fireEvent.click(screen.getByText("#100"));
+    // confidence null → falls through to "—" (null check before toPercent)
+    // confluence_score null → "—", pnl null → "—"
+    const dashes = screen.getAllByText("—");
+    expect(dashes.length).toBeGreaterThanOrEqual(2);
+  });
 });
