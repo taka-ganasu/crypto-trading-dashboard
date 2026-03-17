@@ -38,7 +38,25 @@ function appendExecutionModeParam(
   }
 }
 
-async function fetchJSON<T>(path: string): Promise<T> {
+const MAX_RETRIES = 3;
+const BACKOFF_MS = [1000, 2000, 4000];
+
+function isRetryable(error: unknown): boolean {
+  if (error instanceof Error) {
+    // Timeout → retryable
+    if (error.message === "Request timed out (5s)") return true;
+    // 5xx → retryable; 4xx → not retryable
+    const match = error.message.match(/^API error: (\d+)/);
+    if (match) return Number(match[1]) >= 500;
+    // Network errors (TypeError: Failed to fetch, etc.) → retryable
+    if (error instanceof TypeError) return true;
+  }
+  return false;
+}
+
+import { delay } from "./delay";
+
+async function fetchOnce<T>(path: string): Promise<T> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 5000);
   try {
@@ -48,7 +66,7 @@ async function fetchJSON<T>(path: string): Promise<T> {
     if (!res.ok) {
       throw new Error(`API error: ${res.status} ${res.statusText}`);
     }
-    return (await res.json()) as Promise<T>;
+    return (await res.json()) as T;
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
       throw new Error("Request timed out (5s)");
@@ -57,6 +75,23 @@ async function fetchJSON<T>(path: string): Promise<T> {
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+async function fetchJSON<T>(path: string): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await fetchOnce<T>(path);
+    } catch (error) {
+      lastError = error;
+      if (attempt < MAX_RETRIES && isRetryable(error)) {
+        await delay(BACKOFF_MS[attempt]);
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError;
 }
 
 export async function fetchTrades(

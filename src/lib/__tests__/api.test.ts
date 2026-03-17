@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   fetchTrades,
   fetchTradeSummary,
@@ -11,6 +11,11 @@ import {
   fetchEquityCurve,
   fetchPerformanceSummary,
 } from "../api";
+
+// Mock delay to resolve instantly so retry tests don't wait
+vi.mock("../delay", () => ({
+  delay: vi.fn().mockResolvedValue(undefined),
+}));
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -36,12 +41,7 @@ function mockFetchError(status: number, statusText: string) {
 /* Tests                                                               */
 /* ------------------------------------------------------------------ */
 
-beforeEach(() => {
-  vi.useFakeTimers();
-});
-
 afterEach(() => {
-  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -55,25 +55,39 @@ describe("fetchJSON (via fetch wrapper functions)", () => {
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 
-  it("throws on non-200 response", async () => {
+  it("throws on non-200 5xx after retries", async () => {
     globalThis.fetch = mockFetchError(500, "Internal Server Error");
 
     await expect(fetchSystemHealth()).rejects.toThrow("API error: 500");
+    // 1 initial + 3 retries = 4 calls
+    expect(globalThis.fetch).toHaveBeenCalledTimes(4);
   });
 
-  it("throws on network error", async () => {
+  it("throws on 4xx without retrying", async () => {
+    globalThis.fetch = mockFetchError(400, "Bad Request");
+
+    await expect(fetchSystemHealth()).rejects.toThrow("API error: 400");
+    // 4xx is not retried
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("throws on network error after retries", async () => {
     globalThis.fetch = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
 
     await expect(fetchBotHealth()).rejects.toThrow("Failed to fetch");
+    // Network errors are retried
+    expect(globalThis.fetch).toHaveBeenCalledTimes(4);
   });
 
-  it("throws timeout error on abort", async () => {
+  it("throws timeout error after retries", async () => {
     globalThis.fetch = vi.fn().mockImplementation(() => {
       const error = new DOMException("The operation was aborted", "AbortError");
       return Promise.reject(error);
     });
 
     await expect(fetchCircuitBreakerState()).rejects.toThrow("Request timed out (5s)");
+    // Timeouts are retried
+    expect(globalThis.fetch).toHaveBeenCalledTimes(4);
   });
 });
 
@@ -195,11 +209,12 @@ describe("fetchEquityCurve", () => {
     expect(secondUrl).toContain("/performance/equity-curve");
   });
 
-  it("throws non-404 errors without fallback", async () => {
+  it("throws non-404 errors after retries without fallback", async () => {
     globalThis.fetch = mockFetchError(500, "Internal Server Error");
 
     await expect(fetchEquityCurve()).rejects.toThrow("API error: 500");
-    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    // 500 is retried 3 times inside fetchJSON, no 404 fallback
+    expect(globalThis.fetch).toHaveBeenCalledTimes(4);
   });
 });
 
@@ -223,5 +238,93 @@ describe("fetchPerformanceSummary", () => {
 
     const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
     expect(url).toContain("execution_mode=live");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Retry behavior tests                                                */
+/* ------------------------------------------------------------------ */
+
+describe("fetchJSON retry behavior", () => {
+  it("retries 5xx and succeeds on 2nd attempt", async () => {
+    let callCount = 0;
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        return Promise.resolve({
+          ok: false,
+          status: 503,
+          statusText: "Service Unavailable",
+          json: () => Promise.resolve({}),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ status: "ok" }),
+      });
+    });
+
+    const result = await fetchTradeSummary();
+    expect(result).toEqual({ status: "ok" });
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries 5xx 3 times then throws", async () => {
+    globalThis.fetch = mockFetchError(502, "Bad Gateway");
+
+    await expect(fetchTradeSummary()).rejects.toThrow("API error: 502");
+    expect(globalThis.fetch).toHaveBeenCalledTimes(4);
+  });
+
+  it("does not retry 4xx errors", async () => {
+    globalThis.fetch = mockFetchError(404, "Not Found");
+
+    await expect(fetchTradeSummary()).rejects.toThrow("API error: 404");
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not retry 401 Unauthorized", async () => {
+    globalThis.fetch = mockFetchError(401, "Unauthorized");
+
+    await expect(fetchTradeSummary()).rejects.toThrow("API error: 401");
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries on network TypeError and succeeds", async () => {
+    let callCount = 0;
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      callCount++;
+      if (callCount <= 2) {
+        return Promise.reject(new TypeError("Failed to fetch"));
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ data: "recovered" }),
+      });
+    });
+
+    const result = await fetchTradeSummary();
+    expect(result).toEqual({ data: "recovered" });
+    expect(globalThis.fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it("retries on timeout and succeeds", async () => {
+    let callCount = 0;
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        return Promise.reject(
+          new DOMException("The operation was aborted", "AbortError")
+        );
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ data: "ok" }),
+      });
+    });
+
+    const result = await fetchTradeSummary();
+    expect(result).toEqual({ data: "ok" });
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
   });
 });
