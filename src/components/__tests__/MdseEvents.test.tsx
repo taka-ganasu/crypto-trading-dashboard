@@ -64,4 +64,53 @@ describe("MdseEvents", () => {
 
     expect(screen.getByText("No events found")).toBeDefined();
   });
+
+  it("handles null/NaN/Infinity confidence via toPercent fallback", () => {
+    const edgeEvents: MdseEvent[] = [
+      {
+        id: 10,
+        detector: "det_a",
+        symbol: "BTC/USDT",
+        direction: "long",
+        confidence: null as unknown as number,
+        timestamp: "2026-03-18T02:00:00Z",
+      },
+      {
+        id: 11,
+        detector: "det_b",
+        symbol: "ETH/USDT",
+        direction: "short",
+        confidence: NaN,
+        timestamp: "2026-03-18T02:01:00Z",
+      },
+      {
+        id: 12,
+        detector: "det_c",
+        symbol: "SOL/USDT",
+        direction: "buy",
+        confidence: Infinity,
+        timestamp: "2026-03-18T02:02:00Z",
+      },
+    ];
+    render(<MdseEvents events={edgeEvents} />);
+
+    const zeroPcts = screen.getAllByText("0.0%");
+    expect(zeroPcts.length).toBe(3);
+  });
+
+  it("falls back to dash when event has no detector or detector_name", () => {
+    const noDetectorEvents: MdseEvent[] = [
+      {
+        id: 20,
+        symbol: "XRP/USDT",
+        direction: "long",
+        confidence: 0.65,
+        timestamp: "2026-03-18T03:00:00Z",
+      },
+    ];
+    render(<MdseEvents events={noDetectorEvents} />);
+
+    expect(screen.getByText("—")).toBeDefined();
+    expect(screen.getByText("65.0%")).toBeDefined();
+  });
 });
