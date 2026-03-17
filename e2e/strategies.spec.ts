@@ -106,7 +106,7 @@ test.describe("Strategies page — null safety", () => {
       page.getByRole("heading", { level: 1, name: "Strategies" })
     ).toBeVisible();
     await expect(page.getByText("0 strategies")).toBeVisible();
-    await expect(page.getByText("No strategy data available")).toBeVisible();
+    await expect(page.getByText("No trades yet for this execution mode.")).toBeVisible();
 
     expectNoConsoleErrors(errors);
   });

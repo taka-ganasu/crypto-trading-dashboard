@@ -166,7 +166,7 @@ test("renders empty-state fallback when strategy data is empty", async ({ page }
   await page.goto("/strategies");
 
   await expect(page.getByText("0 strategies")).toBeVisible();
-  await expect(page.getByText("No strategy data available")).toBeVisible();
+  await expect(page.getByText("No trades yet for this execution mode.")).toBeVisible();
 
   expectNoConsoleErrors(errors);
 });
