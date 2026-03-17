@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import React from "react";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, cleanup, waitFor, within } from "@testing-library/react";
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
@@ -148,6 +148,39 @@ describe("Performance Page", () => {
     expect(screen.getByText("Retry")).toBeDefined();
   });
 
+  it("retries loading after the error state", async () => {
+    vi.mocked(fetchPerformanceSummary)
+      .mockRejectedValueOnce(new Error("fail"))
+      .mockResolvedValue(mockSummary);
+    vi.mocked(fetchExecutionQuality)
+      .mockRejectedValueOnce(new Error("fail"))
+      .mockResolvedValue(mockExecQuality);
+    vi.mocked(fetchMarketSnapshots)
+      .mockRejectedValueOnce(new Error("fail"))
+      .mockResolvedValue(mockSnapshots);
+    vi.mocked(fetchEquityCurve)
+      .mockRejectedValueOnce(new Error("fail"))
+      .mockResolvedValue(mockEquityCurve);
+    vi.mocked(fetchTradesByStrategy)
+      .mockRejectedValueOnce(new Error("fail"))
+      .mockResolvedValue(mockDailyStrategyPnl);
+
+    render(<PerformancePage />);
+
+    const retryButton = await screen.findByRole("button", { name: "Retry" });
+    fireEvent.click(retryButton);
+
+    await waitFor(() => {
+      expect(screen.getByText("Performance")).toBeDefined();
+    });
+
+    expect(vi.mocked(fetchPerformanceSummary).mock.calls.length).toBeGreaterThanOrEqual(2);
+    expect(vi.mocked(fetchExecutionQuality).mock.calls.length).toBeGreaterThanOrEqual(2);
+    expect(vi.mocked(fetchMarketSnapshots).mock.calls.length).toBeGreaterThanOrEqual(2);
+    expect(vi.mocked(fetchEquityCurve).mock.calls.length).toBeGreaterThanOrEqual(2);
+    expect(vi.mocked(fetchTradesByStrategy).mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
   it("shows performance data on success", async () => {
     setupMocksSuccess();
 
@@ -184,6 +217,72 @@ describe("Performance Page", () => {
     expect(
       screen.getByLabelText("Execution quality table")
     ).toBeDefined();
+  });
+
+  it("opens and closes execution details from a table row", async () => {
+    setupMocksSuccess();
+
+    render(<PerformancePage />);
+
+    const firstTrade = await screen.findByText("#1");
+    fireEvent.click(firstTrade.closest("tr") as HTMLTableRowElement);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("dialog", { name: "Execution Quality Details" })
+      ).toBeDefined();
+    });
+
+    expect(screen.getByText("10.000000")).toBeDefined();
+    expect(screen.getAllByText("#1")[0]).toBeDefined();
+
+    fireEvent.click(screen.getByLabelText("Close panel"));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("dialog", { name: "Execution Quality Details" })
+      ).toBeNull();
+    });
+  });
+
+  it("renders null fallback values in execution details and market snapshots", async () => {
+    vi.mocked(fetchPerformanceSummary).mockResolvedValue(mockSummary);
+    vi.mocked(fetchExecutionQuality).mockResolvedValue([
+      {
+        trade_id: null,
+        expected_price: null,
+        actual_price: null,
+        slippage_pct: null,
+        api_latency_ms: null,
+        timestamp: "2026-03-15T12:00:00",
+      },
+    ]);
+    vi.mocked(fetchMarketSnapshots).mockResolvedValue([
+      {
+        symbol: "ETH/USDT",
+        price: null,
+        rsi: null,
+        adx: null,
+        macd: null,
+        volume: null,
+        timestamp: "2026-03-15T12:00:00",
+      },
+    ]);
+    vi.mocked(fetchEquityCurve).mockResolvedValue(mockEquityCurve);
+    vi.mocked(fetchTradesByStrategy).mockResolvedValue(mockDailyStrategyPnl);
+
+    render(<PerformancePage />);
+
+    const executionTable = await screen.findByLabelText("Execution quality table");
+    fireEvent.click(within(executionTable).getAllByRole("row")[1] as HTMLTableRowElement);
+
+    const dialog = await screen.findByRole("dialog", { name: "Execution Quality Details" });
+    expect(within(dialog).getAllByText("—").length).toBeGreaterThanOrEqual(5);
+
+    const snapshotsTable = screen.getByLabelText("Market snapshots table");
+    const snapshotsRow = within(snapshotsTable).getAllByRole("row")[1];
+    expect(within(snapshotsRow).getAllByText("-").length).toBe(3);
+    expect(within(snapshotsRow).getAllByText("—").length).toBe(2);
   });
 
   it("shows market snapshot data", async () => {
