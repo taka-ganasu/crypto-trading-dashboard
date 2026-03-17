@@ -10,6 +10,20 @@ import {
   fetchStrategies,
   fetchEquityCurve,
   fetchPerformanceSummary,
+  fetchAnalysisCycles,
+  fetchMdseScores,
+  fetchMdseSummary,
+  fetchMdseEvents,
+  fetchMdseTrades,
+  fetchMdseTimeline,
+  fetchSystemMetrics,
+  fetchSystemInfo,
+  fetchApiErrors,
+  fetchSystemStatsOverview,
+  fetchExecutionQuality,
+  fetchMarketSnapshots,
+  fetchStrategyPerformance,
+  fetchTradesByStrategy,
 } from "../api";
 
 // Mock delay to resolve instantly so retry tests don't wait
@@ -326,5 +340,304 @@ describe("fetchJSON retry behavior", () => {
     const result = await fetchTradeSummary();
     expect(result).toEqual({ data: "ok" });
     expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* fetchAnalysisCycles                                                  */
+/* ------------------------------------------------------------------ */
+
+describe("fetchAnalysisCycles", () => {
+  it("builds URL with default limit", async () => {
+    globalThis.fetch = mockFetchOk([]);
+
+    await fetchAnalysisCycles();
+
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("/cycles?");
+    expect(url).toContain("limit=50");
+  });
+
+  it("includes date range and execution mode", async () => {
+    globalThis.fetch = mockFetchOk([]);
+
+    await fetchAnalysisCycles(100, "2026-01-01", "2026-01-31", "paper");
+
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("limit=100");
+    expect(url).toContain("start=2026-01-01");
+    expect(url).toContain("end=2026-01-31");
+    expect(url).toContain("execution_mode=paper");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* MDSE fetch functions                                                 */
+/* ------------------------------------------------------------------ */
+
+describe("fetchMdseScores", () => {
+  it("calls /mdse/scores", async () => {
+    globalThis.fetch = mockFetchOk([]);
+    await fetchMdseScores();
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("/mdse/scores");
+  });
+});
+
+describe("fetchMdseSummary", () => {
+  it("calls /mdse/summary", async () => {
+    globalThis.fetch = mockFetchOk({});
+    await fetchMdseSummary();
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("/mdse/summary");
+  });
+});
+
+describe("fetchMdseEvents", () => {
+  it("uses hours param when no start/end", async () => {
+    globalThis.fetch = mockFetchOk([]);
+    await fetchMdseEvents(48);
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("hours=48");
+    expect(url).not.toContain("start=");
+  });
+
+  it("uses start/end when provided", async () => {
+    globalThis.fetch = mockFetchOk([]);
+    await fetchMdseEvents(24, "2026-03-01", "2026-03-15");
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("start=2026-03-01");
+    expect(url).toContain("end=2026-03-15");
+    expect(url).not.toContain("hours=");
+  });
+
+  it("uses start without end", async () => {
+    globalThis.fetch = mockFetchOk([]);
+    await fetchMdseEvents(24, "2026-03-01");
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("start=2026-03-01");
+    expect(url).not.toContain("end=");
+  });
+});
+
+describe("fetchMdseTrades", () => {
+  it("builds URL with default limit", async () => {
+    globalThis.fetch = mockFetchOk([]);
+    await fetchMdseTrades();
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("/mdse/trades?");
+    expect(url).toContain("limit=20");
+  });
+
+  it("includes date range", async () => {
+    globalThis.fetch = mockFetchOk([]);
+    await fetchMdseTrades(10, "2026-01-01", "2026-01-31");
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("start=2026-01-01");
+    expect(url).toContain("end=2026-01-31");
+  });
+});
+
+describe("fetchMdseTimeline", () => {
+  it("uses hours param by default", async () => {
+    globalThis.fetch = mockFetchOk({});
+    await fetchMdseTimeline(12);
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("/mdse/timeline?");
+    expect(url).toContain("hours=12");
+  });
+
+  it("uses start/end when provided", async () => {
+    globalThis.fetch = mockFetchOk({});
+    await fetchMdseTimeline(24, "2026-02-01", "2026-02-28");
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("start=2026-02-01");
+    expect(url).toContain("end=2026-02-28");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* System fetch functions                                               */
+/* ------------------------------------------------------------------ */
+
+describe("fetchSystemMetrics", () => {
+  it("calls /system/metrics", async () => {
+    globalThis.fetch = mockFetchOk({});
+    await fetchSystemMetrics();
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("/system/metrics");
+  });
+});
+
+describe("fetchSystemInfo", () => {
+  it("calls /system/info", async () => {
+    globalThis.fetch = mockFetchOk({});
+    await fetchSystemInfo();
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("/system/info");
+  });
+});
+
+describe("fetchSystemStatsOverview", () => {
+  it("calls /system/stats", async () => {
+    globalThis.fetch = mockFetchOk({});
+    await fetchSystemStatsOverview();
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("/system/stats");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* fetchApiErrors                                                       */
+/* ------------------------------------------------------------------ */
+
+describe("fetchApiErrors", () => {
+  it("parses nested errors wrapper", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ errors: [{ ts: "2026-01-01", path: "/foo" }] }),
+    });
+
+    const result = await fetchApiErrors();
+    expect(result).toEqual([{ ts: "2026-01-01", path: "/foo" }]);
+  });
+
+  it("parses direct array response", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve([{ ts: "2026-01-01" }]),
+    });
+
+    const result = await fetchApiErrors();
+    expect(result).toEqual([{ ts: "2026-01-01" }]);
+  });
+
+  it("returns empty array for non-array errors field", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ errors: "not-an-array" }),
+    });
+
+    const result = await fetchApiErrors();
+    expect(result).toEqual([]);
+  });
+
+  it("returns empty array for non-array non-object response", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve("just a string"),
+    });
+
+    const result = await fetchApiErrors();
+    expect(result).toEqual([]);
+  });
+
+  it("includes since/statusGte/limit params", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve([]),
+    });
+
+    await fetchApiErrors("2026-01-01", 500, 10);
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("since=2026-01-01");
+    expect(url).toContain("status_gte=500");
+    expect(url).toContain("limit=10");
+  });
+
+  it("throws on non-ok response", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({}),
+    });
+
+    await expect(fetchApiErrors()).rejects.toThrow("API error: 500");
+  });
+
+  it("wraps non-Error thrown values", async () => {
+    globalThis.fetch = vi.fn().mockRejectedValue("string error");
+
+    await expect(fetchApiErrors()).rejects.toThrow("Failed to fetch error logs");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Performance fetch functions                                          */
+/* ------------------------------------------------------------------ */
+
+describe("fetchExecutionQuality", () => {
+  it("builds URL with limit and execution_mode", async () => {
+    globalThis.fetch = mockFetchOk([]);
+    await fetchExecutionQuality(25, "live");
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("/performance/execution-quality?");
+    expect(url).toContain("limit=25");
+    expect(url).toContain("execution_mode=live");
+  });
+});
+
+describe("fetchMarketSnapshots", () => {
+  it("builds URL with default limit", async () => {
+    globalThis.fetch = mockFetchOk([]);
+    await fetchMarketSnapshots();
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("/performance/market-snapshots?");
+    expect(url).toContain("limit=20");
+  });
+});
+
+describe("fetchStrategyPerformance", () => {
+  it("includes execution_mode in URL", async () => {
+    globalThis.fetch = mockFetchOk([]);
+    await fetchStrategyPerformance("paper");
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("/performance/by-strategy?");
+    expect(url).toContain("execution_mode=paper");
+  });
+
+  it("omits query when no mode", async () => {
+    globalThis.fetch = mockFetchOk([]);
+    await fetchStrategyPerformance();
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("/performance/by-strategy");
+    expect(url).not.toContain("?");
+  });
+});
+
+describe("fetchTradesByStrategy", () => {
+  it("includes all params", async () => {
+    globalThis.fetch = mockFetchOk([]);
+    await fetchTradesByStrategy("2026-01-01", "2026-01-31", "live", 9);
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("/trades/by-strategy?");
+    expect(url).toContain("start_date=2026-01-01");
+    expect(url).toContain("end_date=2026-01-31");
+    expect(url).toContain("execution_mode=live");
+    expect(url).toContain("tz_offset=9");
+  });
+
+  it("omits optional params when not provided", async () => {
+    globalThis.fetch = mockFetchOk([]);
+    await fetchTradesByStrategy();
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("/trades/by-strategy");
+    expect(url).not.toContain("start_date");
+  });
+});
+
+describe("fetchEquityCurve with params", () => {
+  it("includes date range and tz_offset", async () => {
+    globalThis.fetch = mockFetchOk({ data: [] });
+    await fetchEquityCurve("2026-01-01", "2026-01-31", "live", 9);
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("start_date=2026-01-01");
+    expect(url).toContain("end_date=2026-01-31");
+    expect(url).toContain("tz_offset=9");
+  });
+
+  it("rethrows non-404 errors from primary endpoint", async () => {
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
+    await expect(fetchEquityCurve()).rejects.toThrow("Network error");
   });
 });
