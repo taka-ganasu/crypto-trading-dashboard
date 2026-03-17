@@ -190,8 +190,8 @@ export default function Home() {
   const dailyPnlPct = toNumber(pfData.daily_pnl_pct) ?? 0;
 
   // Extract circuit breaker state
-  const cbData = cb?.data ?? {};
-  const cbStatus = ((cbData.status as string) ?? "NORMAL").toUpperCase();
+  const cbData = cb?.data ?? { status: null, recent_events: null };
+  const cbStatus = (cbData.status ?? "NORMAL").toUpperCase();
   const badge = CB_BADGE[cbStatus] ?? CB_BADGE.NORMAL;
 
   return (
