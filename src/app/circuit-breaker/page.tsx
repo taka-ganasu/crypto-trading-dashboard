@@ -137,8 +137,7 @@ export default function CircuitBreakerPage() {
 
   const currentStatus = normalizeStatus(cbState?.data?.status);
   const config = STATUS_CONFIG[currentStatus];
-  const events =
-    (cbState?.data?.recent_events as Array<Record<string, string>>) ?? [];
+  const events = cbState?.data?.recent_events ?? [];
 
   if (loading && !cbState && !error) {
     return <LoadingSpinner label="Loading circuit breaker data..." />;

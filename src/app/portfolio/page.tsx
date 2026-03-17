@@ -9,7 +9,7 @@ import ExecutionModeFilter, {
   useExecutionMode,
 } from "@/components/ExecutionModeFilter";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import type { EquityCurveResponse, StrategyPerformance } from "@/types";
+import type { EquityCurveResponse, PortfolioData, StrategyPerformance } from "@/types";
 import { formatCurrency, formatPercent, formatPnl, colorByPnl, formatTimestamp } from "@/lib/format";
 import { fillEquityCurveGaps } from "@/lib/chartUtils";
 const DailyPnlChart = dynamic(() => import("@/components/DailyPnlChart"), { ssr: false });
@@ -37,7 +37,7 @@ function toNumber(value: unknown): number | null {
   return null;
 }
 
-function parseStrategies(data: Record<string, unknown>): {
+function parseStrategies(data: PortfolioData): {
   strategies: StrategyEntry[];
   totalEquity: number;
   lastUpdated: string | null;
@@ -59,12 +59,11 @@ function parseStrategies(data: Record<string, unknown>): {
     lastUpdated = data.timestamp;
   }
 
-  const strats =
-    (data.strategies as Record<string, Record<string, unknown>> | undefined) ??
-    (data.positions as Record<string, Record<string, unknown>> | undefined);
+  const strats = data.strategies ?? data.positions;
 
   if (strats && typeof strats === "object") {
-    for (const [id, s] of Object.entries(strats)) {
+    for (const [id, raw] of Object.entries(strats)) {
+      const s = raw as Record<string, unknown>;
       const equity = toNumber(s.equity) ?? 0;
       const initial = toNumber(s.initial_equity) ?? equity;
       const pnl = equity - initial;

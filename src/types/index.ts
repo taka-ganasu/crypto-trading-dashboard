@@ -63,34 +63,57 @@ export interface PortfolioPosition {
   entry_price?: number | null;
   mark_price?: number | null;
   unrealized_pnl?: number | null;
-  [key: string]: unknown;
+}
+
+export interface PortfolioStrategyEntry {
+  symbol?: string | null;
+  strategy?: string | null;
+  allocation_pct?: number | null;
+  equity?: number | null;
+  initial_equity?: number | null;
+  position_count?: number | null;
+  last_signal_time?: string | null;
 }
 
 export interface PortfolioData {
   positions?: Record<string, PortfolioPosition>;
+  strategies?: Record<string, PortfolioStrategyEntry>;
   equity?: number | null;
   available_balance?: number | null;
   total_balance?: number | null;
+  total_equity?: number | null;
   open_trade_count?: number | null;
   timestamp?: string | null;
+  last_updated?: string | null;
   daily_pnl?: number | null;
   daily_pnl_pct?: number | null;
-  [key: string]: unknown;
 }
 
 export interface PortfolioState {
   data: PortfolioData;
 }
 
+export interface CircuitBreakerEvent {
+  status?: string | null;
+  message?: string | null;
+  timestamp?: string | null;
+}
+
+export interface CircuitBreakerData {
+  status?: string | null;
+  recent_events?: CircuitBreakerEvent[] | null;
+}
+
 export interface CircuitBreakerState {
-  data: Record<string, unknown>;
+  data: CircuitBreakerData;
 }
 
 export interface SystemHealth {
   status: string;
   db_connected?: boolean | null;
   exchange_connected?: boolean | null;
-  [key: string]: unknown;
+  uptime_seconds?: number | null;
+  pid?: number | null;
 }
 
 export interface SystemMetrics {
@@ -99,7 +122,6 @@ export interface SystemMetrics {
   ws_connected?: boolean | null;
   last_fr_fetch?: string | null;
   open_positions?: number | null;
-  [key: string]: unknown;
 }
 
 export interface SystemInfo {
@@ -139,9 +161,7 @@ export interface BotHealthResponse {
   checks?: BotHealthCheckItem[] | null;
   data?: {
     checks?: BotHealthCheckItem[] | null;
-    [key: string]: unknown;
   } | null;
-  [key: string]: unknown;
 }
 
 export interface SystemStatsResponse {
@@ -174,8 +194,6 @@ export interface SystemStatsResponse {
   updated_at?: string | null;
   last_updated?: string | null;
   timestamp?: string | null;
-  data?: Record<string, unknown> | null;
-  [key: string]: unknown;
 }
 
 export interface StrategySnapshot {
