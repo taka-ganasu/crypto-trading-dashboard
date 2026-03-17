@@ -113,4 +113,70 @@ describe("StrategyTable", () => {
     expect(sortTexts.length).toBe(2); // win_rate and sharpe
     expect(screen.getByText("DESC")).toBeTruthy();
   });
+
+  it("sorts by sharpe column", () => {
+    render(<StrategyTable strategies={strategies} onSelect={vi.fn()} />);
+    const sharpeBtn = screen.getByRole("button", { name: "Sharpe" });
+    fireEvent.click(sharpeBtn);
+    expect(screen.getByText("DESC")).toBeTruthy();
+    const rows = screen.getAllByRole("row");
+    expect(rows[1].textContent).toContain("BTC_Momentum");
+  });
+
+  it("applies red color for low PF values", () => {
+    const lowPfStrategies: StrategyPerformance[] = [
+      { ...strategies[0], profit_factor: 0.5 },
+    ];
+    render(<StrategyTable strategies={lowPfStrategies} onSelect={vi.fn()} />);
+    expect(screen.getByText("0.50")).toBeTruthy();
+  });
+
+  it("applies red color for low Sharpe values", () => {
+    const lowSharpeStrategies: StrategyPerformance[] = [
+      { ...strategies[0], sharpe: 0.2 },
+    ];
+    render(
+      <StrategyTable strategies={lowSharpeStrategies} onSelect={vi.fn()} />
+    );
+    expect(screen.getByText("0.20")).toBeTruthy();
+  });
+
+  it("sorts null values after non-null values", () => {
+    const mixed: StrategyPerformance[] = [
+      { ...strategies[0], strategy: "A_Null", win_rate: null },
+      { ...strategies[1], strategy: "B_Valid", win_rate: 0.5 },
+    ];
+    render(<StrategyTable strategies={mixed} onSelect={vi.fn()} />);
+    const winRateBtn = screen.getByRole("button", { name: "Win Rate" });
+    fireEvent.click(winRateBtn);
+    const rows = screen.getAllByRole("row");
+    expect(rows[1].textContent).toContain("B_Valid");
+    expect(rows[2].textContent).toContain("A_Null");
+  });
+
+  it("uses name tiebreaker when both values are null", () => {
+    const bothNull: StrategyPerformance[] = [
+      { ...strategies[0], strategy: "Zeta", win_rate: null },
+      { ...strategies[1], strategy: "Alpha", win_rate: null },
+    ];
+    render(<StrategyTable strategies={bothNull} onSelect={vi.fn()} />);
+    const winRateBtn = screen.getByRole("button", { name: "Win Rate" });
+    fireEvent.click(winRateBtn);
+    const rows = screen.getAllByRole("row");
+    expect(rows[1].textContent).toContain("Alpha");
+    expect(rows[2].textContent).toContain("Zeta");
+  });
+
+  it("uses name tiebreaker when sort values are equal", () => {
+    const equalValues: StrategyPerformance[] = [
+      { ...strategies[0], strategy: "Zeta", win_rate: 0.5 },
+      { ...strategies[1], strategy: "Alpha", win_rate: 0.5 },
+    ];
+    render(<StrategyTable strategies={equalValues} onSelect={vi.fn()} />);
+    const winRateBtn = screen.getByRole("button", { name: "Win Rate" });
+    fireEvent.click(winRateBtn);
+    const rows = screen.getAllByRole("row");
+    expect(rows[1].textContent).toContain("Alpha");
+    expect(rows[2].textContent).toContain("Zeta");
+  });
 });

@@ -82,4 +82,22 @@ describe("StrategyCard", () => {
     render(<StrategyCard strategy={lowPf} onClick={vi.fn()} />);
     expect(screen.getByText("0.80")).toBeTruthy();
   });
+
+  it("renders Sharpe with yellow color for moderate values", () => {
+    const midSharpe: StrategyPerformance = {
+      ...baseStrategy,
+      sharpe: 0.75,
+    };
+    render(<StrategyCard strategy={midSharpe} onClick={vi.fn()} />);
+    expect(screen.getByText("0.75")).toBeTruthy();
+  });
+
+  it("renders Sharpe with red color for low values", () => {
+    const lowSharpe: StrategyPerformance = {
+      ...baseStrategy,
+      sharpe: 0.3,
+    };
+    render(<StrategyCard strategy={lowSharpe} onClick={vi.fn()} />);
+    expect(screen.getByText("0.30")).toBeTruthy();
+  });
 });

@@ -136,4 +136,20 @@ describe("CycleTable", () => {
     const table = screen.getByRole("table");
     expect(table.textContent).toContain("2h 0m");
   });
+
+  it("resets to page 1 when cycles prop changes", () => {
+    const initial = makeCycles(30);
+    const { rerender } = render(<CycleTable cycles={initial} />);
+
+    // Navigate to page 2
+    fireEvent.click(screen.getByText("Next"));
+    expect(screen.getByText("Page 2 of 2")).toBeDefined();
+
+    // Re-render with different cycles array → triggers lines 67-68
+    const updated = makeCycles(28);
+    rerender(<CycleTable cycles={updated} />);
+
+    // Should be reset to page 1
+    expect(screen.getByText("Page 1 of 2")).toBeDefined();
+  });
 });
