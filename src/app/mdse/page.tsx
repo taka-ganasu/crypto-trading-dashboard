@@ -33,11 +33,15 @@ function MdseContent() {
   const [warning, setWarning] = useState<string | null>(null);
   const { start, end } = useTimeRange();
 
-  const loadMdseData = useCallback(async () => {
+  const [prevStart, setPrevStart] = useState(start);
+  const [prevEnd, setPrevEnd] = useState(end);
+  if (start !== prevStart || end !== prevEnd) {
+    setPrevStart(start);
+    setPrevEnd(end);
     setLoading(true);
-    setError(null);
-    setWarning(null);
+  }
 
+  const loadMdseData = useCallback(async () => {
     const [summaryResult, eventsResult, tradesResult, timelineResult] =
       await Promise.allSettled([
         fetchMdseSummary(),
@@ -82,17 +86,22 @@ function MdseContent() {
 
     if (criticalFailures >= 3) {
       setError("Failed to load MDSE data.");
+      setWarning(null);
     } else if (failedSections.length > 0) {
+      setError(null);
       setWarning(
         `Some sections failed to load: ${failedSections.join(", ")}. Showing available data.`
       );
+    } else {
+      setError(null);
+      setWarning(null);
     }
 
     setLoading(false);
   }, [start, end]);
 
   useEffect(() => {
-    void loadMdseData();
+    queueMicrotask(() => { void loadMdseData(); });
   }, [loadMdseData]);
 
   if (loading) {
@@ -106,7 +115,7 @@ function MdseContent() {
           <p className="text-red-400">Error: {error}</p>
           <button
             type="button"
-            onClick={() => void loadMdseData()}
+            onClick={() => { setLoading(true); void loadMdseData(); }}
             className="mt-3 rounded border border-zinc-700 bg-zinc-900 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800"
           >
             Retry

@@ -185,7 +185,7 @@ describe("fetchPortfolioState", () => {
 describe("fetchEquityCurve", () => {
   it("falls back to /performance/equity-curve on 404", async () => {
     let callCount = 0;
-    globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+    globalThis.fetch = vi.fn().mockImplementation(() => {
       callCount++;
       if (callCount === 1) {
         return Promise.resolve({

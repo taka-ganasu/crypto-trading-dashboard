@@ -15,8 +15,6 @@ import DetailPanel from "@/components/DetailPanel";
 import { colorByPnl, formatPercent, formatPnl } from "@/lib/format";
 import type {
   StrategyPerformance,
-  StrategySnapshot,
-  SystemStatsResponse,
 } from "@/types";
 
 interface StrategyRow {
@@ -31,15 +29,6 @@ interface StrategyRow {
 
 type SortKey = "win_rate" | "profit_factor" | "sharpe";
 type SortDir = "desc" | "asc";
-
-function toNumber(value: unknown): number | null {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string") {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return null;
-}
 
 function perfToRow(perf: StrategyPerformance): StrategyRow {
   return {
@@ -106,7 +95,7 @@ function StrategiesContent() {
   }, [apiExecutionMode]);
 
   useEffect(() => {
-    void load();
+    queueMicrotask(() => { void load(); });
   }, [load]);
 
   function handleSort(key: SortKey) {

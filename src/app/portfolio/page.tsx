@@ -180,7 +180,7 @@ function PortfolioContent() {
   }, [apiExecutionMode]);
 
   useEffect(() => {
-    void loadPortfolio();
+    queueMicrotask(() => { void loadPortfolio(); });
   }, [loadPortfolio]);
 
   if (loading) {

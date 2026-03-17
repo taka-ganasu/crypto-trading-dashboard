@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { formatDuration } from "@/lib/format";
 
 export type RegimeType =
@@ -61,10 +61,12 @@ export default function CycleTable({ cycles }: { cycles: DisplayCycle[] }) {
     currentPage * PAGE_SIZE
   );
 
-  // Reset to page 1 when cycles change
-  useEffect(() => {
+  // Reset to page 1 when cycles change (render-phase adjustment)
+  const [prevCycles, setPrevCycles] = useState(cycles);
+  if (cycles !== prevCycles) {
+    setPrevCycles(cycles);
     setCurrentPage(1);
-  }, [cycles]);
+  }
 
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-900">

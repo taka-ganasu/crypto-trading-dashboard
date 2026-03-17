@@ -33,25 +33,33 @@ function TradesContent() {
   const [totalTrades, setTotalTrades] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
-  const [highlightTradeId, setHighlightTradeId] = useState<number | null>(null);
+  const [highlightTradeId] = useState<number | null>(() => {
+    if (typeof window === "undefined") return null;
+    const raw = new URLSearchParams(window.location.search).get("tradeId");
+    const parsed = raw ? Number(raw) : NaN;
+    return Number.isFinite(parsed) ? parsed : null;
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { start, end } = useTimeRange();
   const { apiExecutionMode } = useExecutionMode();
 
-  useEffect(() => {
-    const tradeIdRaw = new URLSearchParams(window.location.search).get("tradeId");
-    const parsedTradeId = tradeIdRaw ? Number(tradeIdRaw) : NaN;
-    setHighlightTradeId(Number.isFinite(parsedTradeId) ? parsedTradeId : null);
-  }, []);
-
-  useEffect(() => {
+  const filterKey = `${start}\0${end}\0${apiExecutionMode}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey);
     setCurrentPage(1);
-  }, [start, end, apiExecutionMode]);
+  }
+
+  const fetchDepsKey = `${filterKey}\0${currentPage}`;
+  const [prevFetchDepsKey, setPrevFetchDepsKey] = useState(fetchDepsKey);
+  if (fetchDepsKey !== prevFetchDepsKey) {
+    setPrevFetchDepsKey(fetchDepsKey);
+    setLoading(true);
+  }
 
   useEffect(() => {
     const offset = (currentPage - 1) * PAGE_SIZE;
-    setLoading(true);
     fetchTrades(undefined, PAGE_SIZE, start, end, apiExecutionMode, offset)
       .then((res) => {
         setTrades(res.trades);
