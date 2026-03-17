@@ -3,6 +3,8 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { fetchPortfolioState, fetchEquityCurve, fetchStrategyPerformance } from "@/lib/api";
+import DetailPanel from "@/components/DetailPanel";
+import DetailRow from "@/components/DetailRow";
 import ExecutionModeFilter, {
   useExecutionMode,
 } from "@/components/ExecutionModeFilter";
@@ -10,7 +12,6 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import type { EquityCurveResponse, StrategyPerformance } from "@/types";
 import { formatCurrency, formatPercent, formatPnl, colorByPnl, formatTimestamp } from "@/lib/format";
 import { fillEquityCurveGaps } from "@/lib/chartUtils";
-import DetailPanel from "@/components/DetailPanel";
 const DailyPnlChart = dynamic(() => import("@/components/DailyPnlChart"), { ssr: false });
 const StrategyAllocationPie = dynamic(() => import("@/components/StrategyAllocationPie"), { ssr: false });
 
@@ -416,15 +417,6 @@ function PortfolioContent() {
           </div>
         )}
       </DetailPanel>
-    </div>
-  );
-}
-
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-start justify-between gap-4 border-b border-zinc-800/70 pb-2">
-      <span className="text-zinc-500">{label}</span>
-      <span className="text-right text-zinc-200 font-mono">{value}</span>
     </div>
   );
 }

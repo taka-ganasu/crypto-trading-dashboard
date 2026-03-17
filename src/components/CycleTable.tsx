@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatDuration } from "@/lib/format";
 
 export type RegimeType =
   | "trending"
@@ -47,21 +48,6 @@ function formatDateTime(value: string | null): string {
 function formatConfidence(value: number | null): string {
   if (value == null || !Number.isFinite(value)) return "—";
   return `${value.toFixed(1)}%`;
-}
-
-function formatDuration(value: number | null): string {
-  if (value == null || !Number.isFinite(value) || value < 0) return "—";
-  if (value < 60) return `${Math.round(value)}s`;
-
-  const minutes = Math.floor(value / 60);
-  const seconds = Math.round(value % 60);
-  if (minutes < 60) {
-    return `${minutes}m ${seconds}s`;
-  }
-
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  return `${hours}h ${remainingMinutes}m`;
 }
 
 const PAGE_SIZE = 25;

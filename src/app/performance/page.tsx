@@ -12,6 +12,7 @@ import {
 const CumulativePnlChart = dynamic(() => import("@/components/CumulativePnlChart"), { ssr: false });
 const DailyStrategyPnlChart = dynamic(() => import("@/components/DailyStrategyPnlChart"), { ssr: false });
 import DetailPanel from "@/components/DetailPanel";
+import DetailRow from "@/components/DetailRow";
 const EquityCurveChart = dynamic(() => import("@/components/EquityCurveChart"), { ssr: false });
 import ExecutionModeFilter, {
   useExecutionMode,
@@ -22,6 +23,7 @@ import {
   formatPercent,
   formatPnl,
   colorByPnl,
+  formatPrice,
   formatTimestamp,
 } from "@/lib/format";
 import { fillEquityCurveGaps, fillStrategyPnlGaps } from "@/lib/chartUtils";
@@ -45,14 +47,6 @@ function rsiColor(rsi: number | null): string {
   if (rsi > 70) return "text-red-400";
   if (rsi < 30) return "text-emerald-400";
   return "text-zinc-300";
-}
-
-function formatPrice(value: number | null): string {
-  if (value == null) return "—";
-  return value.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 6,
-  });
 }
 
 export default function PerformancePage() {
@@ -399,15 +393,6 @@ function PerformanceContent() {
           </table>
         </div>
       </div>
-    </div>
-  );
-}
-
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-start justify-between gap-4 border-b border-zinc-800/70 pb-2">
-      <span className="text-zinc-500">{label}</span>
-      <span className="font-mono text-right text-zinc-200">{value}</span>
     </div>
   );
 }

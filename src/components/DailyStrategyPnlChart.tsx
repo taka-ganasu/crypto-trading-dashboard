@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { formatCurrency } from "@/lib/format";
 import type { TradeByStrategyDaily } from "@/types";
 
 interface DailyStrategyPnlChartProps {
@@ -39,13 +40,6 @@ const STRATEGY_COLORS = [
   "#22d3ee", // cyan-400
   "#84cc16", // lime-500
 ];
-
-function formatCurrency(value: number): string {
-  const abs = Math.abs(value);
-  if (abs >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
-  if (abs >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
-  return `$${value.toFixed(0)}`;
-}
 
 function normalizeRows(rows: TradeByStrategyDaily[]): {
   chartData: ChartRow[];
@@ -172,7 +166,14 @@ export default function DailyStrategyPnlChart({ data }: DailyStrategyPnlChartPro
             axisLine={{ stroke: "#3f3f46" }}
           />
           <YAxis
-            tickFormatter={formatCurrency}
+            tickFormatter={(value: number) =>
+              formatCurrency(value, {
+                compact: true,
+                compactDecimals: 1,
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              })
+            }
             tick={{ fill: "#71717a", fontSize: 11 }}
             tickLine={false}
             axisLine={{ stroke: "#3f3f46" }}
