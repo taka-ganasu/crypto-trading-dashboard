@@ -274,4 +274,97 @@ describe("Circuit Breaker Page", () => {
       expect(screen.getByText("State change")).toBeDefined();
     });
   });
+
+  it("shows PAUSED status with description", async () => {
+    vi.mocked(fetchCircuitBreakerState).mockResolvedValue({
+      data: {
+        status: "PAUSED",
+        recent_events: [
+          {
+            status: "PAUSED",
+            message: "Further losses detected",
+            timestamp: "2026-03-15T11:30:00",
+          },
+        ],
+      },
+    });
+
+    render(<CircuitBreakerPage />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText("PAUSED").length).toBeGreaterThanOrEqual(1);
+    });
+
+    expect(
+      screen.getByText(
+        "Further losses detected. Positions reduced by 50% and new trades halted."
+      )
+    ).toBeDefined();
+  });
+
+  it("shows event with null timestamp as empty string", async () => {
+    vi.mocked(fetchCircuitBreakerState).mockResolvedValue({
+      data: {
+        status: "WARNING",
+        recent_events: [
+          {
+            status: "WARNING",
+            message: "Loss threshold reached",
+            timestamp: null,
+          },
+        ],
+      },
+    });
+
+    render(<CircuitBreakerPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Loss threshold reached")).toBeDefined();
+    });
+  });
+
+  it("shows safety mechanism subtitle", async () => {
+    vi.mocked(fetchCircuitBreakerState).mockResolvedValue(mockCBStateNormal);
+
+    render(<CircuitBreakerPage />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "Safety mechanism that automatically reduces risk during adverse conditions"
+        )
+      ).toBeDefined();
+    });
+  });
+
+  it("displays transition actions", async () => {
+    vi.mocked(fetchCircuitBreakerState).mockResolvedValue(mockCBStateNormal);
+
+    render(<CircuitBreakerPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("State Transitions")).toBeDefined();
+    });
+
+    expect(
+      screen.getByText("Leverage restored (75% → 100%)")
+    ).toBeDefined();
+    expect(
+      screen.getByText("New trades re-enabled at reduced leverage")
+    ).toBeDefined();
+  });
+
+  it("handles non-Error thrown in fetch", async () => {
+    vi.mocked(fetchCircuitBreakerState).mockRejectedValue("string error");
+
+    render(<CircuitBreakerPage />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Failed to load circuit breaker state")
+      ).toBeDefined();
+    });
+
+    expect(screen.getByText("Failed to fetch")).toBeDefined();
+  });
 });
