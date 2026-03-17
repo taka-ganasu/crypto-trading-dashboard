@@ -2,8 +2,9 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { fetchSignals } from "@/lib/api";
-import LoadingSpinner from "@/components/LoadingSpinner";
 import DetailPanel from "@/components/DetailPanel";
+import DetailRow from "@/components/DetailRow";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import TimeRangeFilter, { useTimeRange } from "@/components/TimeRangeFilter";
 import ExecutionModeFilter, {
   useExecutionMode,
@@ -281,15 +282,6 @@ function SignalsContent() {
           </div>
         )}
       </DetailPanel>
-    </div>
-  );
-}
-
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-start justify-between gap-4 border-b border-zinc-800/70 pb-2">
-      <span className="text-zinc-500">{label}</span>
-      <span className="text-right text-zinc-200 font-mono">{value}</span>
     </div>
   );
 }

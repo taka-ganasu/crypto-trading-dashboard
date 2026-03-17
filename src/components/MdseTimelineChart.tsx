@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { formatPrice } from "@/lib/format";
 import type { MdseTimeline, MdseTimelineEvent } from "@/types";
 
 const DETECTOR_COLORS: Record<string, string> = {
@@ -37,11 +38,6 @@ function getDetectorColor(detector: string): string {
 
 function getSymbolColor(symbol: string): string {
   return SYMBOL_COLORS[symbol] ?? "#a1a1aa";
-}
-
-function formatPrice(value: number): string {
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
-  return `$${value.toFixed(2)}`;
 }
 
 function formatTime(ts: string): string {
@@ -85,7 +81,15 @@ function EventTooltip({
       <p className="mb-1 font-medium text-zinc-300">{formatTime(d.timestamp)}</p>
       <p className="text-zinc-400">
         {d.symbol}:{" "}
-        <span className="font-mono text-zinc-200">{formatPrice(d.price)}</span>
+        <span className="font-mono text-zinc-200">
+          {formatPrice(d.price, {
+            compact: true,
+            compactDecimals: 1,
+            currency: true,
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
+        </span>
       </p>
     </div>
   );
@@ -239,7 +243,15 @@ export default function MdseTimelineChart({ data }: MdseTimelineChartProps) {
             />
             <YAxis
               domain={["auto", "auto"]}
-              tickFormatter={formatPrice}
+              tickFormatter={(value: number) =>
+                formatPrice(value, {
+                  compact: true,
+                  compactDecimals: 1,
+                  currency: true,
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              }
               tick={{ fill: "#71717a", fontSize: 11 }}
               tickLine={false}
               axisLine={{ stroke: "#3f3f46" }}

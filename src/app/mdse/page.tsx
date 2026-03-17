@@ -9,6 +9,7 @@ import {
   fetchMdseTimeline,
 } from "@/lib/api";
 import DetailPanel from "@/components/DetailPanel";
+import DetailRow from "@/components/DetailRow";
 import LoadingSpinner from "@/components/LoadingSpinner";
 const MdseTimelineChart = dynamic(() => import("@/components/MdseTimelineChart"), { ssr: false });
 import TimeRangeFilter, { useTimeRange } from "@/components/TimeRangeFilter";
@@ -432,15 +433,6 @@ function MdseTradeDetail({
         label="PnL"
         value={trade.pnl != null ? formatPnl(trade.pnl) : "—"}
       />
-    </div>
-  );
-}
-
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-start justify-between gap-4 border-b border-zinc-800/70 pb-2">
-      <span className="text-zinc-500">{label}</span>
-      <span className="text-right text-zinc-200 font-mono">{value}</span>
     </div>
   );
 }

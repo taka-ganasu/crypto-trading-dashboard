@@ -2,9 +2,16 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { fetchTrades } from "@/lib/api";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import { formatNumber, formatPnl, colorByPnl, formatDateTime } from "@/lib/format";
 import DetailPanel from "@/components/DetailPanel";
+import DetailRow from "@/components/DetailRow";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import {
+  formatNumber,
+  formatPnl,
+  colorByPnl,
+  formatDateTime,
+  formatDuration,
+} from "@/lib/format";
 import TimeRangeFilter, { useTimeRange } from "@/components/TimeRangeFilter";
 import ExecutionModeFilter, {
   useExecutionMode,
@@ -298,29 +305,4 @@ function TradesContent() {
       </DetailPanel>
     </div>
   );
-}
-
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-start justify-between gap-4 border-b border-zinc-800/70 pb-2">
-      <span className="text-zinc-500">{label}</span>
-      <span className="text-right text-zinc-200 font-mono">{value}</span>
-    </div>
-  );
-}
-
-function formatDuration(entryTime: string, exitTime: string): string {
-  const start = new Date(entryTime).getTime();
-  const end = new Date(exitTime).getTime();
-  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) {
-    return "—";
-  }
-
-  const minutes = Math.round((end - start) / 60000);
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  if (hours > 0) {
-    return `${hours}h ${remainingMinutes}m`;
-  }
-  return `${minutes}m`;
 }

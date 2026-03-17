@@ -12,6 +12,7 @@ import {
 import LoadingSpinner from "@/components/LoadingSpinner";
 import StatsOverviewCards from "@/components/StatsOverviewCards";
 import SystemStatusWidget from "@/components/SystemStatusWidget";
+import { formatCurrency } from "@/lib/format";
 import type {
   PortfolioState,
   CircuitBreakerState,
@@ -38,14 +39,6 @@ const CB_BADGE: Record<string, { bg: string; text: string; dot: string }> = {
   },
   STOPPED: { bg: "bg-red-950/50", text: "text-red-400", dot: "bg-red-400" },
 };
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(value);
-}
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
@@ -235,7 +228,7 @@ export default function Home() {
             Total Balance
           </p>
           <p className="mt-2 text-2xl font-bold text-zinc-100">
-            {formatCurrency(totalBalance)}
+            {formatCurrency(totalBalance, { locale: "en-US", useIntlStyle: true })}
           </p>
         </div>
 
@@ -250,7 +243,7 @@ export default function Home() {
             }`}
           >
             {dailyPnl >= 0 ? "+" : ""}
-            {formatCurrency(dailyPnl)}
+            {formatCurrency(dailyPnl, { locale: "en-US", useIntlStyle: true })}
             <span className="ml-2 text-sm font-normal">
               ({dailyPnlPct >= 0 ? "+" : ""}
               {dailyPnlPct.toFixed(2)}%)
@@ -336,7 +329,10 @@ export default function Home() {
                     }`}
                   >
                     {trade.pnl != null
-                      ? `${trade.pnl >= 0 ? "+" : ""}${formatCurrency(trade.pnl)}`
+                      ? `${trade.pnl >= 0 ? "+" : ""}${formatCurrency(trade.pnl, {
+                          locale: "en-US",
+                          useIntlStyle: true,
+                        })}`
                       : "Open"}
                   </p>
                   {trade.pnl_pct != null && (
