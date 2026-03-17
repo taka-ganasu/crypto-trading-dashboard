@@ -159,8 +159,15 @@ function AnalysisContent() {
   const [error, setError] = useState<string | null>(null);
   const { start, end } = useTimeRange();
 
-  useEffect(() => {
+  const [prevStart, setPrevStart] = useState(start);
+  const [prevEnd, setPrevEnd] = useState(end);
+  if (start !== prevStart || end !== prevEnd) {
+    setPrevStart(start);
+    setPrevEnd(end);
     setLoading(true);
+  }
+
+  useEffect(() => {
     fetchAnalysisCycles(100, start, end)
       .then((data) => {
         setCycles(Array.isArray(data) ? data : []);
@@ -199,7 +206,7 @@ function AnalysisContent() {
       executionRate,
       avgConfidence,
     };
-  }, [displayCycles]);
+  }, [cycles, displayCycles]);
 
   if (loading) {
     return <LoadingSpinner label="Loading analysis..." />;

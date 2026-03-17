@@ -71,13 +71,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
 
-  const loadDashboard = useCallback(async (isInitial: boolean = false) => {
-    if (isInitial) {
-      setLoading(true);
-    }
-    setError(null);
-    setWarning(null);
-
+  const loadDashboard = useCallback(async () => {
     const [portfolioResult, cbResult, tradesResult, healthResult, statsResult] =
       await Promise.allSettled([
         fetchPortfolioState(),
@@ -138,20 +132,21 @@ export default function Home() {
 
     if (failedSections.length === 5) {
       setError("Failed to load dashboard data.");
+      setWarning(null);
     } else if (failedSections.length > 0) {
+      setError(null);
       setWarning(
         `Some sections failed to load: ${failedSections.join(", ")}. Showing available data.`
       );
-    }
-
-    if (isInitial) {
-      setLoading(false);
+    } else {
+      setError(null);
+      setWarning(null);
     }
   }, []);
 
   useEffect(() => {
-    void loadDashboard(true);
-    const interval = setInterval(() => void loadDashboard(false), 30000);
+    queueMicrotask(() => { loadDashboard().then(() => setLoading(false)); });
+    const interval = setInterval(() => void loadDashboard(), 30000);
     return () => clearInterval(interval);
   }, [loadDashboard]);
 
@@ -172,7 +167,7 @@ export default function Home() {
           </p>
           <button
             type="button"
-            onClick={() => void loadDashboard()}
+            onClick={() => { setLoading(true); void loadDashboard().then(() => setLoading(false)); }}
             className="mt-3 rounded border border-zinc-700 bg-zinc-900 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800"
           >
             Retry

@@ -1,6 +1,5 @@
 import type {
   ExecutionMode,
-  Trade,
   TradeListResponse,
   TradeSummary,
   SignalListResponse,
