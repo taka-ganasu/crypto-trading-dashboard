@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import React from "react";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import ErrorBoundary from "../ErrorBoundary";
 
 afterEach(cleanup);
@@ -61,6 +61,26 @@ describe("ErrorBoundary", () => {
     expect(screen.getByText("Something went wrong")).toBeDefined();
     // Empty message falls back to the default text
     expect(screen.getByText("An unexpected error occurred.")).toBeDefined();
+
+    spy.mockRestore();
+  });
+
+  it("calls window.location.reload when Reload button is clicked", () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const reloadMock = vi.fn();
+    Object.defineProperty(window, "location", {
+      value: { ...window.location, reload: reloadMock },
+      writable: true,
+    });
+
+    render(
+      <ErrorBoundary>
+        <ThrowingChild error={new Error("crash")} />
+      </ErrorBoundary>
+    );
+
+    fireEvent.click(screen.getByText("Reload page"));
+    expect(reloadMock).toHaveBeenCalledTimes(1);
 
     spy.mockRestore();
   });
