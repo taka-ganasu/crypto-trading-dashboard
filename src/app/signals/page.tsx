@@ -43,21 +43,13 @@ function SignalsContent() {
   const { start, end } = useTimeRange();
   const { apiExecutionMode } = useExecutionMode();
 
-  const filterKey = `${start}\0${end}\0${apiExecutionMode}\0${executedFilter}`;
-  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
-  if (filterKey !== prevFilterKey) {
-    setPrevFilterKey(filterKey);
+  // Reset page to 1 when any filter changes
+  useEffect(() => {
     setCurrentPage(1);
-  }
-
-  const fetchDepsKey = `${filterKey}\0${currentPage}`;
-  const [prevFetchDepsKey, setPrevFetchDepsKey] = useState(fetchDepsKey);
-  if (fetchDepsKey !== prevFetchDepsKey) {
-    setPrevFetchDepsKey(fetchDepsKey);
-    setLoading(true);
-  }
+  }, [start, end, apiExecutionMode, executedFilter]);
 
   useEffect(() => {
+    setLoading(true);
     const offset = (currentPage - 1) * PAGE_SIZE;
     fetchSignals(undefined, PAGE_SIZE, start, end, apiExecutionMode, offset)
       .then((res) => {
