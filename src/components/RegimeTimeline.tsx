@@ -1,4 +1,5 @@
 import type { DisplayCycle, RegimeType } from "@/components/CycleTable";
+import { formatTimestamp } from "@/lib/format";
 
 const regimeStyle: Record<
   RegimeType,
@@ -36,12 +37,7 @@ const regimeStyle: Record<
   },
 };
 
-function formatDateTime(value: string | null): string {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "—";
-  return parsed.toLocaleString();
-}
+const formatDateTime = formatTimestamp;
 
 export default function RegimeTimeline({ cycles }: { cycles: DisplayCycle[] }) {
   return (

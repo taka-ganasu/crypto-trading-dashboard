@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCompactCurrency } from "@/lib/format";
 import {
   Bar,
   BarChart,
@@ -20,10 +21,7 @@ interface DailyPnlChartProps {
   data: DailyPnlPoint[];
 }
 
-function formatPnl(value: number): string {
-  if (Math.abs(value) >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
-  return `$${value.toFixed(0)}`;
-}
+const formatPnl = formatCompactCurrency;
 
 function CustomTooltip({
   active,

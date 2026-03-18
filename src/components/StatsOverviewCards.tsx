@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { formatTimestamp } from "@/lib/format";
 import type { SystemStatsResponse } from "@/types";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -70,12 +71,6 @@ function readText(payload: SystemStatsResponse | null, paths: string[][]): strin
   return null;
 }
 
-function formatTimestamp(value: string | null): string {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "—";
-  return parsed.toLocaleString();
-}
 
 interface StatsOverviewCardsProps {
   stats: SystemStatsResponse | null;

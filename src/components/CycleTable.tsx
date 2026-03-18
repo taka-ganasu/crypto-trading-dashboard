@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { formatDuration } from "@/lib/format";
+import { formatConfidence, formatDuration, formatTimestamp } from "@/lib/format";
 
 export type RegimeType =
   | "trending"
@@ -38,17 +38,7 @@ const regimeTextClassMap: Record<RegimeType, string> = {
   unknown: "text-zinc-500",
 };
 
-function formatDateTime(value: string | null): string {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "—";
-  return parsed.toLocaleString();
-}
-
-function formatConfidence(value: number | null | undefined): string {
-  if (value == null || !Number.isFinite(value)) return "—";
-  return `${value.toFixed(1)}%`;
-}
+const formatDateTime = formatTimestamp;
 
 const PAGE_SIZE = 25;
 

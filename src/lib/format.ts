@@ -173,18 +173,25 @@ export function colorByPnl(value: number): string {
   return value >= 0 ? "text-emerald-400" : "text-red-400";
 }
 
-/** Format an ISO timestamp as a locale date+time string. */
-export function formatTimestamp(ts: string): string {
-  return new Date(ts).toLocaleString();
+/** Format an ISO timestamp as a locale date+time string (null-safe). */
+export function formatTimestamp(ts: string | null | undefined): string {
+  if (!ts) return "—";
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString();
 }
 
-/** Format an ISO timestamp as a locale date string. */
-export function formatDate(ts: string): string {
-  return new Date(ts).toLocaleDateString();
+/** Format an ISO timestamp as a locale date string (null-safe). */
+export function formatDate(ts: string | null | undefined): string {
+  if (!ts) return "—";
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString();
 }
 
-/** Format an ISO timestamp as YYYY-MM-DD HH:mm in local time. */
-export function formatDateTime(ts: string): string {
+/** Format an ISO timestamp as YYYY-MM-DD HH:mm in local time (null-safe). */
+export function formatDateTime(ts: string | null | undefined): string {
+  if (!ts) return "—";
   const date = new Date(ts);
   if (Number.isNaN(date.getTime())) {
     return "—";
@@ -200,7 +207,55 @@ export function formatDateTime(ts: string): string {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
 }
 
-/** Format an ISO timestamp as a locale time string. */
-export function formatTime(ts: string): string {
-  return new Date(ts).toLocaleTimeString();
+/** Format an ISO timestamp as a locale time string (null-safe). */
+export function formatTime(ts: string | null | undefined): string {
+  if (!ts) return "—";
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleTimeString();
+}
+
+/** Format a currency value with compact $K/$M/$B suffixes (for chart axes). */
+export function formatCompactCurrency(value: number): string {
+  if (Math.abs(value) >= 1_000_000)
+    return `$${(value / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(value) >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
+  return `$${value.toFixed(0)}`;
+}
+
+/** Format a confidence value as percentage (null-safe, e.g. "75.0%"). */
+export function formatConfidence(
+  value: number | null | undefined
+): string {
+  if (value == null || !Number.isFinite(value)) return "—";
+  return `${value.toFixed(1)}%`;
+}
+
+/** Format an ISO timestamp with en-US locale including seconds (e.g. "Jan 1, 12:30:45 PM"). */
+export function formatTimestampVerbose(
+  ts: string | null | undefined
+): string {
+  if (!ts) return "—";
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
+/** Format an ISO timestamp as short date+time (e.g. "Jan 1, 12:30 PM"). */
+export function formatDateShort(ts: string | null | undefined): string {
+  if (!ts) return "—";
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }

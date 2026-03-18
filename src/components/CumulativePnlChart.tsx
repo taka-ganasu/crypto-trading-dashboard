@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { formatCompactCurrency } from "@/lib/format";
 import {
   Area,
   AreaChart,
@@ -24,12 +25,7 @@ interface CumulativePnlChartProps {
   data: CumulativePnlPoint[];
 }
 
-function formatPnl(value: number): string {
-  if (Math.abs(value) >= 1_000_000)
-    return `$${(value / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(value) >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
-  return `$${value.toFixed(0)}`;
-}
+const formatPnl = formatCompactCurrency;
 
 function getWeekKey(dateStr: string): string {
   // Parse date string as local date (not UTC) to avoid timezone shift

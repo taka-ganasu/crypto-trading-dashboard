@@ -12,7 +12,7 @@ import {
 import LoadingSpinner from "@/components/LoadingSpinner";
 import StatsOverviewCards from "@/components/StatsOverviewCards";
 import SystemStatusWidget from "@/components/SystemStatusWidget";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, formatDateShort } from "@/lib/format";
 import type {
   PortfolioState,
   CircuitBreakerState,
@@ -40,15 +40,7 @@ const CB_BADGE: Record<string, { bg: string; text: string; dot: string }> = {
   STOPPED: { bg: "bg-red-950/50", text: "text-red-400", dot: "bg-red-400" },
 };
 
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+const formatDate = formatDateShort;
 
 function toNumber(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;

@@ -11,9 +11,13 @@ const { formatPriceMock, tooltipState } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("@/lib/format", () => ({
-  formatPrice: formatPriceMock,
-}));
+vi.mock("@/lib/format", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/format")>();
+  return {
+    ...actual,
+    formatPrice: formatPriceMock,
+  };
+});
 
 vi.mock("recharts", () => {
   const ResponsiveContainer = ({ children }: { children: React.ReactNode }) => (
@@ -155,7 +159,7 @@ describe("MdseTimelineChart", () => {
     expect(screen.getByTestId("mdse-symbol-selector")).toBeDefined();
     expect(screen.getByText("BTC/USDT")).toBeDefined();
     expect(screen.getByText("ETH/USDT")).toBeDefined();
-    expect(screen.getByText("not-a-date")).toBeDefined();
+    expect(screen.getByText("—")).toBeDefined();
     expect(screen.getByText("formatted:1234.5")).toBeDefined();
     expect(formatPriceMock).toHaveBeenCalledWith(
       1234.56,

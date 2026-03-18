@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { formatPrice } from "@/lib/format";
+import { formatDateShort, formatPrice } from "@/lib/format";
 import type { MdseTimeline, MdseTimelineEvent } from "@/types";
 
 const DETECTOR_COLORS: Record<string, string> = {
@@ -40,16 +40,7 @@ function getSymbolColor(symbol: string): string {
   return SYMBOL_COLORS[symbol] ?? "#a1a1aa";
 }
 
-function formatTime(ts: string): string {
-  const d = new Date(ts);
-  if (Number.isNaN(d.getTime())) return ts;
-  return d.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+const formatTime = formatDateShort;
 
 function detectorName(event: MdseTimelineEvent): string {
   return event.detector ?? event.detector_name ?? "unknown";

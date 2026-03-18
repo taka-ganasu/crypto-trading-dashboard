@@ -1,17 +1,5 @@
+import { formatTimestampVerbose as formatTimestamp } from "@/lib/format";
 import type { SystemMetrics } from "@/types";
-
-function formatTimestamp(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-}
 
 function formatWebSocketStatus(value: boolean | null | undefined): {
   label: string;
