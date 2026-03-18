@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCompactCurrency } from "@/lib/format";
 import {
   Area,
   AreaChart,
@@ -21,11 +22,7 @@ interface EquityCurveChartProps {
   data: EquityCurvePoint[];
 }
 
-function formatBalance(value: number): string {
-  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
-  return `$${value.toFixed(0)}`;
-}
+const formatBalance = formatCompactCurrency;
 
 function CustomTooltip({
   active,

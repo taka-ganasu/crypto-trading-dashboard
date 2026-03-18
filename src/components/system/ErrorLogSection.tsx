@@ -1,18 +1,6 @@
 import { Fragment } from "react";
+import { formatTimestampVerbose as formatTimestamp } from "@/lib/format";
 import type { ApiError } from "@/types";
-
-function formatTimestamp(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-}
 
 function normalizeStatusCode(statusCode: number | null | undefined): number {
   return typeof statusCode === "number" && Number.isFinite(statusCode)
