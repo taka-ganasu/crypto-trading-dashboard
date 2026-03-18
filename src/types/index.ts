@@ -1,69 +1,54 @@
+/**
+ * Dashboard type definitions.
+ *
+ * Types are sourced from the Bot OpenAPI spec via openapi-typescript (api-generated.ts).
+ * Dashboard-only types and types requiring extension are defined manually below.
+ *
+ * To regenerate: npm run generate:types
+ */
+import type { components } from "./api-generated";
+
+type Schemas = components["schemas"];
+
+// ────────────────────────────────────────────────────────────────
+// Re-exported from Bot OpenAPI spec (source of truth)
+// ────────────────────────────────────────────────────────────────
+export type Trade = Schemas["TradeResponse"];
+export type TradeSummary = Schemas["TradeSummaryResponse"];
+export type Signal = Schemas["SignalResponse"];
+export type TradeListResponse = Schemas["TradeListResponse"];
+export type SignalListResponse = Schemas["SignalListResponse"];
+export type PortfolioPosition = Schemas["PortfolioPosition"];
+export type StrategiesResponse = Schemas["StrategiesResponse"];
+export type StrategySnapshot = Schemas["StrategySnapshot"];
+export type AnalysisCycle = Schemas["CycleResponse"];
+export type MdseSummaryDetector = Schemas["MdseDetectorSummary"];
+export type MdseSummary = Schemas["MdseSummaryResponse"];
+export type MdseEvent = Schemas["DistortionEventResponse"];
+export type MdseTrade = Schemas["DistortionTradeResponse"];
+export type PerformanceSummary = Schemas["PerformanceSummaryResponse"];
+export type ExecutionQuality = Schemas["ExecutionQualityResponse"];
+export type MarketSnapshot = Schemas["MarketSnapshotResponse"];
+export type EquityCurvePoint = Schemas["EquityCurvePoint"];
+export type EquityCurveResponse = Schemas["EquityCurveResponse"];
+export type TradeByStrategyDaily = Schemas["DailyStrategyPnlResponse"];
+export type MdseTimelinePoint = Schemas["TimelinePricePoint"];
+export type MdseTimelineEvent = Schemas["DistortionEventResponse"];
+export type MdseTimeline = Schemas["TimelineResponse"];
+export type StrategyPerformance = Schemas["StrategyPerformanceResponse"];
+export type SystemInfo = Schemas["SystemInfoResponse"];
+export type SystemMetrics = Schemas["SystemMetricsResponse"];
+export type MdseDetectorScore = Schemas["DetectorScoreResponse"];
+
+// ────────────────────────────────────────────────────────────────
+// Extended types (generated base + Dashboard-specific fields)
+// ────────────────────────────────────────────────────────────────
+export type SystemHealth = Schemas["SystemHealthResponse"] & {
+  uptime_seconds?: number | null;
+  pid?: number | null;
+};
+
 export type ExecutionMode = "all" | "live" | "paper" | "dry_run";
-
-export interface Trade {
-  id: number;
-  symbol: string;
-  side: string;
-  entry_price: number;
-  exit_price: number | null;
-  quantity: number;
-  pnl: number | null;
-  pnl_pct: number | null;
-  fees: number | null;
-  entry_time: string;
-  exit_time: string | null;
-  exit_reason: string | null;
-  strategy: string | null;
-  cycle_id: number | null;
-  created_at: string | null;
-  execution_mode: string | null;
-}
-
-export interface TradeSummary {
-  total_trades: number;
-  winning_trades: number | null;
-  losing_trades: number | null;
-  win_rate: number | null;
-  total_pnl: number | null;
-  profit_factor: number | null;
-  message: string | null;
-}
-
-export interface Signal {
-  id: number;
-  timestamp: string;
-  symbol: string;
-  action: string;
-  score: number | null;
-  confidence: number | null;
-  executed: number;
-  skip_reason: string | null;
-  strategy_type: string | null;
-  cycle_id: number | null;
-  created_at: string | null;
-}
-
-export interface TradeListResponse {
-  trades: Trade[];
-  total: number;
-  offset: number;
-  limit: number;
-}
-
-export interface SignalListResponse {
-  signals: Signal[];
-  total: number;
-  offset: number;
-  limit: number;
-}
-
-export interface PortfolioPosition {
-  side?: string | null;
-  size?: number | null;
-  entry_price?: number | null;
-  mark_price?: number | null;
-  unrealized_pnl?: number | null;
-}
 
 export interface PortfolioStrategyEntry {
   symbol?: string | null;
@@ -75,19 +60,9 @@ export interface PortfolioStrategyEntry {
   last_signal_time?: string | null;
 }
 
-export interface PortfolioData {
-  positions?: Record<string, PortfolioPosition>;
+export type PortfolioData = Schemas["PortfolioData"] & {
   strategies?: Record<string, PortfolioStrategyEntry>;
-  equity?: number | null;
-  available_balance?: number | null;
-  total_balance?: number | null;
-  total_equity?: number | null;
-  open_trade_count?: number | null;
-  timestamp?: string | null;
-  last_updated?: string | null;
-  daily_pnl?: number | null;
-  daily_pnl_pct?: number | null;
-}
+};
 
 export interface PortfolioState {
   data: PortfolioData;
@@ -99,39 +74,17 @@ export interface CircuitBreakerEvent {
   timestamp?: string | null;
 }
 
-export interface CircuitBreakerData {
-  status?: string | null;
+export type CircuitBreakerData = Schemas["CircuitBreakerData"] & {
   recent_events?: CircuitBreakerEvent[] | null;
-}
+};
 
 export interface CircuitBreakerState {
   data: CircuitBreakerData;
 }
 
-export interface SystemHealth {
-  status: string;
-  db_connected?: boolean | null;
-  exchange_connected?: boolean | null;
-  uptime_seconds?: number | null;
-  pid?: number | null;
-}
-
-export interface SystemMetrics {
-  memory_mb?: number | null;
-  cpu_percent?: number | null;
-  ws_connected?: boolean | null;
-  last_fr_fetch?: string | null;
-  open_positions?: number | null;
-}
-
-export interface SystemInfo {
-  db_path: string;
-  api_version: string;
-  bot_version?: string | null;
-  python_version: string;
-  platform: string;
-}
-
+// ────────────────────────────────────────────────────────────────
+// Dashboard-only types (no direct Bot API equivalent)
+// ────────────────────────────────────────────────────────────────
 export interface ApiError {
   ts: string;
   status_code: number;
@@ -194,163 +147,4 @@ export interface SystemStatsResponse {
   updated_at?: string | null;
   last_updated?: string | null;
   timestamp?: string | null;
-}
-
-export interface StrategySnapshot {
-  id: string;
-  symbol: string;
-  strategy: string;
-  allocation_pct: number;
-  status: string;
-  trade_count?: number | null;
-  win_rate?: number | null;
-  recent_pnl?: number | null;
-}
-
-export interface StrategiesResponse {
-  active_plan?: string | null;
-  strategies: StrategySnapshot[];
-}
-
-export interface AnalysisCycle {
-  id: number;
-  start_time: string;
-  end_time: string | null;
-  symbols_processed: string | null;
-  signals_generated: number;
-  trades_executed: number;
-  errors: string | null;
-  duration_seconds: number | null;
-  regime_info: string | null;
-  created_at: string | null;
-  total_count?: number | null;
-}
-
-export interface MdseDetectorScore {
-  detector_name: string;
-  win_rate: number | null;
-  avg_pnl: number | null;
-  weight: number | null;
-  sample_count: number | null;
-}
-
-export interface MdseSummaryDetector {
-  detector_name: string;
-  event_count: number;
-  validated_count: number;
-  win_rate: number | null;
-  avg_pnl: number | null;
-  weight: number | null;
-  sample_count: number | null;
-  last_event_at: string | null;
-}
-
-export interface MdseSummary {
-  total_events: number;
-  validated_events: number;
-  unvalidated_events: number;
-  detectors: MdseSummaryDetector[];
-}
-
-export interface MdseEvent {
-  id: number;
-  detector_name?: string;
-  detector?: string;
-  symbol: string;
-  direction: string;
-  confidence: number;
-  timestamp: string;
-  ttl?: number;
-  metadata_json?: string | null;
-  confluence_score?: number | null;
-  validated?: number;
-  trade_id?: number | null;
-  alert_sent?: boolean;
-  alert_type?: string | null;
-  created_at?: string | null;
-}
-
-export interface MdseTrade {
-  id: number;
-  event_id: number;
-  symbol: string;
-  direction: string;
-  entry_price: number;
-  exit_price: number | null;
-  entry_time: string;
-  exit_time: string | null;
-  pnl: number | null;
-  position_size: number;
-  created_at?: string | null;
-}
-
-export interface PerformanceSummary {
-  total_pnl: number | null;
-  win_rate: number | null;
-  profit_factor: number | null;
-  avg_slippage: number | null;
-  initial_balance?: number | null;
-}
-
-export interface ExecutionQuality {
-  trade_id: number | null;
-  expected_price: number | null;
-  actual_price: number | null;
-  slippage_pct: number | null;
-  api_latency_ms: number | null;
-  timestamp: string;
-}
-
-export interface MarketSnapshot {
-  symbol: string;
-  price: number | null;
-  rsi: number | null;
-  adx: number | null;
-  macd: number | null;
-  volume: number | null;
-  timestamp: string;
-}
-
-export interface EquityCurvePoint {
-  date: string;
-  balance: number;
-  daily_pnl: number;
-  cumulative_pnl: number;
-}
-
-export interface EquityCurveResponse {
-  data: EquityCurvePoint[];
-  total_days: number;
-  start_date: string | null;
-  end_date: string | null;
-  initial_balance?: number | null;
-}
-export interface TradeByStrategyDaily {
-  date: string;
-  strategy: string;
-  trade_count: number;
-  daily_pnl: number;
-}
-
-export interface MdseTimelinePoint {
-  timestamp: string;
-  price: number | null;
-  symbol: string | null;
-}
-
-export type MdseTimelineEvent = MdseEvent;
-
-export interface MdseTimeline {
-  prices: MdseTimelinePoint[];
-  events: MdseTimelineEvent[];
-}
-
-export interface StrategyPerformance {
-  strategy: string;
-  trade_count: number;
-  win_rate: number | null;
-  profit_factor: number | null;
-  sharpe: number | null;
-  avg_pnl: number | null;
-  max_dd: number | null;
 }

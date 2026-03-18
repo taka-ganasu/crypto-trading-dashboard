@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "test:e2e": "npx playwright test",
-    "test:unit": "vitest run"
+    "test:unit": "vitest run",
+    "generate:types": "openapi-typescript generated/openapi.json -o src/types/api-generated.ts"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.43.0",
@@ -31,6 +32,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "jsdom": "^28.1.0",
+    "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.0.18"

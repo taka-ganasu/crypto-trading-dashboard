@@ -4,14 +4,14 @@ import { useMemo, useState } from "react";
 import { formatPercent, formatPnl, colorByPnl, formatNumber } from "@/lib/format";
 import type { StrategyPerformance } from "@/types";
 
-function pfColor(pf: number | null): string {
+function pfColor(pf: number | null | undefined): string {
   if (pf == null) return "text-zinc-500";
   if (pf >= 1.5) return "text-emerald-400";
   if (pf >= 1.0) return "text-yellow-400";
   return "text-red-400";
 }
 
-function sharpeColor(sharpe: number | null): string {
+function sharpeColor(sharpe: number | null | undefined): string {
   if (sharpe == null) return "text-zinc-500";
   if (sharpe >= 1.0) return "text-emerald-400";
   if (sharpe >= 0.5) return "text-yellow-400";

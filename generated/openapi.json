@@ -1,0 +1,5978 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Crypto Trading Bot API",
+    "description": "REST API for the crypto trading bot. Provides access to trades, signals, portfolio state, performance metrics, MDSE distortion events, and system diagnostics.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/trades": {
+      "get": {
+        "tags": [
+          "Trades"
+        ],
+        "summary": "List trades",
+        "description": "Return trade history with optional symbol and date-range filters.",
+        "operationId": "get_trades_api_trades_get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Symbol"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}(?:[ T]\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?(?:Z|[+-]\\d{2}:\\d{2})?)?$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Date in YYYY-MM-DD or datetime in ISO-8601 format.",
+              "title": "Start"
+            },
+            "description": "Date in YYYY-MM-DD or datetime in ISO-8601 format."
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}(?:[ T]\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?(?:Z|[+-]\\d{2}:\\d{2})?)?$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Date in YYYY-MM-DD or datetime in ISO-8601 format.",
+              "title": "End"
+            },
+            "description": "Date in YYYY-MM-DD or datetime in ISO-8601 format."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "execution_mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by execution mode: dry_run, paper, live",
+              "title": "Execution Mode"
+            },
+            "description": "Filter by execution mode: dry_run, paper, live"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TradeListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/trades/summary": {
+      "get": {
+        "tags": [
+          "Trades"
+        ],
+        "summary": "Get trade summary",
+        "description": "Return aggregate trading metrics for the specified period.",
+        "operationId": "get_trade_summary_api_trades_summary_get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}(?:[ T]\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?(?:Z|[+-]\\d{2}:\\d{2})?)?$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Date in YYYY-MM-DD or datetime in ISO-8601 format.",
+              "title": "Start"
+            },
+            "description": "Date in YYYY-MM-DD or datetime in ISO-8601 format."
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}(?:[ T]\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?(?:Z|[+-]\\d{2}:\\d{2})?)?$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Date in YYYY-MM-DD or datetime in ISO-8601 format.",
+              "title": "End"
+            },
+            "description": "Date in YYYY-MM-DD or datetime in ISO-8601 format."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TradeSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/trades/by-strategy": {
+      "get": {
+        "tags": [
+          "Trades"
+        ],
+        "summary": "Get daily realized PnL by strategy",
+        "description": "Return day-by-day realized PnL aggregated by strategy.",
+        "operationId": "get_trades_by_strategy_api_trades_by_strategy_get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}(?:[ T]\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?(?:Z|[+-]\\d{2}:\\d{2})?)?$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Date in YYYY-MM-DD or datetime in ISO-8601 format.",
+              "title": "Start Date"
+            },
+            "description": "Date in YYYY-MM-DD or datetime in ISO-8601 format."
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}(?:[ T]\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?(?:Z|[+-]\\d{2}:\\d{2})?)?$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Date in YYYY-MM-DD or datetime in ISO-8601 format.",
+              "title": "End Date"
+            },
+            "description": "Date in YYYY-MM-DD or datetime in ISO-8601 format."
+          },
+          {
+            "name": "execution_mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by execution mode: dry_run, paper, live",
+              "title": "Execution Mode"
+            },
+            "description": "Filter by execution mode: dry_run, paper, live"
+          },
+          {
+            "name": "tz_offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Timezone offset in hours from UTC (e.g. 9 for JST)",
+              "default": 0,
+              "title": "Tz Offset"
+            },
+            "description": "Timezone offset in hours from UTC (e.g. 9 for JST)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DailyStrategyPnlResponse"
+                  },
+                  "title": "Response Get Trades By Strategy Api Trades By Strategy Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/trades/{trade_id}": {
+      "get": {
+        "tags": [
+          "Trades"
+        ],
+        "summary": "Get trade by ID",
+        "description": "Return a single trade record by its unique identifier.",
+        "operationId": "get_trade_by_id_api_trades__trade_id__get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trade_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Trade Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TradeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/signals": {
+      "get": {
+        "tags": [
+          "Trades"
+        ],
+        "summary": "List signals",
+        "description": "Return generated trading signals with optional symbol and date filters.",
+        "operationId": "get_signals_api_signals_get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Symbol"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}(?:[ T]\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?(?:Z|[+-]\\d{2}:\\d{2})?)?$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Date in YYYY-MM-DD or datetime in ISO-8601 format.",
+              "title": "Start"
+            },
+            "description": "Date in YYYY-MM-DD or datetime in ISO-8601 format."
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}(?:[ T]\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?(?:Z|[+-]\\d{2}:\\d{2})?)?$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Date in YYYY-MM-DD or datetime in ISO-8601 format.",
+              "title": "End"
+            },
+            "description": "Date in YYYY-MM-DD or datetime in ISO-8601 format."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 1000,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "execution_mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by execution mode: dry_run, paper, live",
+              "title": "Execution Mode"
+            },
+            "description": "Filter by execution mode: dry_run, paper, live"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignalListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/portfolio/state": {
+      "get": {
+        "tags": [
+          "Trades"
+        ],
+        "summary": "Get portfolio state",
+        "description": "Return the latest portfolio snapshot from paper-trading state storage.",
+        "operationId": "get_portfolio_state_api_portfolio_state_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioStateResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ]
+      }
+    },
+    "/api/portfolio/summary": {
+      "get": {
+        "tags": [
+          "Trades"
+        ],
+        "summary": "Get portfolio summary",
+        "description": "Return aggregated trade PnL metrics for the current portfolio.",
+        "operationId": "get_portfolio_summary_api_portfolio_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TradeSummaryResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ]
+      }
+    },
+    "/api/cb/state": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Get circuit breaker state",
+        "description": "Return current circuit breaker status from the state JSON file.",
+        "operationId": "get_circuit_breaker_state_api_cb_state_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CircuitBreakerStateResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ]
+      }
+    },
+    "/api/cycles": {
+      "get": {
+        "tags": [
+          "Trades"
+        ],
+        "summary": "List analysis cycles",
+        "description": "Return historical cycle runs ordered by latest start time.",
+        "operationId": "get_cycles_api_cycles_get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Start date filter (ISO 8601)",
+              "title": "Start"
+            },
+            "description": "Start date filter (ISO 8601)"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "End date filter (ISO 8601)",
+              "title": "End"
+            },
+            "description": "End date filter (ISO 8601)"
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Alias of start for backward compatibility",
+              "title": "Start Date"
+            },
+            "description": "Alias of start for backward compatibility"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Alias of end for backward compatibility",
+              "title": "End Date"
+            },
+            "description": "Alias of end for backward compatibility"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "execution_mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by execution mode: dry_run, paper, live",
+              "title": "Execution Mode"
+            },
+            "description": "Filter by execution mode: dry_run, paper, live"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CycleResponse"
+                  },
+                  "title": "Response Get Cycles Api Cycles Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cycles/detail": {
+      "get": {
+        "tags": [
+          "Trades"
+        ],
+        "summary": "List cycle details",
+        "description": "Return cycles enriched with parsed regime information and signal statistics.",
+        "operationId": "get_cycles_detail_api_cycles_detail_get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CycleDetailResponse"
+                  },
+                  "title": "Response Get Cycles Detail Api Cycles Detail Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cycles/{cycle_id}": {
+      "get": {
+        "tags": [
+          "Trades"
+        ],
+        "summary": "Get cycle by ID",
+        "description": "Return one analysis cycle by numeric identifier.",
+        "operationId": "get_cycle_by_id_api_cycles__cycle_id__get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cycle_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Cycle Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CycleResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cycles/{cycle_id}/detail": {
+      "get": {
+        "tags": [
+          "Trades"
+        ],
+        "summary": "Get cycle detail by ID",
+        "description": "Return one cycle with computed signal stats and parsed regime detail.",
+        "operationId": "get_cycle_detail_by_id_api_cycles__cycle_id__detail_get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cycle_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Cycle Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CycleDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Get system health",
+        "description": "Return local DB, exchange, and process health status.",
+        "operationId": "get_system_health_api_system_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemHealthResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ]
+      }
+    },
+    "/api/system/metrics": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Get system metrics",
+        "description": "Return process metrics from local psutil inspection.",
+        "operationId": "get_system_metrics_api_system_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemMetricsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ]
+      }
+    },
+    "/api/system/info": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Get runtime info",
+        "description": "Return local runtime and API version metadata for diagnostics.",
+        "operationId": "get_system_info_api_system_info_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemInfoResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ]
+      }
+    },
+    "/api/strategies": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Get strategy list",
+        "description": "Return active plan strategy settings with status and recent performance.",
+        "operationId": "get_strategies_api_strategies_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategiesResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ]
+      }
+    },
+    "/api/system/stats": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Get system stats",
+        "description": "Return endpoint count, DB table counts, and active strategy allocation.",
+        "operationId": "get_system_stats_api_system_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemStatsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ]
+      }
+    },
+    "/api/performance/execution-quality": {
+      "get": {
+        "tags": [
+          "Performance"
+        ],
+        "summary": "List execution quality",
+        "description": "Return execution-quality records ordered by latest timestamp.",
+        "operationId": "get_execution_quality_api_performance_execution_quality_get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "execution_mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by execution mode: dry_run, paper, live",
+              "title": "Execution Mode"
+            },
+            "description": "Filter by execution mode: dry_run, paper, live"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExecutionQualityResponse"
+                  },
+                  "title": "Response Get Execution Quality Api Performance Execution Quality Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/performance/market-snapshots": {
+      "get": {
+        "tags": [
+          "Performance"
+        ],
+        "summary": "List market snapshots",
+        "description": "Return indicator snapshots with optional symbol filtering.",
+        "operationId": "get_market_snapshots_api_performance_market_snapshots_get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Symbol"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "execution_mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by execution mode: dry_run, paper, live",
+              "title": "Execution Mode"
+            },
+            "description": "Filter by execution mode: dry_run, paper, live"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MarketSnapshotResponse"
+                  },
+                  "title": "Response Get Market Snapshots Api Performance Market Snapshots Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/performance/summary": {
+      "get": {
+        "tags": [
+          "Performance"
+        ],
+        "summary": "Get performance summary",
+        "description": "Return aggregate trade metrics and average slippage.",
+        "operationId": "get_performance_summary_api_performance_summary_get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "execution_mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by execution mode: dry_run, paper, live",
+              "title": "Execution Mode"
+            },
+            "description": "Filter by execution mode: dry_run, paper, live"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerformanceSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/performance/by-strategy": {
+      "get": {
+        "tags": [
+          "Performance"
+        ],
+        "summary": "Get strategy performance",
+        "description": "Return performance metrics grouped by strategy name.",
+        "operationId": "get_performance_by_strategy_api_performance_by_strategy_get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "execution_mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by execution mode: dry_run, paper, live",
+              "title": "Execution Mode"
+            },
+            "description": "Filter by execution mode: dry_run, paper, live"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StrategyPerformanceResponse"
+                  },
+                  "title": "Response Get Performance By Strategy Api Performance By Strategy Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/performance/equity-curve": {
+      "get": {
+        "tags": [
+          "Performance"
+        ],
+        "summary": "Get equity curve",
+        "description": "Return daily balance progression derived from closed-trade PnL.",
+        "operationId": "get_equity_curve_api_performance_equity_curve_get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter start date (YYYY-MM-DD)",
+              "title": "Start Date"
+            },
+            "description": "Filter start date (YYYY-MM-DD)"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter end date (YYYY-MM-DD)",
+              "title": "End Date"
+            },
+            "description": "Filter end date (YYYY-MM-DD)"
+          },
+          {
+            "name": "initial_balance",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Starting balance (auto-detected from config if omitted)",
+              "title": "Initial Balance"
+            },
+            "description": "Starting balance (auto-detected from config if omitted)"
+          },
+          {
+            "name": "execution_mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by execution mode: dry_run, paper, live",
+              "title": "Execution Mode"
+            },
+            "description": "Filter by execution mode: dry_run, paper, live"
+          },
+          {
+            "name": "tz_offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Timezone offset in hours from UTC (e.g. 9 for JST)",
+              "default": 0,
+              "title": "Tz Offset"
+            },
+            "description": "Timezone offset in hours from UTC (e.g. 9 for JST)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquityCurveResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mdse/events": {
+      "get": {
+        "tags": [
+          "MDSE"
+        ],
+        "summary": "List MDSE events",
+        "description": "Return distortion events with optional detector, symbol, and lookback filters.",
+        "operationId": "get_mdse_events_api_mdse_events_get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "hours",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Hours"
+            }
+          },
+          {
+            "name": "detector_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Detector Name"
+            }
+          },
+          {
+            "name": "symbol",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Symbol"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DistortionEventResponse"
+                  },
+                  "title": "Response Get Mdse Events Api Mdse Events Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mdse/scores": {
+      "get": {
+        "tags": [
+          "MDSE"
+        ],
+        "summary": "List detector scores",
+        "description": "Return all detector performance scores used by MDSE weighting.",
+        "operationId": "get_mdse_scores_api_mdse_scores_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DetectorScoreResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Get Mdse Scores Api Mdse Scores Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ]
+      }
+    },
+    "/api/mdse/trades": {
+      "get": {
+        "tags": [
+          "MDSE"
+        ],
+        "summary": "List MDSE-linked trades",
+        "description": "Return trades linked to distortion events with optional filtering.",
+        "operationId": "get_mdse_trades_api_mdse_trades_get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Id"
+            }
+          },
+          {
+            "name": "symbol",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Symbol"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Start date filter (ISO 8601)",
+              "title": "Start"
+            },
+            "description": "Start date filter (ISO 8601)"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "End date filter (ISO 8601)",
+              "title": "End"
+            },
+            "description": "End date filter (ISO 8601)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DistortionTradeResponse"
+                  },
+                  "title": "Response Get Mdse Trades Api Mdse Trades Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mdse/virtual-pnl": {
+      "get": {
+        "tags": [
+          "MDSE"
+        ],
+        "summary": "List virtual PnL snapshots",
+        "description": "Return MDSE virtual PnL snapshots and optionally refresh cached calculations.",
+        "operationId": "get_mdse_virtual_pnl_api_mdse_virtual_pnl_get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Id"
+            }
+          },
+          {
+            "name": "symbol",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Symbol"
+            }
+          },
+          {
+            "name": "refresh",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Refresh"
+            }
+          },
+          {
+            "name": "recompute",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Recompute"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MdseVirtualPnlResponse"
+                  },
+                  "title": "Response Get Mdse Virtual Pnl Api Mdse Virtual Pnl Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mdse/summary": {
+      "get": {
+        "tags": [
+          "MDSE"
+        ],
+        "summary": "Get MDSE summary",
+        "description": "Return aggregate event counts, detector metrics, trends, and confidence buckets.",
+        "operationId": "get_mdse_summary_api_mdse_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MdseSummaryResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ]
+      }
+    },
+    "/api/mdse/correlation": {
+      "get": {
+        "tags": [
+          "MDSE"
+        ],
+        "summary": "Get detector correlation",
+        "description": "Return co-firing correlation statistics across detectors within configured windows.",
+        "operationId": "get_mdse_correlation_api_mdse_correlation_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MdseCorrelationResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ]
+      }
+    },
+    "/api/mdse/timeline": {
+      "get": {
+        "tags": [
+          "MDSE"
+        ],
+        "summary": "Get MDSE timeline",
+        "description": "Return market snapshots and distortion events as structured {prices, events}.",
+        "operationId": "get_mdse_timeline_api_mdse_timeline_get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "hours",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 168,
+              "minimum": 1,
+              "default": 24,
+              "title": "Hours"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Start time filter (ISO 8601)",
+              "title": "Start"
+            },
+            "description": "Start time filter (ISO 8601)"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "End time filter (ISO 8601)",
+              "title": "End"
+            },
+            "description": "End time filter (ISO 8601)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimelineResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sengan/patterns": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "List Sengan patterns",
+        "description": "Return discovered/validated/active patterns from EdgeCatalog with status, inferred symbol, conditions, and metrics.",
+        "operationId": "get_sengan_patterns_api_sengan_patterns_get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SenganPatternResponse"
+                  },
+                  "title": "Response Get Sengan Patterns Api Sengan Patterns Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sengan/matches": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "List recent Sengan matches",
+        "description": "Return most-recent Sengan pattern match events from the JSONL match log.",
+        "operationId": "get_sengan_matches_api_sengan_matches_get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SenganMatchResponse"
+                  },
+                  "title": "Response Get Sengan Matches Api Sengan Matches Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Comprehensive health check",
+        "description": "Return DB, exchange, process, strategy, last-trade, and MDSE health details.",
+        "operationId": "comprehensive_health_check_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/errors": {
+      "get": {
+        "tags": [
+          "errors"
+        ],
+        "summary": "List API errors",
+        "description": "Return recent API error records from the SQLite error log.",
+        "operationId": "list_errors_api_errors_get",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "ISO 8601 timestamp. Defaults to 24 h ago.",
+              "title": "Since"
+            },
+            "description": "ISO 8601 timestamp. Defaults to 24 h ago."
+          },
+          {
+            "name": "status_gte",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 599,
+              "minimum": 100,
+              "description": "Minimum HTTP status code to include.",
+              "default": 400,
+              "title": "Status Gte"
+            },
+            "description": "Minimum HTTP status code to include."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "description": "Maximum number of records to return.",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "Maximum number of records to return."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response List Errors Api Errors Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CircuitBreakerData": {
+        "properties": {
+          "portfolio_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portfolio State"
+          },
+          "strategy_states": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy States"
+          },
+          "excluded_strategies": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excluded Strategies"
+          },
+          "strategy_peaks": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Peaks"
+          },
+          "portfolio_peak": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portfolio Peak"
+          },
+          "total_assets_peak": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Assets Peak"
+          },
+          "pause_entered_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pause Entered At"
+          },
+          "recovery_started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recovery Started At"
+          },
+          "warning_entered_at": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning Entered At"
+          },
+          "leverage_overrides": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Leverage Overrides"
+          },
+          "last_updated": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Updated"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "daily_pnl_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Pnl Pct"
+          },
+          "consecutive_losses": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consecutive Losses"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "CircuitBreakerData",
+        "description": "Circuit breaker state payload.\n\nSupports both the full state from circuit_breaker_state.json\n(portfolio_state, strategy_states, etc.) and the simplified\nfallback (status, message) when the state file is absent.",
+        "example": {
+          "excluded_strategies": [],
+          "last_updated": "2026-03-12T09:33:36.621725+00:00",
+          "portfolio_peak": 10217.14,
+          "portfolio_state": "NORMAL",
+          "strategy_states": {
+            "btc_mom": "NORMAL",
+            "sol_fr_reversal": "NORMAL"
+          },
+          "total_assets_peak": 10000.0
+        }
+      },
+      "CircuitBreakerStateResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CircuitBreakerData"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "CircuitBreakerStateResponse",
+        "description": "Wrapper payload for circuit breaker state responses.",
+        "example": {
+          "data": {
+            "excluded_strategies": [],
+            "last_updated": "2026-03-12T09:33:36.621725+00:00",
+            "portfolio_peak": 10217.14,
+            "portfolio_state": "NORMAL",
+            "strategy_states": {
+              "btc_mom": "NORMAL"
+            },
+            "total_assets_peak": 10000.0
+          }
+        }
+      },
+      "CycleDetailResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "start_time": {
+            "type": "string",
+            "title": "Start Time"
+          },
+          "end_time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time"
+          },
+          "symbols_processed": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbols Processed"
+          },
+          "signals_generated": {
+            "type": "integer",
+            "title": "Signals Generated",
+            "default": 0
+          },
+          "trades_executed": {
+            "type": "integer",
+            "title": "Trades Executed",
+            "default": 0
+          },
+          "errors": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errors"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Seconds"
+          },
+          "regime_info": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regime Info"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "regime_detail": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RegimeDetail"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "signal_stats": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SignalStats"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "start_time"
+        ],
+        "title": "CycleDetailResponse",
+        "description": "Detailed cycle response including regime and signal summaries.",
+        "example": {
+          "created_at": "2026-03-05T09:00:12Z",
+          "duration_seconds": 12.4,
+          "end_time": "2026-03-05T09:00:12Z",
+          "id": 101,
+          "regime_detail": {
+            "raw": "{\"regime_type\": \"trend\"}",
+            "regime_confidence": 0.84,
+            "regime_duration_hours": 6.0,
+            "regime_type": "trend"
+          },
+          "regime_info": "{\"regime_type\": \"trend\"}",
+          "signal_stats": {
+            "avg_score": 0.7123,
+            "dominant_direction": "BUY",
+            "execution_rate": 0.4167,
+            "signals_executed": 10,
+            "signals_generated": 24
+          },
+          "signals_generated": 24,
+          "start_time": "2026-03-05T09:00:00Z",
+          "symbols_processed": "BTC/USDC,ETH/USDC",
+          "trades_executed": 10
+        }
+      },
+      "CycleResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "start_time": {
+            "type": "string",
+            "title": "Start Time"
+          },
+          "end_time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time"
+          },
+          "symbols_processed": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbols Processed"
+          },
+          "signals_generated": {
+            "type": "integer",
+            "title": "Signals Generated",
+            "default": 0
+          },
+          "trades_executed": {
+            "type": "integer",
+            "title": "Trades Executed",
+            "default": 0
+          },
+          "errors": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errors"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Seconds"
+          },
+          "regime_info": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regime Info"
+          },
+          "execution_mode": {
+            "type": "string",
+            "title": "Execution Mode",
+            "default": "paper"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "total_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "start_time"
+        ],
+        "title": "CycleResponse",
+        "description": "Response payload describing one orchestration cycle.",
+        "example": {
+          "created_at": "2026-03-05T09:00:12Z",
+          "duration_seconds": 12.5,
+          "end_time": "2026-03-05T09:00:12Z",
+          "id": 5,
+          "regime_info": "{\"BTC/USDC\": \"trending\"}",
+          "signals_generated": 2,
+          "start_time": "2026-03-05T09:00:00Z",
+          "symbols_processed": "BTC/USDC,ETH/USDC",
+          "total_count": 321,
+          "trades_executed": 1
+        }
+      },
+      "DailyStrategyPnlResponse": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "strategy": {
+            "type": "string",
+            "title": "Strategy"
+          },
+          "trade_count": {
+            "type": "integer",
+            "title": "Trade Count"
+          },
+          "daily_pnl": {
+            "type": "number",
+            "title": "Daily Pnl"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "strategy",
+          "trade_count",
+          "daily_pnl"
+        ],
+        "title": "DailyStrategyPnlResponse",
+        "description": "Daily realized PnL aggregated by strategy.",
+        "example": {
+          "daily_pnl": 125.5,
+          "date": "2026-03-07",
+          "strategy": "trend_following",
+          "trade_count": 3
+        }
+      },
+      "DbStats": {
+        "properties": {
+          "total_trades": {
+            "type": "integer",
+            "title": "Total Trades"
+          },
+          "total_signals": {
+            "type": "integer",
+            "title": "Total Signals"
+          },
+          "total_distortion_events": {
+            "type": "integer",
+            "title": "Total Distortion Events"
+          },
+          "db_size_mb": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Db Size Mb"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_trades",
+          "total_signals",
+          "total_distortion_events"
+        ],
+        "title": "DbStats",
+        "description": "Database table counts and size.",
+        "example": {
+          "db_size_mb": 6.74,
+          "total_distortion_events": 312,
+          "total_signals": 2048,
+          "total_trades": 128
+        }
+      },
+      "DetectorScoreResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "detector_name": {
+            "type": "string",
+            "title": "Detector Name"
+          },
+          "win_rate": {
+            "type": "number",
+            "title": "Win Rate"
+          },
+          "avg_pnl": {
+            "type": "number",
+            "title": "Avg Pnl"
+          },
+          "weight": {
+            "type": "number",
+            "title": "Weight"
+          },
+          "last_updated": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Updated"
+          },
+          "sample_count": {
+            "type": "integer",
+            "title": "Sample Count"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "detector_name",
+          "win_rate",
+          "avg_pnl",
+          "weight",
+          "sample_count"
+        ],
+        "title": "DetectorScoreResponse",
+        "description": "Detector performance score row used for MDSE weighting.",
+        "example": {
+          "avg_pnl": 24.8,
+          "created_at": "2026-03-01T00:00:00Z",
+          "detector_name": "fr_extreme",
+          "id": 1,
+          "last_updated": "2026-03-05T09:00:00Z",
+          "sample_count": 48,
+          "weight": 1.15,
+          "win_rate": 0.61
+        }
+      },
+      "DistortionEventResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          },
+          "detector_name": {
+            "type": "string",
+            "title": "Detector Name"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "direction": {
+            "type": "string",
+            "title": "Direction"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "ttl": {
+            "type": "integer",
+            "title": "Ttl"
+          },
+          "metadata_json": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata Json"
+          },
+          "confluence_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confluence Score"
+          },
+          "validated": {
+            "type": "integer",
+            "title": "Validated",
+            "default": 0
+          },
+          "trade_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trade Id"
+          },
+          "alert_sent": {
+            "type": "boolean",
+            "title": "Alert Sent",
+            "default": false
+          },
+          "alert_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alert Type"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "detector": {
+            "type": "string",
+            "title": "Detector",
+            "description": "Alias for detector_name for Dashboard compatibility.",
+            "readOnly": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "timestamp",
+          "detector_name",
+          "symbol",
+          "direction",
+          "confidence",
+          "ttl",
+          "detector"
+        ],
+        "title": "DistortionEventResponse",
+        "description": "Response payload for an MDSE distortion event.",
+        "example": {
+          "alert_sent": true,
+          "alert_type": "slack",
+          "confidence": 0.92,
+          "confluence_score": 4.0,
+          "created_at": "2026-03-05T09:00:01Z",
+          "detector": "fr_extreme",
+          "detector_name": "fr_extreme",
+          "direction": "BUY",
+          "id": 1,
+          "metadata_json": "{\"basis\": \"spike\"}",
+          "symbol": "BTC/USDC",
+          "timestamp": "2026-03-05T09:00:00Z",
+          "trade_id": 101,
+          "ttl": 600,
+          "validated": 1
+        }
+      },
+      "DistortionTradeResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "event_id": {
+            "type": "integer",
+            "title": "Event Id"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "direction": {
+            "type": "string",
+            "title": "Direction"
+          },
+          "entry_price": {
+            "type": "number",
+            "title": "Entry Price"
+          },
+          "exit_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Price"
+          },
+          "entry_time": {
+            "type": "string",
+            "title": "Entry Time"
+          },
+          "exit_time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Time"
+          },
+          "pnl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl"
+          },
+          "position_size": {
+            "type": "number",
+            "title": "Position Size"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "event_id",
+          "symbol",
+          "direction",
+          "entry_price",
+          "entry_time",
+          "position_size"
+        ],
+        "title": "DistortionTradeResponse",
+        "description": "Trade row linked to an MDSE distortion event.",
+        "example": {
+          "created_at": "2026-03-05T09:01:01Z",
+          "direction": "BUY",
+          "entry_price": 50250.0,
+          "entry_time": "2026-03-05T09:01:00Z",
+          "event_id": 1,
+          "exit_price": 50600.0,
+          "exit_time": "2026-03-05T09:30:00Z",
+          "id": 11,
+          "pnl": 35.2,
+          "position_size": 0.01,
+          "symbol": "BTC/USDC"
+        }
+      },
+      "EquityCurvePoint": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "balance": {
+            "type": "number",
+            "title": "Balance"
+          },
+          "daily_pnl": {
+            "type": "number",
+            "title": "Daily Pnl"
+          },
+          "cumulative_pnl": {
+            "type": "number",
+            "title": "Cumulative Pnl"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "balance",
+          "daily_pnl",
+          "cumulative_pnl"
+        ],
+        "title": "EquityCurvePoint",
+        "description": "Single daily equity-curve datapoint.",
+        "example": {
+          "balance": 10125.5,
+          "cumulative_pnl": 125.5,
+          "daily_pnl": 125.5,
+          "date": "2026-03-05"
+        }
+      },
+      "EquityCurveResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/EquityCurvePoint"
+            },
+            "type": "array",
+            "title": "Data"
+          },
+          "total_days": {
+            "type": "integer",
+            "title": "Total Days"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          },
+          "initial_balance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initial Balance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "total_days"
+        ],
+        "title": "EquityCurveResponse",
+        "description": "Equity-curve response payload with metadata range fields.",
+        "example": {
+          "data": [
+            {
+              "balance": 10125.5,
+              "cumulative_pnl": 125.5,
+              "daily_pnl": 125.5,
+              "date": "2026-03-05"
+            }
+          ],
+          "end_date": "2026-03-05",
+          "initial_balance": 10000.0,
+          "start_date": "2026-03-05",
+          "total_days": 1
+        }
+      },
+      "ExecutionQualityResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "trade_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trade Id"
+          },
+          "expected_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Price"
+          },
+          "actual_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Price"
+          },
+          "slippage_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slippage Pct"
+          },
+          "api_latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Latency Ms"
+          },
+          "cycle_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cycle Id"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "timestamp"
+        ],
+        "title": "ExecutionQualityResponse",
+        "description": "Execution-quality row returned by performance endpoints.",
+        "example": {
+          "actual_price": 50310.0,
+          "api_latency_ms": 120.5,
+          "created_at": "2026-03-05T09:00:01Z",
+          "cycle_id": 8,
+          "expected_price": 50300.0,
+          "id": 1,
+          "slippage_pct": 0.0199,
+          "timestamp": "2026-03-05T09:00:00Z",
+          "trade_id": 42
+        }
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthCheckItem": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "warn",
+              "fail"
+            ],
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Ms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "status",
+          "message"
+        ],
+        "title": "HealthCheckItem",
+        "description": "Individual health check result.",
+        "example": {
+          "latency_ms": 1.2,
+          "message": "Connected",
+          "name": "db",
+          "status": "ok"
+        }
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "healthy",
+              "degraded",
+              "unhealthy"
+            ],
+            "title": "Status"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/HealthCheckItem"
+            },
+            "type": "array",
+            "title": "Checks"
+          },
+          "bot_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bot Version"
+          },
+          "git_commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Git Commit"
+          },
+          "uptime_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uptime Seconds"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "checks",
+          "timestamp"
+        ],
+        "title": "HealthResponse",
+        "description": "Comprehensive health check response.",
+        "example": {
+          "bot_version": "0.2.0",
+          "checks": [
+            {
+              "latency_ms": 1.2,
+              "message": "Connected",
+              "name": "db",
+              "status": "ok"
+            }
+          ],
+          "git_commit": "abc1234",
+          "status": "healthy",
+          "timestamp": "2026-03-05T09:00:00Z",
+          "uptime_seconds": 3600.0
+        }
+      },
+      "MarketSnapshotResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "volume": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume"
+          },
+          "rsi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rsi"
+          },
+          "adx": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adx"
+          },
+          "bb_upper": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bb Upper"
+          },
+          "bb_lower": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bb Lower"
+          },
+          "bb_middle": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bb Middle"
+          },
+          "ma_short": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ma Short"
+          },
+          "ma_long": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ma Long"
+          },
+          "macd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Macd"
+          },
+          "macd_signal": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Macd Signal"
+          },
+          "cycle_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cycle Id"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "timestamp",
+          "symbol"
+        ],
+        "title": "MarketSnapshotResponse",
+        "description": "Market indicator snapshot row returned by performance endpoints.",
+        "example": {
+          "adx": 25.2,
+          "bb_lower": 49500.0,
+          "bb_middle": 50250.0,
+          "bb_upper": 51000.0,
+          "created_at": "2026-03-05T09:00:01Z",
+          "cycle_id": 8,
+          "id": 1,
+          "ma_long": 50000.0,
+          "ma_short": 50200.0,
+          "macd": 22.1,
+          "macd_signal": 18.4,
+          "price": 50300.0,
+          "rsi": 57.1,
+          "symbol": "BTC/USDC",
+          "timestamp": "2026-03-05T09:00:00Z",
+          "volume": 1023.4
+        }
+      },
+      "MdseConfidenceBucket": {
+        "properties": {
+          "min_confidence": {
+            "type": "number",
+            "title": "Min Confidence"
+          },
+          "max_confidence": {
+            "type": "number",
+            "title": "Max Confidence"
+          },
+          "event_count": {
+            "type": "integer",
+            "title": "Event Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "min_confidence",
+          "max_confidence",
+          "event_count"
+        ],
+        "title": "MdseConfidenceBucket",
+        "description": "Histogram bucket for MDSE confidence distribution.",
+        "example": {
+          "event_count": 9,
+          "max_confidence": 1.0,
+          "min_confidence": 0.8
+        }
+      },
+      "MdseCorrelationPairResponse": {
+        "properties": {
+          "detector_a": {
+            "type": "string",
+            "title": "Detector A"
+          },
+          "detector_b": {
+            "type": "string",
+            "title": "Detector B"
+          },
+          "cofire_windows": {
+            "type": "integer",
+            "title": "Cofire Windows"
+          },
+          "simultaneous_rate": {
+            "type": "number",
+            "title": "Simultaneous Rate"
+          },
+          "cofire_event_count": {
+            "type": "integer",
+            "title": "Cofire Event Count"
+          },
+          "cofire_validated_count": {
+            "type": "integer",
+            "title": "Cofire Validated Count"
+          },
+          "cofire_hit_rate": {
+            "type": "number",
+            "title": "Cofire Hit Rate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detector_a",
+          "detector_b",
+          "cofire_windows",
+          "simultaneous_rate",
+          "cofire_event_count",
+          "cofire_validated_count",
+          "cofire_hit_rate"
+        ],
+        "title": "MdseCorrelationPairResponse",
+        "description": "Correlation metrics for a detector pair within a time window.",
+        "example": {
+          "cofire_event_count": 16,
+          "cofire_hit_rate": 0.5625,
+          "cofire_validated_count": 9,
+          "cofire_windows": 8,
+          "detector_a": "fr_extreme",
+          "detector_b": "oi_divergence",
+          "simultaneous_rate": 0.4
+        }
+      },
+      "MdseCorrelationResponse": {
+        "properties": {
+          "window_sec": {
+            "type": "integer",
+            "title": "Window Sec"
+          },
+          "total_events": {
+            "type": "integer",
+            "title": "Total Events"
+          },
+          "total_windows": {
+            "type": "integer",
+            "title": "Total Windows"
+          },
+          "pairs": {
+            "items": {
+              "$ref": "#/components/schemas/MdseCorrelationPairResponse"
+            },
+            "type": "array",
+            "title": "Pairs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "window_sec",
+          "total_events",
+          "total_windows",
+          "pairs"
+        ],
+        "title": "MdseCorrelationResponse",
+        "description": "Top-level response payload for MDSE detector correlation endpoint.",
+        "example": {
+          "pairs": [
+            {
+              "cofire_event_count": 16,
+              "cofire_hit_rate": 0.5625,
+              "cofire_validated_count": 9,
+              "cofire_windows": 8,
+              "detector_a": "fr_extreme",
+              "detector_b": "oi_divergence",
+              "simultaneous_rate": 0.4
+            }
+          ],
+          "total_events": 24,
+          "total_windows": 10,
+          "window_sec": 300
+        }
+      },
+      "MdseDetectorHitRateTrendPoint": {
+        "properties": {
+          "detector_name": {
+            "type": "string",
+            "title": "Detector Name"
+          },
+          "period_start": {
+            "type": "string",
+            "title": "Period Start"
+          },
+          "event_count": {
+            "type": "integer",
+            "title": "Event Count"
+          },
+          "validated_count": {
+            "type": "integer",
+            "title": "Validated Count"
+          },
+          "hit_rate": {
+            "type": "number",
+            "title": "Hit Rate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detector_name",
+          "period_start",
+          "event_count",
+          "validated_count",
+          "hit_rate"
+        ],
+        "title": "MdseDetectorHitRateTrendPoint",
+        "description": "Per-detector hit-rate trend datapoint for a time bucket.",
+        "example": {
+          "detector_name": "fr_extreme",
+          "event_count": 6,
+          "hit_rate": 0.6667,
+          "period_start": "2026-03-05",
+          "validated_count": 4
+        }
+      },
+      "MdseDetectorSummary": {
+        "properties": {
+          "detector_name": {
+            "type": "string",
+            "title": "Detector Name"
+          },
+          "event_count": {
+            "type": "integer",
+            "title": "Event Count"
+          },
+          "validated_count": {
+            "type": "integer",
+            "title": "Validated Count"
+          },
+          "win_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Win Rate"
+          },
+          "avg_pnl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Pnl"
+          },
+          "weight": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight"
+          },
+          "sample_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Count"
+          },
+          "last_event_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Event At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detector_name",
+          "event_count",
+          "validated_count"
+        ],
+        "title": "MdseDetectorSummary",
+        "description": "Per-detector aggregate metrics used in MDSE summary responses.",
+        "example": {
+          "avg_pnl": 20.1,
+          "detector_name": "fr_extreme",
+          "event_count": 12,
+          "last_event_at": "2026-03-07T12:30:00Z",
+          "sample_count": 48,
+          "validated_count": 7,
+          "weight": 1.12,
+          "win_rate": 0.58
+        }
+      },
+      "MdseEventTrendPoint": {
+        "properties": {
+          "period_start": {
+            "type": "string",
+            "title": "Period Start"
+          },
+          "event_count": {
+            "type": "integer",
+            "title": "Event Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "period_start",
+          "event_count"
+        ],
+        "title": "MdseEventTrendPoint",
+        "description": "Time-bucket point for MDSE event-count trend charts.",
+        "example": {
+          "event_count": 6,
+          "period_start": "2026-03-05"
+        }
+      },
+      "MdseSummaryResponse": {
+        "properties": {
+          "total_events": {
+            "type": "integer",
+            "title": "Total Events"
+          },
+          "validated_events": {
+            "type": "integer",
+            "title": "Validated Events"
+          },
+          "unvalidated_events": {
+            "type": "integer",
+            "title": "Unvalidated Events"
+          },
+          "detectors": {
+            "items": {
+              "$ref": "#/components/schemas/MdseDetectorSummary"
+            },
+            "type": "array",
+            "title": "Detectors"
+          },
+          "daily_event_trend": {
+            "items": {
+              "$ref": "#/components/schemas/MdseEventTrendPoint"
+            },
+            "type": "array",
+            "title": "Daily Event Trend"
+          },
+          "weekly_event_trend": {
+            "items": {
+              "$ref": "#/components/schemas/MdseEventTrendPoint"
+            },
+            "type": "array",
+            "title": "Weekly Event Trend"
+          },
+          "detector_hit_rate_trend": {
+            "items": {
+              "$ref": "#/components/schemas/MdseDetectorHitRateTrendPoint"
+            },
+            "type": "array",
+            "title": "Detector Hit Rate Trend"
+          },
+          "confidence_distribution": {
+            "items": {
+              "$ref": "#/components/schemas/MdseConfidenceBucket"
+            },
+            "type": "array",
+            "title": "Confidence Distribution"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_events",
+          "validated_events",
+          "unvalidated_events",
+          "detectors",
+          "daily_event_trend",
+          "weekly_event_trend",
+          "detector_hit_rate_trend",
+          "confidence_distribution"
+        ],
+        "title": "MdseSummaryResponse",
+        "description": "Top-level response payload for MDSE summary endpoint.",
+        "example": {
+          "confidence_distribution": [
+            {
+              "event_count": 0,
+              "max_confidence": 0.2,
+              "min_confidence": 0.0
+            },
+            {
+              "event_count": 2,
+              "max_confidence": 0.4,
+              "min_confidence": 0.2
+            },
+            {
+              "event_count": 5,
+              "max_confidence": 0.6,
+              "min_confidence": 0.4
+            },
+            {
+              "event_count": 8,
+              "max_confidence": 0.8,
+              "min_confidence": 0.6
+            },
+            {
+              "event_count": 9,
+              "max_confidence": 1.0,
+              "min_confidence": 0.8
+            }
+          ],
+          "daily_event_trend": [
+            {
+              "event_count": 6,
+              "period_start": "2026-03-05"
+            }
+          ],
+          "detector_hit_rate_trend": [
+            {
+              "detector_name": "fr_extreme",
+              "event_count": 6,
+              "hit_rate": 0.6667,
+              "period_start": "2026-03-05",
+              "validated_count": 4
+            }
+          ],
+          "detectors": [
+            {
+              "avg_pnl": 20.1,
+              "detector_name": "fr_extreme",
+              "event_count": 12,
+              "sample_count": 48,
+              "validated_count": 7,
+              "weight": 1.12,
+              "win_rate": 0.58
+            }
+          ],
+          "total_events": 24,
+          "unvalidated_events": 11,
+          "validated_events": 13,
+          "weekly_event_trend": [
+            {
+              "event_count": 24,
+              "period_start": "2026-03-02"
+            }
+          ]
+        }
+      },
+      "MdseVirtualPnlResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "event_id": {
+            "type": "integer",
+            "title": "Event Id"
+          },
+          "event_timestamp": {
+            "type": "string",
+            "title": "Event Timestamp"
+          },
+          "detector_name": {
+            "type": "string",
+            "title": "Detector Name"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "direction": {
+            "type": "string",
+            "title": "Direction"
+          },
+          "entry_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Price"
+          },
+          "price_1h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price 1H"
+          },
+          "price_4h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price 4H"
+          },
+          "price_1d": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price 1D"
+          },
+          "virtual_pnl_1h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Virtual Pnl 1H"
+          },
+          "virtual_pnl_4h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Virtual Pnl 4H"
+          },
+          "virtual_pnl_1d": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Virtual Pnl 1D"
+          },
+          "calculated_at": {
+            "type": "string",
+            "title": "Calculated At"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "event_id",
+          "event_timestamp",
+          "detector_name",
+          "symbol",
+          "direction",
+          "calculated_at"
+        ],
+        "title": "MdseVirtualPnlResponse",
+        "description": "Virtual PnL snapshot derived from MDSE event progression.",
+        "example": {
+          "calculated_at": "2026-03-05T10:00:00Z",
+          "created_at": "2026-03-05T10:00:00Z",
+          "detector_name": "fr_extreme",
+          "direction": "BUY",
+          "entry_price": 50250.0,
+          "event_id": 1,
+          "event_timestamp": "2026-03-05T09:00:00Z",
+          "id": 21,
+          "price_1d": 51200.0,
+          "price_1h": 50400.0,
+          "price_4h": 50750.0,
+          "symbol": "BTC/USDC",
+          "virtual_pnl_1d": 95.0,
+          "virtual_pnl_1h": 15.0,
+          "virtual_pnl_4h": 50.0
+        }
+      },
+      "PerformanceSummaryResponse": {
+        "properties": {
+          "total_trades": {
+            "type": "integer",
+            "title": "Total Trades"
+          },
+          "winning_trades": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Winning Trades"
+          },
+          "losing_trades": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Losing Trades"
+          },
+          "win_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Win Rate"
+          },
+          "total_pnl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Pnl"
+          },
+          "profit_factor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profit Factor"
+          },
+          "avg_slippage": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Slippage"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "initial_balance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initial Balance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_trades"
+        ],
+        "title": "PerformanceSummaryResponse",
+        "description": "Aggregated performance statistics over executed trades.",
+        "example": {
+          "avg_slippage": 0.021,
+          "initial_balance": 10000.0,
+          "losing_trades": 52,
+          "profit_factor": 1.42,
+          "total_pnl": 1820.5,
+          "total_trades": 120,
+          "win_rate": 0.5667,
+          "winning_trades": 68
+        }
+      },
+      "PortfolioData": {
+        "properties": {
+          "positions": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/PortfolioPosition"
+            },
+            "type": "object",
+            "title": "Positions"
+          },
+          "equity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equity"
+          },
+          "total_equity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Equity"
+          },
+          "available_balance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available Balance"
+          },
+          "total_balance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Balance"
+          },
+          "balance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Balance"
+          },
+          "initial_balance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initial Balance"
+          },
+          "open_trade_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Open Trade Count"
+          },
+          "daily_pnl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Pnl"
+          },
+          "daily_pnl_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Pnl Pct"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          },
+          "last_updated": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Updated"
+          },
+          "perps_balance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Perps Balance"
+          },
+          "spot_balance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spot Balance"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "PortfolioData",
+        "description": "Portfolio snapshot including positions and balances.",
+        "example": {
+          "available_balance": 9500.0,
+          "equity": 10000.0,
+          "open_trade_count": 2,
+          "positions": {
+            "BTC/USDC": {
+              "entry_price": 50000.0,
+              "mark_price": 50300.0,
+              "side": "long",
+              "size": 0.01,
+              "unrealized_pnl": 3.0
+            }
+          },
+          "timestamp": "2026-03-05T09:00:00Z",
+          "total_balance": 10000.0
+        }
+      },
+      "PortfolioPosition": {
+        "properties": {
+          "side": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Side"
+          },
+          "size": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size"
+          },
+          "entry_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Price"
+          },
+          "mark_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mark Price"
+          },
+          "unrealized_pnl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unrealized Pnl"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "PortfolioPosition",
+        "description": "Position details for a symbol in portfolio state responses.",
+        "example": {
+          "entry_price": 50000.0,
+          "mark_price": 50300.0,
+          "side": "long",
+          "size": 0.01,
+          "unrealized_pnl": 3.0
+        }
+      },
+      "PortfolioStateResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PortfolioData"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "PortfolioStateResponse",
+        "description": "Wrapper payload for portfolio state endpoint responses.",
+        "example": {
+          "data": {
+            "available_balance": 9500.0,
+            "equity": 10000.0,
+            "positions": {
+              "BTC/USDC": {
+                "entry_price": 50000.0,
+                "mark_price": 50300.0,
+                "side": "long",
+                "size": 0.01,
+                "unrealized_pnl": 3.0
+              }
+            },
+            "timestamp": "2026-03-05T09:00:00Z"
+          }
+        }
+      },
+      "RegimeDetail": {
+        "properties": {
+          "regime_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regime Type"
+          },
+          "regime_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regime Confidence"
+          },
+          "regime_duration_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regime Duration Hours"
+          },
+          "raw": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw"
+          }
+        },
+        "type": "object",
+        "title": "RegimeDetail",
+        "description": "Parsed regime metadata attached to a cycle response.",
+        "example": {
+          "raw": "{\"regime_type\": \"trend\", \"regime_confidence\": 0.84}",
+          "regime_confidence": 0.84,
+          "regime_duration_hours": 6.0,
+          "regime_type": "trend"
+        }
+      },
+      "SenganMatchResponse": {
+        "properties": {
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          },
+          "pattern_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pattern Id"
+          },
+          "pattern_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pattern Name"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          },
+          "timeframe": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timeframe"
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Direction"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "title": "SenganMatchResponse",
+        "description": "Single recent Sengan pattern-match event.",
+        "example": {
+          "confidence": 0.79,
+          "direction": "bullish",
+          "metadata": {
+            "match_score": 0.93
+          },
+          "pattern_id": 12,
+          "pattern_name": "fr_neg_cloud_vol_spike",
+          "source": "sengan.realtime_scanner",
+          "symbol": "BTC",
+          "timeframe": "15m",
+          "timestamp": "2026-03-06T15:30:00+00:00"
+        }
+      },
+      "SenganPatternResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "pattern_name": {
+            "type": "string",
+            "title": "Pattern Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          },
+          "conditions": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Conditions"
+          },
+          "metrics": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metrics"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "discovery_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discovery Date"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "pattern_name",
+          "description",
+          "status",
+          "conditions",
+          "source"
+        ],
+        "title": "SenganPatternResponse",
+        "description": "Single pattern entry from EdgeCatalog.",
+        "example": {
+          "conditions": [
+            {
+              "indicator": "funding_rate",
+              "operator": "<",
+              "value": -0.01
+            },
+            {
+              "indicator": "volume_vs_avg_20",
+              "operator": ">",
+              "value": 2.0
+            }
+          ],
+          "confidence": 0.82,
+          "created_at": "2026-03-06T01:20:00+00:00",
+          "description": "Negative FR with cloud breakout and volume spike",
+          "discovery_date": "2026-03-06T01:20:00+00:00",
+          "id": 12,
+          "metrics": {
+            "is": {
+              "n_trades": 52,
+              "pf": 1.78
+            },
+            "oos": {
+              "n_trades": 31,
+              "pf": 1.34
+            }
+          },
+          "pattern_name": "fr_neg_cloud_vol_spike",
+          "source": "llm",
+          "status": "validated",
+          "symbol": "BTC",
+          "updated_at": "2026-03-06T03:40:00+00:00"
+        }
+      },
+      "SignalListResponse": {
+        "properties": {
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/SignalResponse"
+            },
+            "type": "array",
+            "title": "Signals"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "default": 0
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "default": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "signals",
+          "total"
+        ],
+        "title": "SignalListResponse",
+        "description": "Paginated response for signal listing.",
+        "example": {
+          "limit": 1000,
+          "offset": 0,
+          "signals": [
+            {
+              "action": "BUY",
+              "confidence": 75.0,
+              "created_at": "2026-03-05T09:00:01Z",
+              "cycle_id": 5,
+              "executed": 1,
+              "id": 301,
+              "score": 0.75,
+              "strategy_type": "trend_following",
+              "symbol": "BTC/USDT",
+              "timestamp": "2026-03-05T09:00:00Z"
+            }
+          ],
+          "total": 1
+        }
+      },
+      "SignalResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "executed": {
+            "type": "integer",
+            "title": "Executed",
+            "default": 0
+          },
+          "skip_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skip Reason"
+          },
+          "strategy_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Type"
+          },
+          "cycle_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cycle Id"
+          },
+          "execution_mode": {
+            "type": "string",
+            "title": "Execution Mode",
+            "default": "paper"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "timestamp",
+          "symbol",
+          "action"
+        ],
+        "title": "SignalResponse",
+        "description": "Response payload for a generated trading signal.",
+        "example": {
+          "action": "BUY",
+          "confidence": 75.0,
+          "created_at": "2026-03-05T09:00:01Z",
+          "cycle_id": 5,
+          "executed": 1,
+          "id": 301,
+          "score": 0.75,
+          "strategy_type": "trend_following",
+          "symbol": "BTC/USDC",
+          "timestamp": "2026-03-05T09:00:00Z"
+        }
+      },
+      "SignalStats": {
+        "properties": {
+          "signals_generated": {
+            "type": "integer",
+            "title": "Signals Generated",
+            "default": 0
+          },
+          "signals_executed": {
+            "type": "integer",
+            "title": "Signals Executed",
+            "default": 0
+          },
+          "execution_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execution Rate"
+          },
+          "avg_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Score"
+          },
+          "dominant_direction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dominant Direction"
+          }
+        },
+        "type": "object",
+        "title": "SignalStats",
+        "description": "Signal-level aggregates calculated for a cycle.",
+        "example": {
+          "avg_score": 0.7123,
+          "dominant_direction": "BUY",
+          "execution_rate": 0.4167,
+          "signals_executed": 10,
+          "signals_generated": 24
+        }
+      },
+      "StrategiesResponse": {
+        "properties": {
+          "active_plan": {
+            "type": "string",
+            "title": "Active Plan"
+          },
+          "strategies": {
+            "items": {
+              "$ref": "#/components/schemas/StrategySnapshot"
+            },
+            "type": "array",
+            "title": "Strategies"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active_plan",
+          "strategies"
+        ],
+        "title": "StrategiesResponse",
+        "description": "Portfolio strategy list with live performance summary.",
+        "example": {
+          "active_plan": "plan_6b",
+          "strategies": [
+            {
+              "allocation_pct": 30.0,
+              "id": "btc_mom",
+              "recent_pnl": 42.75,
+              "status": "active",
+              "strategy": "momentum_divergence",
+              "symbol": "BTC/USDT",
+              "trade_count": 12,
+              "win_rate": 0.58
+            }
+          ]
+        }
+      },
+      "StrategyAllocation": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "strategy": {
+            "type": "string",
+            "title": "Strategy"
+          },
+          "allocation_pct": {
+            "type": "number",
+            "title": "Allocation Pct"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "symbol",
+          "strategy",
+          "allocation_pct"
+        ],
+        "title": "StrategyAllocation",
+        "description": "Single strategy entry from the active portfolio plan.",
+        "example": {
+          "allocation_pct": 20.0,
+          "id": "plan6_alpha",
+          "strategy": "trend_following",
+          "symbol": "BTC/USDC"
+        }
+      },
+      "StrategyPerformanceResponse": {
+        "properties": {
+          "strategy": {
+            "type": "string",
+            "title": "Strategy"
+          },
+          "trade_count": {
+            "type": "integer",
+            "title": "Trade Count"
+          },
+          "win_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Win Rate"
+          },
+          "profit_factor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profit Factor"
+          },
+          "sharpe": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sharpe"
+          },
+          "avg_pnl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Pnl"
+          },
+          "max_dd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Dd"
+          }
+        },
+        "type": "object",
+        "required": [
+          "strategy",
+          "trade_count"
+        ],
+        "title": "StrategyPerformanceResponse",
+        "description": "Per-strategy aggregated performance metrics.",
+        "example": {
+          "avg_pnl": 14.2,
+          "max_dd": 220.0,
+          "profit_factor": 1.51,
+          "sharpe": 1.34,
+          "strategy": "trend_following",
+          "trade_count": 44,
+          "win_rate": 0.59
+        }
+      },
+      "StrategySnapshot": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "strategy": {
+            "type": "string",
+            "title": "Strategy"
+          },
+          "allocation_pct": {
+            "type": "number",
+            "title": "Allocation Pct"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "trade_count": {
+            "type": "integer",
+            "title": "Trade Count",
+            "default": 0
+          },
+          "win_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Win Rate"
+          },
+          "recent_pnl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recent Pnl"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "symbol",
+          "strategy",
+          "allocation_pct",
+          "status"
+        ],
+        "title": "StrategySnapshot",
+        "description": "Strategy row for /api/strategies endpoint.",
+        "example": {
+          "allocation_pct": 30.0,
+          "id": "btc_mom",
+          "recent_pnl": 42.75,
+          "status": "active",
+          "strategy": "momentum_divergence",
+          "symbol": "BTC/USDT",
+          "trade_count": 12,
+          "win_rate": 0.58
+        }
+      },
+      "SystemHealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "db_connected": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Db Connected"
+          },
+          "exchange_connected": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exchange Connected"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "SystemHealthResponse",
+        "description": "Health-check response from the runtime health server.",
+        "example": {
+          "db_connected": true,
+          "exchange_connected": true,
+          "status": "ok"
+        }
+      },
+      "SystemInfoResponse": {
+        "properties": {
+          "python_version": {
+            "type": "string",
+            "title": "Python Version"
+          },
+          "platform": {
+            "type": "string",
+            "title": "Platform"
+          },
+          "db_path": {
+            "type": "string",
+            "title": "Db Path"
+          },
+          "api_version": {
+            "type": "string",
+            "title": "Api Version"
+          },
+          "bot_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bot Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "python_version",
+          "platform",
+          "db_path",
+          "api_version"
+        ],
+        "title": "SystemInfoResponse",
+        "description": "Static API/runtime information.",
+        "example": {
+          "api_version": "1.0.0",
+          "bot_version": "0.2.0",
+          "db_path": "data/trades.db",
+          "platform": "darwin",
+          "python_version": "3.12.2"
+        }
+      },
+      "SystemMetricsResponse": {
+        "properties": {
+          "memory_mb": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memory Mb"
+          },
+          "cpu_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cpu Percent"
+          },
+          "ws_connected": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ws Connected"
+          },
+          "last_fr_fetch": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Fr Fetch"
+          },
+          "open_positions": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Open Positions"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "SystemMetricsResponse",
+        "description": "Metrics response from the runtime health server.",
+        "example": {
+          "cpu_percent": 12.5,
+          "last_fr_fetch": "2026-03-05T09:00:00Z",
+          "memory_mb": 256.4,
+          "open_positions": 3,
+          "ws_connected": true
+        }
+      },
+      "SystemStatsResponse": {
+        "properties": {
+          "api_version": {
+            "type": "string",
+            "title": "Api Version"
+          },
+          "total_endpoints": {
+            "type": "integer",
+            "title": "Total Endpoints"
+          },
+          "db_stats": {
+            "$ref": "#/components/schemas/DbStats"
+          },
+          "strategy_config": {
+            "items": {
+              "$ref": "#/components/schemas/StrategyAllocation"
+            },
+            "type": "array",
+            "title": "Strategy Config"
+          },
+          "active_plan": {
+            "type": "string",
+            "title": "Active Plan"
+          },
+          "last_updated": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Updated"
+          },
+          "recent_trades": {
+            "type": "integer",
+            "title": "Recent Trades",
+            "default": 0
+          },
+          "recent_signals": {
+            "type": "integer",
+            "title": "Recent Signals",
+            "default": 0
+          },
+          "recent_mdse_events": {
+            "type": "integer",
+            "title": "Recent Mdse Events",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_version",
+          "total_endpoints",
+          "db_stats",
+          "strategy_config",
+          "active_plan"
+        ],
+        "title": "SystemStatsResponse",
+        "description": "Aggregate system statistics.",
+        "example": {
+          "active_plan": "plan_6",
+          "api_version": "1.0.0",
+          "db_stats": {
+            "db_size_mb": 6.74,
+            "total_distortion_events": 312,
+            "total_signals": 2048,
+            "total_trades": 128
+          },
+          "last_updated": "2026-03-05T08:59:58Z",
+          "recent_mdse_events": 8,
+          "recent_signals": 42,
+          "recent_trades": 5,
+          "strategy_config": [
+            {
+              "allocation_pct": 20.0,
+              "id": "plan6_alpha",
+              "strategy": "trend_following",
+              "symbol": "BTC/USDC"
+            }
+          ],
+          "total_endpoints": 24
+        }
+      },
+      "TimelinePricePoint": {
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          }
+        },
+        "type": "object",
+        "required": [
+          "timestamp"
+        ],
+        "title": "TimelinePricePoint",
+        "description": "Price point for structured timeline response.",
+        "example": {
+          "price": 50250.0,
+          "symbol": "BTC/USDC",
+          "timestamp": "2026-03-05T09:00:00Z"
+        }
+      },
+      "TimelineResponse": {
+        "properties": {
+          "prices": {
+            "items": {
+              "$ref": "#/components/schemas/TimelinePricePoint"
+            },
+            "type": "array",
+            "title": "Prices",
+            "default": []
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/DistortionEventResponse"
+            },
+            "type": "array",
+            "title": "Events",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "TimelineResponse",
+        "description": "Structured timeline response with separate prices and events lists.",
+        "example": {
+          "events": [],
+          "prices": [
+            {
+              "price": 50250.0,
+              "symbol": "BTC/USDC",
+              "timestamp": "2026-03-05T09:00:00Z"
+            }
+          ]
+        }
+      },
+      "TradeListResponse": {
+        "properties": {
+          "trades": {
+            "items": {
+              "$ref": "#/components/schemas/TradeResponse"
+            },
+            "type": "array",
+            "title": "Trades"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "default": 0
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "default": 50
+          }
+        },
+        "type": "object",
+        "required": [
+          "trades",
+          "total"
+        ],
+        "title": "TradeListResponse",
+        "description": "Paginated response for trade listing.",
+        "example": {
+          "limit": 50,
+          "offset": 0,
+          "total": 1,
+          "trades": [
+            {
+              "created_at": "2026-03-05T09:00:01Z",
+              "cycle_id": 5,
+              "entry_price": 50000.0,
+              "entry_time": "2026-03-05T09:00:00Z",
+              "execution_mode": "paper",
+              "exit_price": 51000.0,
+              "exit_reason": "tp_hit",
+              "exit_time": "2026-03-05T09:30:00Z",
+              "fees": 0.5,
+              "id": 101,
+              "pnl": 10.0,
+              "pnl_pct": 2.0,
+              "quantity": 0.01,
+              "side": "buy",
+              "strategy": "trend_following",
+              "symbol": "BTC/USDC"
+            }
+          ]
+        }
+      },
+      "TradeResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "side": {
+            "type": "string",
+            "title": "Side"
+          },
+          "entry_price": {
+            "type": "number",
+            "title": "Entry Price"
+          },
+          "exit_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Price"
+          },
+          "quantity": {
+            "type": "number",
+            "title": "Quantity"
+          },
+          "pnl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl"
+          },
+          "pnl_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl Pct"
+          },
+          "fees": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fees"
+          },
+          "entry_time": {
+            "type": "string",
+            "title": "Entry Time"
+          },
+          "exit_time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Time"
+          },
+          "exit_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Reason"
+          },
+          "strategy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy"
+          },
+          "cycle_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cycle Id"
+          },
+          "execution_mode": {
+            "type": "string",
+            "title": "Execution Mode",
+            "default": "paper"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "symbol",
+          "side",
+          "entry_price",
+          "quantity",
+          "entry_time"
+        ],
+        "title": "TradeResponse",
+        "description": "Response payload for a single trade record.",
+        "example": {
+          "created_at": "2026-03-05T09:00:01Z",
+          "cycle_id": 5,
+          "entry_price": 50000.0,
+          "entry_time": "2026-03-05T09:00:00Z",
+          "execution_mode": "paper",
+          "exit_price": 51000.0,
+          "exit_reason": "tp_hit",
+          "exit_time": "2026-03-05T09:30:00Z",
+          "fees": 0.5,
+          "id": 101,
+          "pnl": 10.0,
+          "pnl_pct": 2.0,
+          "quantity": 0.01,
+          "side": "buy",
+          "strategy": "trend_following",
+          "symbol": "BTC/USDC"
+        }
+      },
+      "TradeSummaryResponse": {
+        "properties": {
+          "total_trades": {
+            "type": "integer",
+            "title": "Total Trades"
+          },
+          "winning_trades": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Winning Trades"
+          },
+          "losing_trades": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Losing Trades"
+          },
+          "win_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Win Rate"
+          },
+          "total_pnl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Pnl"
+          },
+          "profit_factor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profit Factor"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_trades"
+        ],
+        "title": "TradeSummaryResponse",
+        "description": "Aggregate trade performance metrics for summary endpoints.",
+        "example": {
+          "losing_trades": 52,
+          "profit_factor": 1.42,
+          "total_pnl": 1820.5,
+          "total_trades": 120,
+          "win_rate": 0.5667,
+          "winning_trades": 68
+        }
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "APIKeyHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      }
+    }
+  }
+}

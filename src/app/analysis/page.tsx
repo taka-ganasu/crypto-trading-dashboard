@@ -70,7 +70,7 @@ function normalizeRegime(value: unknown): RegimeType {
   return "unknown";
 }
 
-function coerceConfidencePercent(raw: number | null): number | null {
+function coerceConfidencePercent(raw: number | null | undefined): number | null {
   if (raw == null || !Number.isFinite(raw)) {
     return null;
   }
