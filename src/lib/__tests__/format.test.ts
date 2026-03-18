@@ -8,6 +8,13 @@ import {
   colorByPnl,
   formatDateTime,
   formatNumber,
+  formatTimestamp,
+  formatDate,
+  formatTime,
+  formatCompactCurrency,
+  formatConfidence,
+  formatTimestampVerbose,
+  formatDateShort,
 } from "../format";
 
 describe("formatCurrency", () => {
@@ -187,5 +194,235 @@ describe("formatNumber", () => {
   it("formats with custom decimals", () => {
     const result = formatNumber(42, 0);
     expect(result).toBe("42");
+  });
+});
+
+describe("formatTimestamp", () => {
+  it("formats valid ISO timestamp as locale string", () => {
+    const result = formatTimestamp("2026-03-15T14:30:00Z");
+    expect(result).not.toBe("—");
+    expect(result.length).toBeGreaterThan(5);
+  });
+
+  it("returns dash for null", () => {
+    expect(formatTimestamp(null)).toBe("—");
+  });
+
+  it("returns dash for undefined", () => {
+    expect(formatTimestamp(undefined)).toBe("—");
+  });
+
+  it("returns dash for empty string", () => {
+    expect(formatTimestamp("")).toBe("—");
+  });
+
+  it("returns dash for invalid date string", () => {
+    expect(formatTimestamp("not-a-date")).toBe("—");
+  });
+});
+
+describe("formatDate", () => {
+  it("formats valid ISO timestamp as locale date", () => {
+    const result = formatDate("2026-03-15T14:30:00Z");
+    expect(result).not.toBe("—");
+    expect(result.length).toBeGreaterThan(3);
+  });
+
+  it("returns dash for null", () => {
+    expect(formatDate(null)).toBe("—");
+  });
+
+  it("returns dash for undefined", () => {
+    expect(formatDate(undefined)).toBe("—");
+  });
+
+  it("returns dash for invalid date string", () => {
+    expect(formatDate("xyz")).toBe("—");
+  });
+});
+
+describe("formatTime", () => {
+  it("formats valid ISO timestamp as locale time", () => {
+    const result = formatTime("2026-03-15T14:30:00Z");
+    expect(result).not.toBe("—");
+    expect(result.length).toBeGreaterThan(3);
+  });
+
+  it("returns dash for null", () => {
+    expect(formatTime(null)).toBe("—");
+  });
+
+  it("returns dash for undefined", () => {
+    expect(formatTime(undefined)).toBe("—");
+  });
+
+  it("returns dash for invalid date string", () => {
+    expect(formatTime("bad")).toBe("—");
+  });
+});
+
+describe("formatCompactCurrency", () => {
+  it("formats millions with $M suffix", () => {
+    expect(formatCompactCurrency(1_500_000)).toBe("$1.5M");
+  });
+
+  it("formats negative millions", () => {
+    expect(formatCompactCurrency(-2_300_000)).toBe("$-2.3M");
+  });
+
+  it("formats thousands with $K suffix", () => {
+    expect(formatCompactCurrency(5_000)).toBe("$5.0K");
+  });
+
+  it("formats small values without suffix", () => {
+    expect(formatCompactCurrency(42)).toBe("$42");
+  });
+
+  it("formats zero", () => {
+    expect(formatCompactCurrency(0)).toBe("$0");
+  });
+
+  it("formats negative thousands", () => {
+    expect(formatCompactCurrency(-1_500)).toBe("$-1.5K");
+  });
+
+  it("formats value at boundary 999", () => {
+    expect(formatCompactCurrency(999)).toBe("$999");
+  });
+
+  it("formats value at boundary 1000", () => {
+    expect(formatCompactCurrency(1000)).toBe("$1.0K");
+  });
+});
+
+describe("formatConfidence", () => {
+  it("formats valid confidence as percentage", () => {
+    expect(formatConfidence(75.123)).toBe("75.1%");
+  });
+
+  it("formats zero confidence", () => {
+    expect(formatConfidence(0)).toBe("0.0%");
+  });
+
+  it("returns dash for null", () => {
+    expect(formatConfidence(null)).toBe("—");
+  });
+
+  it("returns dash for undefined", () => {
+    expect(formatConfidence(undefined)).toBe("—");
+  });
+
+  it("returns dash for NaN", () => {
+    expect(formatConfidence(NaN)).toBe("—");
+  });
+
+  it("returns dash for Infinity", () => {
+    expect(formatConfidence(Infinity)).toBe("—");
+  });
+});
+
+describe("formatTimestampVerbose", () => {
+  it("formats valid timestamp with month, day, time including seconds", () => {
+    const result = formatTimestampVerbose("2026-03-15T14:30:45Z");
+    expect(result).not.toBe("—");
+    // Should contain month abbreviation and seconds
+    expect(result).toMatch(/Mar/);
+    expect(result).toMatch(/15/);
+  });
+
+  it("returns dash for null", () => {
+    expect(formatTimestampVerbose(null)).toBe("—");
+  });
+
+  it("returns dash for undefined", () => {
+    expect(formatTimestampVerbose(undefined)).toBe("—");
+  });
+
+  it("returns dash for empty string", () => {
+    expect(formatTimestampVerbose("")).toBe("—");
+  });
+
+  it("returns dash for invalid date", () => {
+    expect(formatTimestampVerbose("not-a-date")).toBe("—");
+  });
+});
+
+describe("formatDateShort", () => {
+  it("formats valid timestamp with short date and time", () => {
+    const result = formatDateShort("2026-03-15T14:30:00Z");
+    expect(result).not.toBe("—");
+    expect(result.length).toBeGreaterThan(5);
+  });
+
+  it("returns dash for null", () => {
+    expect(formatDateShort(null)).toBe("—");
+  });
+
+  it("returns dash for undefined", () => {
+    expect(formatDateShort(undefined)).toBe("—");
+  });
+
+  it("returns dash for empty string", () => {
+    expect(formatDateShort("")).toBe("—");
+  });
+
+  it("returns dash for invalid date", () => {
+    expect(formatDateShort("invalid")).toBe("—");
+  });
+});
+
+describe("formatCurrency edge cases", () => {
+  it("formats with useIntlStyle", () => {
+    const result = formatCurrency(1234.56, { useIntlStyle: true });
+    expect(result).toContain("$");
+    expect(result).toContain("1,234");
+  });
+
+  it("formats compact billions", () => {
+    expect(formatCurrency(2_500_000_000, { compact: true })).toBe("$2.5B");
+  });
+
+  it("uses custom currency symbol", () => {
+    const result = formatCurrency(100, { currencySymbol: "€" });
+    expect(result).toContain("€");
+    expect(result).not.toContain("$");
+  });
+
+  it("formats compact with custom compactDecimals", () => {
+    expect(formatCurrency(1_234_000, { compact: true, compactDecimals: 2 })).toBe("$1.23M");
+  });
+});
+
+describe("formatPrice edge cases", () => {
+  it("formats with compact and currency combined", () => {
+    const result = formatPrice(2_500_000, { compact: true, currency: true });
+    expect(result).toBe("$2.5M");
+  });
+
+  it("formats with custom currency symbol", () => {
+    const result = formatPrice(100.5, { currency: true, currencySymbol: "¥" });
+    expect(result).toContain("¥");
+  });
+
+  it("returns custom nullDisplay for null", () => {
+    expect(formatPrice(null, { nullDisplay: "N/A" })).toBe("N/A");
+  });
+
+  it("formats -Infinity as null display", () => {
+    expect(formatPrice(-Infinity)).toBe("—");
+  });
+});
+
+describe("formatDateTime edge cases", () => {
+  it("returns dash for null", () => {
+    expect(formatDateTime(null)).toBe("—");
+  });
+
+  it("returns dash for undefined", () => {
+    expect(formatDateTime(undefined)).toBe("—");
+  });
+
+  it("returns dash for empty string", () => {
+    expect(formatDateTime("")).toBe("—");
   });
 });
