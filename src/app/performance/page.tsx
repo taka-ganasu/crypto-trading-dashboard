@@ -35,14 +35,14 @@ import type {
   TradeByStrategyDaily,
 } from "@/types";
 
-function slippageColor(pct: number | null): string {
+function slippageColor(pct: number | null | undefined): string {
   if (pct == null) return "text-zinc-500";
   if (pct > 0.5) return "text-red-400";
   if (pct >= 0.1) return "text-yellow-400";
   return "text-emerald-400";
 }
 
-function rsiColor(rsi: number | null): string {
+function rsiColor(rsi: number | null | undefined): string {
   if (rsi == null) return "text-zinc-500";
   if (rsi > 70) return "text-red-400";
   if (rsi < 30) return "text-emerald-400";

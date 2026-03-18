@@ -34,8 +34,8 @@ function perfToRow(perf: StrategyPerformance): StrategyRow {
   return {
     strategy: perf.strategy,
     trade_count: perf.trade_count,
-    win_rate: perf.win_rate,
-    profit_factor: perf.profit_factor,
+    win_rate: perf.win_rate ?? null,
+    profit_factor: perf.profit_factor ?? null,
     sharpe: perf.sharpe ?? null,
     avg_pnl: perf.avg_pnl ?? null,
     max_dd: perf.max_dd ?? null,
