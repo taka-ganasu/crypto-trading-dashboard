@@ -159,15 +159,8 @@ function AnalysisContent() {
   const [error, setError] = useState<string | null>(null);
   const { start, end } = useTimeRange();
 
-  const [prevStart, setPrevStart] = useState(start);
-  const [prevEnd, setPrevEnd] = useState(end);
-  if (start !== prevStart || end !== prevEnd) {
-    setPrevStart(start);
-    setPrevEnd(end);
-    setLoading(true);
-  }
-
   useEffect(() => {
+    setLoading(true);
     fetchAnalysisCycles(100, start, end)
       .then((data) => {
         setCycles(Array.isArray(data) ? data : []);

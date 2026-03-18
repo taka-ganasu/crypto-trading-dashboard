@@ -33,14 +33,6 @@ function MdseContent() {
   const [warning, setWarning] = useState<string | null>(null);
   const { start, end } = useTimeRange();
 
-  const [prevStart, setPrevStart] = useState(start);
-  const [prevEnd, setPrevEnd] = useState(end);
-  if (start !== prevStart || end !== prevEnd) {
-    setPrevStart(start);
-    setPrevEnd(end);
-    setLoading(true);
-  }
-
   const loadMdseData = useCallback(async () => {
     const [summaryResult, eventsResult, tradesResult, timelineResult] =
       await Promise.allSettled([
@@ -101,6 +93,7 @@ function MdseContent() {
   }, [start, end]);
 
   useEffect(() => {
+    setLoading(true);
     queueMicrotask(() => { void loadMdseData(); });
   }, [loadMdseData]);
 
