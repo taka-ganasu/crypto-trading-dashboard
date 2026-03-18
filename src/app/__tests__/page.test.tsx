@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import React from "react";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 
 // Mock next/link
 vi.mock("next/link", () => ({
@@ -265,5 +265,112 @@ describe("Home (Dashboard) Page", () => {
 
     expect(screen.getByText("SELL")).toBeDefined();
     expect(screen.getByText("ETH/USDT")).toBeDefined();
+  });
+
+  it("uses numeric fallbacks and alternate trade badges", async () => {
+    vi.mocked(fetchPortfolioState).mockResolvedValue({
+      data: {
+        equity: "2500.5",
+        daily_pnl: "-12.5",
+        daily_pnl_pct: "-0.5",
+      },
+    } as typeof mockPortfolio);
+    vi.mocked(fetchCircuitBreakerState).mockResolvedValue({
+      data: { status: "halted", recent_events: [] },
+    } as typeof mockCb);
+    vi.mocked(fetchTrades).mockResolvedValue({
+      trades: [
+        {
+          id: 3,
+          symbol: "ETH/USDT",
+          side: "SELL",
+          entry_price: 3000,
+          exit_price: 2950,
+          quantity: 0.2,
+          pnl: -10,
+          pnl_pct: -0.5,
+          fees: 0.4,
+          entry_time: "2026-03-15T12:00:00",
+          exit_time: "2026-03-15T12:30:00",
+          exit_reason: "stop_loss",
+          strategy: "mean_reversion",
+          cycle_id: 3,
+          created_at: "2026-03-15T12:00:00",
+          execution_mode: "paper",
+        },
+        {
+          id: 4,
+          symbol: "SOL/USDT",
+          side: "BUY",
+          entry_price: 150,
+          exit_price: 153,
+          quantity: 1,
+          pnl: 3,
+          pnl_pct: 2,
+          fees: 0.1,
+          entry_time: "2026-03-15T13:00:00",
+          exit_time: "2026-03-15T13:30:00",
+          exit_reason: "take_profit",
+          strategy: "breakout",
+          cycle_id: 4,
+          created_at: "2026-03-15T13:00:00",
+          execution_mode: "dry_run",
+        },
+      ],
+      total: 2,
+      offset: 0,
+      limit: 3,
+    });
+    vi.mocked(fetchBotHealth).mockResolvedValue(mockHealth);
+    vi.mocked(fetchSystemStatsOverview).mockResolvedValue(mockStats);
+
+    render(<Home />);
+
+    await waitFor(() => {
+      expect(screen.getByText("$2,500.50")).toBeDefined();
+    });
+
+    expect(screen.getByText("HALTED")).toBeDefined();
+    expect(screen.getByText("-$12.50")).toBeDefined();
+    expect(screen.getAllByText(/-0.50%/).length).toBeGreaterThan(0);
+    expect(screen.getByText("PAPER")).toBeDefined();
+    expect(screen.getByText("DRY")).toBeDefined();
+  });
+
+  it("shows fallback health and stats errors for non-Error rejections", async () => {
+    vi.mocked(fetchPortfolioState).mockResolvedValue(mockPortfolio);
+    vi.mocked(fetchCircuitBreakerState).mockResolvedValue(mockCb);
+    vi.mocked(fetchTrades).mockResolvedValue(mockTrades);
+    vi.mocked(fetchBotHealth).mockRejectedValue("health-down");
+    vi.mocked(fetchSystemStatsOverview).mockRejectedValue({ detail: "stats-down" });
+
+    render(<Home />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toBeDefined();
+    });
+
+    expect(screen.getByText("Failed to fetch health")).toBeDefined();
+    expect(screen.getByText("Failed to fetch stats")).toBeDefined();
+  });
+
+  it("retries after a complete failure", async () => {
+    setupMocksAllFail();
+
+    render(<Home />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeDefined();
+    });
+
+    setupMocksSuccess();
+    fireEvent.click(screen.getByText("Retry"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Dashboard")).toBeDefined();
+    });
+
+    expect(screen.getByText("Health loaded")).toBeDefined();
+    expect(screen.getByText("Stats loaded")).toBeDefined();
   });
 });

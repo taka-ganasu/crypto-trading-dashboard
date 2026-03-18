@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import React from "react";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
@@ -12,7 +12,9 @@ vi.mock("next/navigation", () => ({
 // Mock next/dynamic to render stub components
 vi.mock("next/dynamic", () => ({
   default: () => {
-    const Stub = () => <div data-testid="dynamic-chart" />;
+    const Stub = (props: { data?: unknown }) => (
+      <div data-testid="dynamic-chart">{JSON.stringify(props)}</div>
+    );
     Stub.displayName = "DynamicStub";
     return Stub;
   },
@@ -194,5 +196,109 @@ describe("Portfolio Page", () => {
     expect(
       screen.getByRole("group", { name: "Execution mode filter" })
     ).toBeDefined();
+  });
+
+  it("derives strategy data from positions and opens the detail panel", async () => {
+    vi.mocked(fetchPortfolioState).mockResolvedValue({
+      data: {
+        timestamp: "2026-03-16T08:00:00",
+        positions: {
+          btc_momentum: {
+            equity: "1200.5",
+            allocation_pct: "60",
+            position_count: "2",
+            last_signal_time: null,
+          },
+        },
+      },
+    } as typeof mockPortfolio);
+    vi.mocked(fetchEquityCurve).mockResolvedValue(null as never);
+    vi.mocked(fetchStrategyPerformance).mockResolvedValue(null as never);
+
+    render(<PortfolioPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("BTC MOMENTUM")).toBeDefined();
+    });
+
+    expect(screen.getAllByText("$1,200.50").length).toBeGreaterThan(0);
+    expect(screen.queryByText("N/A")).toBeNull();
+
+    fireEvent.click(screen.getByText("BTC MOMENTUM"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("dialog", { name: "Strategy Details" })
+      ).toBeDefined();
+    });
+
+    expect(screen.getAllByText("unknown")[0]).toBeDefined();
+    expect(screen.getByText("Position Count")).toBeDefined();
+    expect(screen.getByText("Last Signal Time")).toBeDefined();
+  });
+
+  it("uses chart and allocation fallbacks when strategy data is empty", async () => {
+    vi.mocked(fetchPortfolioState).mockResolvedValue({
+      data: {
+        total_equity: "900",
+        strategies: {},
+      },
+    } as typeof mockPortfolio);
+    vi.mocked(fetchEquityCurve).mockResolvedValue({
+      data: [
+        { date: "2026-03-15", balance: 900, daily_pnl: null, cumulative_pnl: 0 },
+      ],
+      total_days: 1,
+      start_date: "2026-03-15",
+      end_date: "2026-03-15",
+      initial_balance: 900,
+    });
+    vi.mocked(fetchStrategyPerformance).mockResolvedValue([
+      {
+        strategy: "grid",
+        trade_count: 4,
+        win_rate: 0.5,
+        profit_factor: 1.2,
+        sharpe: 0.8,
+        avg_pnl: 3,
+        max_dd: 12,
+      },
+    ]);
+
+    render(<PortfolioPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("No strategy data available")).toBeDefined();
+    });
+
+    const charts = screen.getAllByTestId("dynamic-chart");
+    expect(charts[0].textContent).toContain('"daily_pnl":0');
+    expect(charts[1].textContent).toContain('"name":"grid"');
+    expect(charts[1].textContent).toContain('"value":4');
+    expect(screen.getByText("N/A")).toBeDefined();
+  });
+
+  it("shows the default portfolio error for non-Error failures and retries", async () => {
+    vi.mocked(fetchPortfolioState).mockRejectedValue("not-json-error");
+    vi.mocked(fetchEquityCurve).mockRejectedValue(new Error("fail"));
+    vi.mocked(fetchStrategyPerformance).mockRejectedValue(new Error("fail"));
+
+    render(<PortfolioPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeDefined();
+    });
+
+    expect(screen.getByText("Failed to load portfolio state")).toBeDefined();
+
+    vi.mocked(fetchPortfolioState).mockResolvedValue(mockPortfolio);
+    vi.mocked(fetchEquityCurve).mockResolvedValue(mockEquityCurve);
+    vi.mocked(fetchStrategyPerformance).mockResolvedValue(mockStrategyPerf);
+
+    fireEvent.click(screen.getByText("Retry"));
+
+    await waitFor(() => {
+      expect(screen.getByText("BTC/USDT")).toBeDefined();
+    });
   });
 });

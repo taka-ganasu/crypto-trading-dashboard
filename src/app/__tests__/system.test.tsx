@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import React from "react";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
@@ -23,13 +23,20 @@ vi.mock("@/components/system/HealthSection", () => ({
   default: ({
     systemError,
     status,
+    goLiveChecks,
   }: {
     systemError: string | null;
     status: string;
+    goLiveChecks: Array<{ name: string; status: string }>;
   }) => (
     <div data-testid="health-section">
       Status: {status}
       {systemError && <span>{systemError}</span>}
+      {goLiveChecks.map((check) => (
+        <span key={check.name}>
+          {check.name}:{check.status}
+        </span>
+      ))}
     </div>
   ),
 }));
@@ -46,13 +53,19 @@ vi.mock("@/components/system/ConfigSection", () => ({
   default: ({
     botVersionFromHealth,
     vpsHead,
+    mainHead,
+    isHeadDrift,
   }: {
     botVersionFromHealth: string | null;
     vpsHead: string | null;
+    mainHead: string | null;
+    isHeadDrift: boolean;
   }) => (
     <div data-testid="config-section">
       {botVersionFromHealth && <span>Bot: {botVersionFromHealth}</span>}
       {vpsHead && <span>VPS: {vpsHead}</span>}
+      {mainHead && <span>Main: {mainHead}</span>}
+      <span>Drift: {String(isHeadDrift)}</span>
     </div>
   ),
 }));
@@ -61,12 +74,20 @@ vi.mock("@/components/system/ErrorLogSection", () => ({
   default: ({
     apiErrors,
     errorLogError,
+    expandedTraceKey,
+    onToggleTrace,
   }: {
     apiErrors: unknown[];
     errorLogError: string | null;
+    expandedTraceKey: string | null;
+    onToggleTrace: (key: string) => void;
   }) => (
     <div data-testid="error-log-section">
       {errorLogError && <span>{errorLogError}</span>}
+      <span>Expanded: {expandedTraceKey ?? "none"}</span>
+      <button type="button" onClick={() => onToggleTrace("trace-1")}>
+        Toggle trace
+      </button>
       {apiErrors.length} errors
     </div>
   ),
@@ -267,5 +288,83 @@ describe("System Page", () => {
     });
 
     expect(screen.getByText("1 errors")).toBeDefined();
+  });
+
+  it("normalizes nested bot health data and toggles trace expansion", async () => {
+    vi.mocked(fetchSystemHealth).mockResolvedValue({
+      ...mockHealth,
+      status: "degraded",
+    });
+    vi.mocked(fetchSystemMetrics).mockResolvedValue(mockMetrics);
+    vi.mocked(fetchSystemInfo).mockResolvedValue(mockInfo);
+    vi.mocked(fetchBotHealth).mockResolvedValue({
+      data: {
+        app_version: "1.2.3",
+        vps_commit: "abc123",
+        origin_main_head: "def456",
+        checks: [
+          { name: "exchange", status: "warning", message: "Lagging", latency_ms: 12 },
+          { status: "fail", message: null, latency_ms: null },
+        ],
+      },
+    });
+    vi.mocked(fetchApiErrors).mockResolvedValue(mockApiErrors);
+
+    render(<SystemPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("System")).toBeDefined();
+    });
+
+    expect(screen.getByText("Status: DEGRADED")).toBeDefined();
+    expect(screen.getByText("exchange:warning")).toBeDefined();
+    expect(screen.getByText("check_2:error")).toBeDefined();
+    expect(screen.getByText("Bot: 1.2.3")).toBeDefined();
+    expect(screen.getByText("VPS: abc123")).toBeDefined();
+    expect(screen.getByText("Main: def456")).toBeDefined();
+    expect(screen.getByText("Drift: true")).toBeDefined();
+
+    fireEvent.click(screen.getByTestId("system-tab-error-log"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Expanded: none")).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByText("Toggle trace"));
+    await waitFor(() => {
+      expect(screen.getByText("Expanded: trace-1")).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByText("Toggle trace"));
+    await waitFor(() => {
+      expect(screen.getByText("Expanded: none")).toBeDefined();
+    });
+  });
+
+  it("uses fallback error log messaging for non-Error failures", async () => {
+    vi.mocked(fetchSystemHealth).mockResolvedValue({
+      ...mockHealth,
+      status: "mystery",
+    });
+    vi.mocked(fetchSystemMetrics).mockResolvedValue(mockMetrics);
+    vi.mocked(fetchSystemInfo).mockResolvedValue(mockInfo);
+    vi.mocked(fetchBotHealth).mockResolvedValue({
+      data: {
+        checks: "invalid",
+      },
+    } as never);
+    vi.mocked(fetchApiErrors).mockRejectedValue("permission denied");
+
+    render(<SystemPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Status: unreachable")).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByTestId("system-tab-error-log"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Failed to fetch error logs")).toBeDefined();
+    });
   });
 });
