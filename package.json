@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@sentry/nextjs": "^10.43.0",
-    "next": "16.1.6",
+    "next": "^16.2.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "^3.7.0"
@@ -31,7 +31,7 @@
     "@vitest/coverage-v8": "^4.0.18",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "^16.2.0",
     "jsdom": "^28.1.0",
     "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4",
