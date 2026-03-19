@@ -10,7 +10,8 @@
     "lint": "eslint",
     "test:e2e": "npx playwright test",
     "test:unit": "vitest run",
-    "generate:types": "openapi-typescript generated/openapi.json -o src/types/api-generated.ts"
+    "generate:types": "node scripts/generate-api-types.mjs",
+    "generate:types:from-spec": "openapi-typescript generated/openapi.json -o src/types/api-generated.ts"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.43.0",

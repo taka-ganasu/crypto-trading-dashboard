@@ -53,7 +53,7 @@ export interface paths {
         };
         /**
          * Get daily realized PnL by strategy
-         * @description Return day-by-day realized PnL aggregated by strategy.
+         * @description Return day-by-day realized net PnL aggregated by strategy.
          */
         get: operations["get_trades_by_strategy_api_trades_by_strategy_get"];
         put?: never;
@@ -433,7 +433,7 @@ export interface paths {
         };
         /**
          * Get equity curve
-         * @description Return daily balance progression derived from closed-trade PnL.
+         * @description Return daily balance progression derived from closed-trade net PnL.
          */
         get: operations["get_equity_curve_api_performance_equity_curve_get"];
         put?: never;

@@ -51,8 +51,12 @@ import {
   fetchMdseTrades,
   fetchMdseTimeline,
 } from "@/lib/api";
+import type { MdseEvent, MdseSummary, MdseTimeline, MdseTrade } from "@/types";
 
 const mockSummary = {
+  total_events: 23,
+  validated_events: 15,
+  unvalidated_events: 8,
   detectors: [
     {
       detector_name: "fr_extreme",
@@ -75,18 +79,26 @@ const mockSummary = {
       last_event_at: "2026-03-15T09:00:00",
     },
   ],
-};
+  daily_event_trend: [],
+  weekly_event_trend: [],
+  detector_hit_rate_trend: [],
+  confidence_distribution: [],
+} satisfies MdseSummary;
 
 const mockEvents = [
   {
     id: 1,
+    detector: "fr_extreme",
     detector_name: "fr_extreme",
     symbol: "BTC/USDT",
     direction: "long",
     confidence: 0.85,
     timestamp: "2026-03-15T10:00:00",
+    ttl: 600,
+    validated: 1,
+    alert_sent: true,
   },
-];
+] satisfies MdseEvent[];
 
 const mockTrades = [
   {
@@ -98,19 +110,14 @@ const mockTrades = [
     exit_price: 71000,
     entry_time: "2026-03-15T10:00:00",
     exit_time: "2026-03-15T11:00:00",
+    position_size: 0.1,
   },
-];
+] satisfies MdseTrade[];
 
 const mockTimeline = {
   prices: [{ timestamp: "2026-03-15T10:00:00", price: 70000 }],
-  events: [
-    {
-      timestamp: "2026-03-15T10:00:00",
-      detector: "fr_extreme",
-      direction: "long",
-    },
-  ],
-};
+  events: mockEvents,
+} satisfies MdseTimeline;
 
 beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true });

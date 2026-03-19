@@ -26,11 +26,10 @@ describe("app/layout", () => {
     expect(metadata.title).toBe("Crypto Trading Dashboard");
     expect(metadata.description).toContain("Real-time monitoring dashboard");
     expect(metadata.openGraph?.siteName).toBe("Crypto Trading Dashboard");
-    expect(metadata.icons?.icon?.[0]).toEqual({
-      url: "/icon.svg",
-      type: "image/svg+xml",
+    expect(metadata.icons).toEqual({
+      icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+      shortcut: ["/icon.svg"],
     });
-    expect(metadata.icons?.shortcut).toEqual(["/icon.svg"]);
 
     expect(viewport.width).toBe("device-width");
     expect(viewport.initialScale).toBe(1);
@@ -40,12 +39,23 @@ describe("app/layout", () => {
   it("wraps children in AppShell with font variables applied", () => {
     const tree = RootLayout({
       children: <div>Layout Child</div>,
-    }) as React.ReactElement;
+    });
+    expect(React.isValidElement(tree)).toBe(true);
+    if (!React.isValidElement<{ lang: string; children: React.ReactNode }>(tree)) {
+      throw new Error("RootLayout should return an html element");
+    }
 
     expect(tree.type).toBe("html");
     expect(tree.props.lang).toBe("en");
 
-    const body = tree.props.children as React.ReactElement;
+    const body = tree.props.children;
+    expect(React.isValidElement(body)).toBe(true);
+    if (
+      !React.isValidElement<{ className: string; children: React.ReactNode }>(body)
+    ) {
+      throw new Error("RootLayout should render a body element");
+    }
+
     expect(body.type).toBe("body");
     expect(body.props.className).toContain("font-geist-sans");
     expect(body.props.className).toContain("font-geist-mono");

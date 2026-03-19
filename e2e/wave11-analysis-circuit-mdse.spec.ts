@@ -166,7 +166,7 @@ test.describe("Wave11 Circuit Breaker E2E", () => {
     page,
   }) => {
     const errors = trackConsoleErrors(page);
-    let release: (() => void) | null = null;
+    let release: () => void = () => {};
     const waitForRelease = new Promise<void>((resolve) => {
       release = resolve;
     });
@@ -182,7 +182,7 @@ test.describe("Wave11 Circuit Breaker E2E", () => {
     await page.goto("/circuit-breaker");
     await expect(page.getByText("Loading circuit breaker data...")).toBeVisible();
 
-    release?.();
+    release();
     await expect(
       page.getByRole("heading", { level: 1, name: "Circuit Breaker" })
     ).toBeVisible();
