@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import {
+  getLocalToday,
   generateDateRange,
   fillEquityCurveGaps,
   fillStrategyPnlGaps,
@@ -17,6 +18,15 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+// ── getLocalToday ─────────────────────────────────────────
+
+describe("getLocalToday", () => {
+  it("returns local date in YYYY-MM-DD format", () => {
+    mockToday("2026-04-09");
+    expect(getLocalToday()).toBe("2026-04-09");
+  });
+});
+
 // ── generateDateRange ──────────────────────────────────────
 
 describe("generateDateRange", () => {
@@ -32,6 +42,18 @@ describe("generateDateRange", () => {
       "2026-03-02",
       "2026-03-03",
     ]);
+  });
+
+  it("crosses month and year boundaries correctly", () => {
+    expect(generateDateRange("2025-12-31", "2026-01-02")).toEqual([
+      "2025-12-31",
+      "2026-01-01",
+      "2026-01-02",
+    ]);
+  });
+
+  it("returns empty array when start is after end", () => {
+    expect(generateDateRange("2026-03-05", "2026-03-03")).toEqual([]);
   });
 });
 
@@ -197,5 +219,29 @@ describe("fillStrategyPnlGaps", () => {
       daily_pnl: 0,
       trade_count: 0,
     });
+  });
+
+  it("does not extend to today when includeToday is false", () => {
+    mockToday("2026-03-05");
+    const data: TradeByStrategyDaily[] = [
+      { date: "2026-03-03", strategy: "A", daily_pnl: 10, trade_count: 1 },
+      { date: "2026-03-04", strategy: "A", daily_pnl: 5, trade_count: 1 },
+    ];
+
+    const result = fillStrategyPnlGaps(data, false);
+
+    expect(result).toEqual(data);
+  });
+
+  it("does not add extra rows when last date is already today", () => {
+    mockToday("2026-03-04");
+    const data: TradeByStrategyDaily[] = [
+      { date: "2026-03-04", strategy: "A", daily_pnl: 10, trade_count: 1 },
+      { date: "2026-03-04", strategy: "B", daily_pnl: -2, trade_count: 1 },
+    ];
+
+    const result = fillStrategyPnlGaps(data);
+
+    expect(result).toEqual(data);
   });
 });
