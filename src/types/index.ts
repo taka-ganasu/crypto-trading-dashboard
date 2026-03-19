@@ -114,6 +114,9 @@ export interface BotHealthResponse {
   checks?: BotHealthCheckItem[] | null;
   data?: {
     checks?: BotHealthCheckItem[] | null;
+    app_version?: string | null;
+    vps_commit?: string | null;
+    origin_main_head?: string | null;
   } | null;
 }
 

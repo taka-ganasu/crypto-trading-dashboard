@@ -225,7 +225,7 @@ describe("Trades Page", () => {
           strategy: null,
           cycle_id: null,
           created_at: "2026-03-15T14:00:00",
-          execution_mode: null,
+          execution_mode: "paper",
         },
       ],
       total: 1,

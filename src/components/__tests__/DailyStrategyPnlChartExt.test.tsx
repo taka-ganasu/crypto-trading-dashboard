@@ -3,7 +3,7 @@ import React from "react";
 import { render, screen, cleanup } from "@testing-library/react";
 
 let capturedTickFormatter: ((value: number) => string) | null = null;
-let capturedTooltipContent: React.ReactElement | null = null;
+let capturedTooltipContent: React.ReactElement<Record<string, unknown>> | null = null;
 
 vi.mock("recharts", () => {
   const MockContainer = ({ children }: { children: React.ReactNode }) => (
@@ -31,7 +31,7 @@ vi.mock("recharts", () => {
       return null;
     },
     CartesianGrid: () => null,
-    Tooltip: ({ content }: { content?: React.ReactElement }) => {
+    Tooltip: ({ content }: { content?: React.ReactElement<Record<string, unknown>> }) => {
       capturedTooltipContent = content ?? null;
       return null;
     },

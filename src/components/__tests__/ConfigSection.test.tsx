@@ -36,6 +36,7 @@ describe("ConfigSection", () => {
           bot_version: "0.42.0",
           db_path: "/data/trades.db",
           python_version: "3.12.4",
+          platform: "Linux",
         }}
         dashboardVersion="1.5.0"
       />

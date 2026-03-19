@@ -5,7 +5,7 @@ import ErrorBoundary from "../ErrorBoundary";
 
 afterEach(cleanup);
 
-function ThrowingChild({ error }: { error: Error }) {
+function ThrowingChild({ error }: { error: Error }): React.ReactNode {
   throw error;
 }
 

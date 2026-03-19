@@ -55,10 +55,14 @@ afterEach(cleanup);
 const relatedEvents: MdseEvent[] = [
   {
     id: 100,
-    detector: "oi_divergence",
+    detector_name: "oi_divergence",
     symbol: "BTC/USDT",
     direction: "long",
     confidence: 0.73,
+    ttl: 600,
+    validated: 1,
+    alert_sent: false,
+    detector: "oi_divergence",
     timestamp: "2026-03-18T00:30:00Z",
     confluence_score: 0.52,
   },
@@ -193,9 +197,14 @@ describe("MdseTrades", () => {
     const eventsNoScore: MdseEvent[] = [
       {
         id: 100,
+        detector_name: "",
         symbol: "BTC/USDT",
         direction: "long",
         confidence: null as unknown as number,
+        ttl: 600,
+        validated: 0,
+        alert_sent: false,
+        detector: "",
         timestamp: "2026-03-18T00:30:00Z",
       },
     ];

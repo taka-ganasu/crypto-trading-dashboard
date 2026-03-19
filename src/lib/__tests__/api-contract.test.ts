@@ -107,6 +107,7 @@ describe("API contract: default responses", () => {
           skip_reason: null,
           strategy_type: "trend",
           cycle_id: 1,
+          execution_mode: "paper",
           created_at: "2026-01-01",
         } satisfies Signal,
       ],
@@ -151,6 +152,7 @@ describe("API contract: default responses", () => {
   test("/api/mdse/scores matches MdseDetectorScore[]", () => {
     const data = [
       {
+        id: 1,
         detector_name: "detector-a",
         win_rate: 61,
         avg_pnl: 12.5,
@@ -179,6 +181,10 @@ describe("API contract: default responses", () => {
           last_event_at: "2026-01-01T00:00:00Z",
         },
       ],
+      daily_event_trend: [],
+      weekly_event_trend: [],
+      detector_hit_rate_trend: [],
+      confidence_distribution: [],
     } satisfies MdseSummary;
     assertKeys<MdseSummary>(data, ["total_events", "validated_events", "unvalidated_events", "detectors"]);
   });
@@ -187,10 +193,14 @@ describe("API contract: default responses", () => {
     const data = [
       {
         id: 1,
-        detector: "detector-a",
+        detector_name: "detector-a",
         symbol: "BTC/USDT",
         direction: "long",
         confidence: 80,
+        ttl: 600,
+        validated: 0,
+        alert_sent: false,
+        detector: "detector-a",
         timestamp: "2026-01-01T00:00:00Z",
       } satisfies MdseEvent,
     ];
@@ -283,6 +293,7 @@ describe("API contract: default responses", () => {
 
   test("/api/performance/summary matches PerformanceSummary", () => {
     const data = {
+      total_trades: 10,
       total_pnl: 50,
       win_rate: 1,
       profit_factor: 2,
@@ -295,6 +306,7 @@ describe("API contract: default responses", () => {
   test("/api/performance/execution-quality matches ExecutionQuality[]", () => {
     const data = [
       {
+        id: 1,
         trade_id: 1,
         expected_price: 100000,
         actual_price: 100010,
@@ -309,6 +321,7 @@ describe("API contract: default responses", () => {
   test("/api/performance/market-snapshots matches MarketSnapshot[]", () => {
     const data = [
       {
+        id: 1,
         symbol: "BTC/USDT",
         price: 100000,
         volume: 1000,
@@ -333,6 +346,7 @@ describe("API contract: default responses", () => {
         errors: null,
         duration_seconds: 300,
         regime_info: '{"regime":"trending"}',
+        execution_mode: "paper",
         created_at: "2026-01-01T00:05:00Z",
       } satisfies AnalysisCycle,
     ];
@@ -388,10 +402,14 @@ describe("API contract: default responses", () => {
         {
           id: 1,
           timestamp: "2026-01-01T08:00:00Z",
-          detector: "fr_extreme",
+          detector_name: "fr_extreme",
           symbol: "BTC/USDT",
           direction: "long",
           confidence: 85,
+          ttl: 600,
+          validated: 1,
+          alert_sent: false,
+          detector: "fr_extreme",
         },
       ],
     } satisfies MdseTimeline;
@@ -480,6 +498,7 @@ describe("API contract: null-safe responses", () => {
 
   test("null-heavy PerformanceSummary", () => {
     const data = {
+      total_trades: 0,
       total_pnl: null,
       win_rate: null,
       profit_factor: null,

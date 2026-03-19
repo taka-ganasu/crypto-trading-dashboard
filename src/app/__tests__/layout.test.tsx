@@ -26,11 +26,12 @@ describe("app/layout", () => {
     expect(metadata.title).toBe("Crypto Trading Dashboard");
     expect(metadata.description).toContain("Real-time monitoring dashboard");
     expect(metadata.openGraph?.siteName).toBe("Crypto Trading Dashboard");
-    expect(metadata.icons?.icon?.[0]).toEqual({
+    const icons = metadata.icons as { icon?: Array<{ url: string; type: string }>; shortcut?: string[] } | undefined;
+    expect(icons?.icon?.[0]).toEqual({
       url: "/icon.svg",
       type: "image/svg+xml",
     });
-    expect(metadata.icons?.shortcut).toEqual(["/icon.svg"]);
+    expect(icons?.shortcut).toEqual(["/icon.svg"]);
 
     expect(viewport.width).toBe("device-width");
     expect(viewport.initialScale).toBe(1);
@@ -42,16 +43,18 @@ describe("app/layout", () => {
       children: <div>Layout Child</div>,
     }) as React.ReactElement;
 
+    const treeProps = tree.props as Record<string, unknown>;
     expect(tree.type).toBe("html");
-    expect(tree.props.lang).toBe("en");
+    expect(treeProps.lang).toBe("en");
 
-    const body = tree.props.children as React.ReactElement;
+    const body = treeProps.children as React.ReactElement;
+    const bodyProps = body.props as Record<string, unknown>;
     expect(body.type).toBe("body");
-    expect(body.props.className).toContain("font-geist-sans");
-    expect(body.props.className).toContain("font-geist-mono");
-    expect(body.props.className).toContain("antialiased");
+    expect(bodyProps.className).toContain("font-geist-sans");
+    expect(bodyProps.className).toContain("font-geist-mono");
+    expect(bodyProps.className).toContain("antialiased");
 
-    render(body.props.children);
+    render(bodyProps.children as React.ReactElement);
 
     expect(screen.getByTestId("app-shell")).toBeDefined();
     expect(screen.getByText("Layout Child")).toBeDefined();

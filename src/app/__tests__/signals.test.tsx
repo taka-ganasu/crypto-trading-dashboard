@@ -49,6 +49,7 @@ const mockSignalsResponse = {
       skip_reason: null,
       strategy_type: "momentum",
       cycle_id: 10,
+      execution_mode: "paper",
       created_at: "2026-03-15T10:00:00",
     },
     {
@@ -62,6 +63,7 @@ const mockSignalsResponse = {
       skip_reason: "confidence_below_threshold",
       strategy_type: "fr_reversal",
       cycle_id: 11,
+      execution_mode: "paper",
       created_at: "2026-03-15T11:00:00",
     },
   ],
@@ -155,6 +157,7 @@ describe("Signals Page", () => {
           skip_reason: null,
           strategy_type: null,
           cycle_id: null,
+          execution_mode: "paper",
           created_at: "2026-03-15T12:00:00",
         },
       ],

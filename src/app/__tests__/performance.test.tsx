@@ -43,6 +43,7 @@ import {
 } from "@/lib/api";
 
 const mockSummary = {
+  total_trades: 20,
   total_pnl: 250.5,
   win_rate: 0.65,
   profit_factor: 1.82,
@@ -52,6 +53,7 @@ const mockSummary = {
 
 const mockExecQuality = [
   {
+    id: 1,
     trade_id: 1,
     expected_price: 50000,
     actual_price: 50010,
@@ -60,6 +62,7 @@ const mockExecQuality = [
     timestamp: "2026-03-15T10:00:00",
   },
   {
+    id: 2,
     trade_id: 2,
     expected_price: 3000,
     actual_price: 2998,
@@ -71,6 +74,7 @@ const mockExecQuality = [
 
 const mockSnapshots = [
   {
+    id: 1,
     symbol: "BTC/USDT",
     price: 83000,
     rsi: 55.3,
@@ -249,6 +253,7 @@ describe("Performance Page", () => {
     vi.mocked(fetchPerformanceSummary).mockResolvedValue(mockSummary);
     vi.mocked(fetchExecutionQuality).mockResolvedValue([
       {
+        id: 3,
         trade_id: null,
         expected_price: null,
         actual_price: null,
@@ -259,6 +264,7 @@ describe("Performance Page", () => {
     ]);
     vi.mocked(fetchMarketSnapshots).mockResolvedValue([
       {
+        id: 2,
         symbol: "ETH/USDT",
         price: null,
         rsi: null,
