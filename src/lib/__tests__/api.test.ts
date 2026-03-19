@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import {
+  fetchJSON,
   fetchTrades,
   fetchTradeSummary,
   fetchSignals,
@@ -18,7 +19,6 @@ import {
   fetchMdseTimeline,
   fetchSystemMetrics,
   fetchSystemInfo,
-  fetchApiErrors,
   fetchSystemStatsOverview,
   fetchExecutionQuality,
   fetchMarketSnapshots,
@@ -488,17 +488,27 @@ describe("fetchSystemStatsOverview", () => {
 });
 
 /* ------------------------------------------------------------------ */
-/* fetchApiErrors                                                       */
+/* fetchJSON response mapping                                           */
 /* ------------------------------------------------------------------ */
 
-describe("fetchApiErrors", () => {
+describe("fetchJSON response mapping", () => {
   it("parses nested errors wrapper", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ errors: [{ ts: "2026-01-01", path: "/foo" }] }),
     });
 
-    const result = await fetchApiErrors();
+    const result = await fetchJSON<
+      { errors: unknown } | Array<{ ts: string; path?: string }>,
+      Array<{ ts: string; path?: string }>
+    >("/errors", {
+      mapResponse: (payload) => {
+        if (Array.isArray(payload)) return payload;
+        return Array.isArray(payload.errors)
+          ? (payload.errors as Array<{ ts: string; path?: string }>)
+          : [];
+      },
+    });
     expect(result).toEqual([{ ts: "2026-01-01", path: "/foo" }]);
   });
 
@@ -508,7 +518,15 @@ describe("fetchApiErrors", () => {
       json: () => Promise.resolve([{ ts: "2026-01-01" }]),
     });
 
-    const result = await fetchApiErrors();
+    const result = await fetchJSON<
+      { errors: unknown } | Array<{ ts: string }>,
+      Array<{ ts: string }>
+    >("/errors", {
+      mapResponse: (payload) => {
+        if (Array.isArray(payload)) return payload;
+        return Array.isArray(payload.errors) ? (payload.errors as Array<{ ts: string }>) : [];
+      },
+    });
     expect(result).toEqual([{ ts: "2026-01-01" }]);
   });
 
@@ -518,7 +536,15 @@ describe("fetchApiErrors", () => {
       json: () => Promise.resolve({ errors: "not-an-array" }),
     });
 
-    const result = await fetchApiErrors();
+    const result = await fetchJSON<
+      { errors: unknown } | Array<{ ts: string }>,
+      Array<{ ts: string }>
+    >("/errors", {
+      mapResponse: (payload) => {
+        if (Array.isArray(payload)) return payload;
+        return Array.isArray(payload.errors) ? (payload.errors as Array<{ ts: string }>) : [];
+      },
+    });
     expect(result).toEqual([]);
   });
 
@@ -528,17 +554,22 @@ describe("fetchApiErrors", () => {
       json: () => Promise.resolve("just a string"),
     });
 
-    const result = await fetchApiErrors();
+    const result = await fetchJSON<string | Array<{ ts: string }>, Array<{ ts: string }>>(
+      "/errors",
+      {
+        mapResponse: (payload) => (Array.isArray(payload) ? payload : []),
+      }
+    );
     expect(result).toEqual([]);
   });
 
-  it("includes since/statusGte/limit params", async () => {
+  it("preserves the requested path for mapped responses", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve([]),
     });
 
-    await fetchApiErrors("2026-01-01", 500, 10);
+    await fetchJSON<Array<{ ts: string }>>("/errors?since=2026-01-01&status_gte=500&limit=10");
     const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
     expect(url).toContain("since=2026-01-01");
     expect(url).toContain("status_gte=500");
@@ -552,13 +583,7 @@ describe("fetchApiErrors", () => {
       json: () => Promise.resolve({}),
     });
 
-    await expect(fetchApiErrors()).rejects.toThrow("API error: 500");
-  });
-
-  it("wraps non-Error thrown values", async () => {
-    globalThis.fetch = vi.fn().mockRejectedValue("string error");
-
-    await expect(fetchApiErrors()).rejects.toThrow("Failed to fetch error logs");
+    await expect(fetchJSON("/errors")).rejects.toThrow("API error: 500");
   });
 });
 
