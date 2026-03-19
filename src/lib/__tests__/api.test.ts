@@ -641,3 +641,111 @@ describe("fetchEquityCurve with params", () => {
     await expect(fetchEquityCurve()).rejects.toThrow("Network error");
   });
 });
+
+/* ------------------------------------------------------------------ */
+/* Additional edge-case coverage (BL-136)                              */
+/* ------------------------------------------------------------------ */
+
+describe("fetchSignals edge cases (BL-136)", () => {
+  it("includes offset when provided", async () => {
+    globalThis.fetch = mockFetchOk({ signals: [], total: 0 });
+    await fetchSignals(undefined, 100, undefined, undefined, undefined, 50);
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("offset=50");
+  });
+
+  it("includes symbol, start, end, and execution_mode together", async () => {
+    globalThis.fetch = mockFetchOk({ signals: [], total: 0 });
+    await fetchSignals("ETH/USDT", 200, "2026-01-01", "2026-01-31", "paper", 25);
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("symbol=ETH");
+    expect(url).toContain("limit=200");
+    expect(url).toContain("start=2026-01-01");
+    expect(url).toContain("end=2026-01-31");
+    expect(url).toContain("execution_mode=paper");
+    expect(url).toContain("offset=25");
+  });
+});
+
+describe("fetchTrades edge cases (BL-136)", () => {
+  it("includes start and end date range", async () => {
+    globalThis.fetch = mockFetchOk({ trades: [], total: 0 });
+    await fetchTrades(undefined, 50, "2026-02-01", "2026-02-28");
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("start=2026-02-01");
+    expect(url).toContain("end=2026-02-28");
+  });
+
+  it("does not include offset when 0", async () => {
+    globalThis.fetch = mockFetchOk({ trades: [], total: 0 });
+    await fetchTrades(undefined, 50, undefined, undefined, undefined, 0);
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).not.toContain("offset");
+  });
+});
+
+describe("fetchApiErrors edge cases (BL-136)", () => {
+  it("calls /errors without query params when none provided", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve([]),
+    });
+    await fetchApiErrors();
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("/errors");
+    expect(url).not.toContain("?");
+  });
+
+  it("handles timeout (AbortError)", async () => {
+    globalThis.fetch = vi.fn().mockRejectedValue(
+      new DOMException("The operation was aborted", "AbortError")
+    );
+    // fetchApiErrors uses its own fetch (not fetchJSON), so no retry
+    await expect(fetchApiErrors()).rejects.toThrow();
+  });
+});
+
+describe("fetchMdseEvents edge cases (BL-136)", () => {
+  it("uses default hours=24 when called with no arguments", async () => {
+    globalThis.fetch = mockFetchOk([]);
+    await fetchMdseEvents();
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("hours=24");
+  });
+});
+
+describe("fetchTradesByStrategy edge cases (BL-136)", () => {
+  it("includes tz_offset=0", async () => {
+    globalThis.fetch = mockFetchOk([]);
+    await fetchTradesByStrategy(undefined, undefined, undefined, 0);
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("tz_offset=0");
+  });
+});
+
+describe("fetchEquityCurve edge cases (BL-136)", () => {
+  it("builds URL without query when no params", async () => {
+    globalThis.fetch = mockFetchOk({ data: [] });
+    await fetchEquityCurve();
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("/equity-curve");
+    expect(url).not.toContain("?");
+  });
+});
+
+describe("appendExecutionModeParam via fetchPortfolioState (BL-136)", () => {
+  it("does not append execution_mode for 'all'", async () => {
+    globalThis.fetch = mockFetchOk({});
+    await fetchPortfolioState("all");
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).not.toContain("execution_mode");
+    expect(url).not.toContain("?");
+  });
+
+  it("does not append execution_mode for undefined", async () => {
+    globalThis.fetch = mockFetchOk({});
+    await fetchPortfolioState(undefined);
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).not.toContain("execution_mode");
+  });
+});
