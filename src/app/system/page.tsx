@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import {
   fetchApiErrors,
   fetchBotHealth,
@@ -125,6 +125,14 @@ function normalizeGoLiveChecks(health: BotHealthResponse | null): GoLiveCheckIte
 }
 
 export default function SystemPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner label="Loading system data..." />}>
+      <SystemContent />
+    </Suspense>
+  );
+}
+
+function SystemContent() {
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [botHealth, setBotHealth] = useState<BotHealthResponse | null>(null);
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);

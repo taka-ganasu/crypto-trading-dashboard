@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { fetchCircuitBreakerState } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import type { CircuitBreakerState } from "@/types";
@@ -106,6 +106,14 @@ function TransitionArrow({ from, to }: { from: CBStatus; to: CBStatus }) {
 }
 
 export default function CircuitBreakerPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner label="Loading circuit breaker data..." />}>
+      <CircuitBreakerContent />
+    </Suspense>
+  );
+}
+
+function CircuitBreakerContent() {
   const [cbState, setCbState] = useState<CircuitBreakerState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

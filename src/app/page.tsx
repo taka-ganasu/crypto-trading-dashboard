@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import {
   fetchPortfolioState,
   fetchCircuitBreakerState,
@@ -52,6 +52,14 @@ function toNumber(value: unknown): number | null {
 }
 
 export default function Home() {
+  return (
+    <Suspense fallback={<LoadingSpinner label="Loading dashboard..." />}>
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+function DashboardContent() {
   const [portfolio, setPortfolio] = useState<PortfolioState | null>(null);
   const [cb, setCb] = useState<CircuitBreakerState | null>(null);
   const [trades, setTrades] = useState<Trade[]>([]);
