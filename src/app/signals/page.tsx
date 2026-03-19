@@ -45,25 +45,29 @@ function SignalsContent() {
 
   // Reset page to 1 when any filter changes
   useEffect(() => {
-    setCurrentPage(1);
+    const resetPage = () => setCurrentPage(1);
+    resetPage();
   }, [start, end, apiExecutionMode, executedFilter]);
 
   useEffect(() => {
-    setLoading(true);
-    const offset = (currentPage - 1) * PAGE_SIZE;
-    fetchSignals(undefined, PAGE_SIZE, start, end, apiExecutionMode, offset)
-      .then((res) => {
-        const filtered =
-          executedFilter === "all"
-            ? res.signals
-            : executedFilter === "executed"
-              ? res.signals.filter((s) => s.executed === 1)
-              : res.signals.filter((s) => s.executed !== 1);
-        setSignals(filtered);
-        setTotalSignals(res.total);
-      })
-      .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
+    const load = () => {
+      setLoading(true);
+      const offset = (currentPage - 1) * PAGE_SIZE;
+      fetchSignals(undefined, PAGE_SIZE, start, end, apiExecutionMode, offset)
+        .then((res) => {
+          const filtered =
+            executedFilter === "all"
+              ? res.signals
+              : executedFilter === "executed"
+                ? res.signals.filter((s) => s.executed === 1)
+                : res.signals.filter((s) => s.executed !== 1);
+          setSignals(filtered);
+          setTotalSignals(res.total);
+        })
+        .catch((e: Error) => setError(e.message))
+        .finally(() => setLoading(false));
+    };
+    load();
   }, [start, end, apiExecutionMode, currentPage, executedFilter]);
 
   const totalPages = Math.max(1, Math.ceil(totalSignals / PAGE_SIZE));

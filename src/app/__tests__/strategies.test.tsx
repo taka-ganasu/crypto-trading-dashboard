@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import React from "react";
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
-import { userEvent } from "@testing-library/user-event";
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({

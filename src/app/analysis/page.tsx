@@ -160,14 +160,17 @@ function AnalysisContent() {
   const { start, end } = useTimeRange();
 
   useEffect(() => {
-    setLoading(true);
-    fetchAnalysisCycles(100, start, end)
-      .then((data) => {
-        setCycles(Array.isArray(data) ? data : []);
-        setError(null);
-      })
-      .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
+    const load = () => {
+      setLoading(true);
+      fetchAnalysisCycles(100, start, end)
+        .then((data) => {
+          setCycles(Array.isArray(data) ? data : []);
+          setError(null);
+        })
+        .catch((e: Error) => setError(e.message))
+        .finally(() => setLoading(false));
+    };
+    load();
   }, [start, end]);
 
   const displayCycles = useMemo(() => {

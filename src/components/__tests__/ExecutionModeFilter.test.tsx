@@ -94,9 +94,8 @@ describe("useExecutionMode with all param", () => {
   it("returns undefined apiExecutionMode when mode is all", async () => {
     // Override mock for this test
     const mod = await import("next/navigation");
-    const origUseSearchParams = mod.useSearchParams;
     vi.spyOn(mod, "useSearchParams").mockReturnValue(
-      new URLSearchParams("execution_mode=all") as ReturnType<typeof origUseSearchParams>
+      new URLSearchParams("execution_mode=all") as ReturnType<typeof mod.useSearchParams>
     );
 
     render(<TestHook />);
