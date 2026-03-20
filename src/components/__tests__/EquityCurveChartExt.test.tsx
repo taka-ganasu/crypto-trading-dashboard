@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import React from "react";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, cleanup } from "@testing-library/react";
 
 let capturedTickFormatter: ((value: number) => string) | null = null;
 let capturedTooltipContent: React.ReactElement<Record<string, unknown>> | null = null;

@@ -34,6 +34,7 @@ function MdseContent() {
   const { start, end } = useTimeRange();
 
   const loadMdseData = useCallback(async () => {
+    setLoading(true);
     const [summaryResult, eventsResult, tradesResult, timelineResult] =
       await Promise.allSettled([
         fetchMdseSummary(),
@@ -93,7 +94,6 @@ function MdseContent() {
   }, [start, end]);
 
   useEffect(() => {
-    setLoading(true);
     queueMicrotask(() => { void loadMdseData(); });
   }, [loadMdseData]);
 

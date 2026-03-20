@@ -46,19 +46,23 @@ function TradesContent() {
 
   // Reset page to 1 when any filter changes
   useEffect(() => {
-    setCurrentPage(1);
+    const resetPage = () => setCurrentPage(1);
+    resetPage();
   }, [start, end, apiExecutionMode]);
 
   useEffect(() => {
-    setLoading(true);
-    const offset = (currentPage - 1) * PAGE_SIZE;
-    fetchTrades(undefined, PAGE_SIZE, start, end, apiExecutionMode, offset)
-      .then((res) => {
-        setTrades(res.trades);
-        setTotalTrades(res.total);
-      })
-      .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
+    const load = () => {
+      setLoading(true);
+      const offset = (currentPage - 1) * PAGE_SIZE;
+      fetchTrades(undefined, PAGE_SIZE, start, end, apiExecutionMode, offset)
+        .then((res) => {
+          setTrades(res.trades);
+          setTotalTrades(res.total);
+        })
+        .catch((e: Error) => setError(e.message))
+        .finally(() => setLoading(false));
+    };
+    load();
   }, [start, end, apiExecutionMode, currentPage]);
 
   const totalPages = Math.max(1, Math.ceil(totalTrades / PAGE_SIZE));

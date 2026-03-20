@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import React from "react";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, cleanup } from "@testing-library/react";
 
 let capturedTooltipContent: React.ReactElement<Record<string, unknown>> | null = null;
 let capturedLegendFormatter: ((value: string) => React.ReactNode) | null = null;

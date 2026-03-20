@@ -273,7 +273,7 @@ describe("System Page", () => {
   it("shows error log tab content", async () => {
     setupMocksSuccess();
 
-    const { container } = render(<SystemPage />);
+    render(<SystemPage />);
 
     await waitFor(() => {
       expect(screen.getByText("System")).toBeDefined();
@@ -286,6 +286,7 @@ describe("System Page", () => {
     await waitFor(() => {
       expect(screen.getByTestId("error-log-section")).toBeDefined();
     });
+
 
     expect(screen.getByText("1 errors")).toBeDefined();
   });
