@@ -81,20 +81,30 @@ function coerceConfidencePercent(raw: number | null | undefined): number | null 
 }
 
 function parseRegimeFromObject(obj: Record<string, unknown>): ParsedRegime {
-  const regime = normalizeRegime(
-    obj.regime ?? obj.current_regime ?? obj.market_regime ?? obj.regime_type ?? obj.name
-  );
+  // Direct regime key (e.g. {"regime": "trending", "confidence": 0.8})
+  const directRegime =
+    obj.regime ?? obj.current_regime ?? obj.market_regime ?? obj.regime_type ?? obj.name;
 
-  const confidenceRaw =
-    asFiniteNumber(obj.avg_confidence) ??
-    asFiniteNumber(obj.average_confidence) ??
-    asFiniteNumber(obj.confidence) ??
-    asFiniteNumber(obj.regime_confidence);
+  if (directRegime !== undefined) {
+    const regime = normalizeRegime(directRegime);
+    const confidenceRaw =
+      asFiniteNumber(obj.avg_confidence) ??
+      asFiniteNumber(obj.average_confidence) ??
+      asFiniteNumber(obj.confidence) ??
+      asFiniteNumber(obj.regime_confidence);
+    return { regime, confidence: coerceConfidencePercent(confidenceRaw) };
+  }
 
-  return {
-    regime,
-    confidence: coerceConfidencePercent(confidenceRaw),
-  };
+  // Per-symbol format (e.g. {"BTC/USDT": {"regime": "trending", ...}, "SOL/USDT": ...})
+  const values = Object.values(obj);
+  if (values.length > 0 && values[0] && typeof values[0] === "object") {
+    const first = values[0] as Record<string, unknown>;
+    const regime = normalizeRegime(first.regime ?? first.regime_type);
+    const confidenceRaw = asFiniteNumber(first.confidence);
+    return { regime, confidence: coerceConfidencePercent(confidenceRaw) };
+  }
+
+  return { regime: "unknown", confidence: null };
 }
 
 function parseRegimeInfo(value: string | null): ParsedRegime {
