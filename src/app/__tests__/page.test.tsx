@@ -26,8 +26,8 @@ vi.mock("@/lib/api", () => ({
 vi.mock("@/components/StatsOverviewCards", () => ({
   default: ({ stats, error }: { stats: unknown; error: string | null }) => (
     <div data-testid="stats-overview-cards">
-      {error && <span>{error}</span>}
-      {stats && <span>Stats loaded</span>}
+      {error ? <span>{error}</span> : null}
+      {stats ? <span>Stats loaded</span> : null}
     </div>
   ),
 }));
@@ -41,8 +41,8 @@ vi.mock("@/components/SystemStatusWidget", () => ({
     error: string | null;
   }) => (
     <div data-testid="system-status-widget">
-      {error && <span>{error}</span>}
-      {health && <span>Health loaded</span>}
+      {error ? <span>{error}</span> : null}
+      {health ? <span>Health loaded</span> : null}
     </div>
   ),
 }));
@@ -247,7 +247,7 @@ describe("Home (Dashboard) Page", () => {
           strategy: "fr_reversal",
           cycle_id: 2,
           created_at: "2026-03-15T12:00:00",
-          execution_mode: null,
+          execution_mode: "paper",
         },
       ],
       total: 1,
@@ -274,7 +274,7 @@ describe("Home (Dashboard) Page", () => {
         daily_pnl: "-12.5",
         daily_pnl_pct: "-0.5",
       },
-    } as typeof mockPortfolio);
+    } as unknown as typeof mockPortfolio);
     vi.mocked(fetchCircuitBreakerState).mockResolvedValue({
       data: { status: "halted", recent_events: [] },
     } as typeof mockCb);

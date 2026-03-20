@@ -211,7 +211,7 @@ describe("Portfolio Page", () => {
           },
         },
       },
-    } as typeof mockPortfolio);
+    } as unknown as typeof mockPortfolio);
     vi.mocked(fetchEquityCurve).mockResolvedValue(null as never);
     vi.mocked(fetchStrategyPerformance).mockResolvedValue(null as never);
 
@@ -243,10 +243,10 @@ describe("Portfolio Page", () => {
         total_equity: "900",
         strategies: {},
       },
-    } as typeof mockPortfolio);
+    } as unknown as typeof mockPortfolio);
     vi.mocked(fetchEquityCurve).mockResolvedValue({
       data: [
-        { date: "2026-03-15", balance: 900, daily_pnl: null, cumulative_pnl: 0 },
+        { date: "2026-03-15", balance: 900, daily_pnl: 0, cumulative_pnl: 0 },
       ],
       total_days: 1,
       start_date: "2026-03-15",

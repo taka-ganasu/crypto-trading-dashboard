@@ -182,7 +182,7 @@ test.describe("Wave11 Circuit Breaker E2E", () => {
     await page.goto("/circuit-breaker");
     await expect(page.getByText("Loading circuit breaker data...")).toBeVisible();
 
-    release?.();
+    (release as (() => void) | null)?.();
     await expect(
       page.getByRole("heading", { level: 1, name: "Circuit Breaker" })
     ).toBeVisible();

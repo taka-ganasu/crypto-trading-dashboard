@@ -53,6 +53,9 @@ import {
 } from "@/lib/api";
 
 const mockSummary = {
+  total_events: 23,
+  validated_events: 15,
+  unvalidated_events: 8,
   detectors: [
     {
       detector_name: "fr_extreme",
@@ -75,6 +78,10 @@ const mockSummary = {
       last_event_at: "2026-03-15T09:00:00",
     },
   ],
+  daily_event_trend: [],
+  weekly_event_trend: [],
+  detector_hit_rate_trend: [],
+  confidence_distribution: [],
 };
 
 const mockEvents = [
@@ -84,6 +91,10 @@ const mockEvents = [
     symbol: "BTC/USDT",
     direction: "long",
     confidence: 0.85,
+    ttl: 600,
+    validated: 1,
+    alert_sent: false,
+    detector: "fr_extreme",
     timestamp: "2026-03-15T10:00:00",
   },
 ];
@@ -98,6 +109,7 @@ const mockTrades = [
     exit_price: 71000,
     entry_time: "2026-03-15T10:00:00",
     exit_time: "2026-03-15T11:00:00",
+    position_size: 0.01,
   },
 ];
 
@@ -105,9 +117,16 @@ const mockTimeline = {
   prices: [{ timestamp: "2026-03-15T10:00:00", price: 70000 }],
   events: [
     {
+      id: 1,
       timestamp: "2026-03-15T10:00:00",
-      detector: "fr_extreme",
+      detector_name: "fr_extreme",
+      symbol: "BTC/USDT",
       direction: "long",
+      confidence: 0.85,
+      ttl: 600,
+      validated: 1,
+      alert_sent: false,
+      detector: "fr_extreme",
     },
   ],
 };

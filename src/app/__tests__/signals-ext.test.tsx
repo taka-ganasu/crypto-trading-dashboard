@@ -55,6 +55,7 @@ const twoPageResponse = {
     skip_reason: i % 3 === 0 ? null : "confidence_below_threshold",
     strategy_type: "momentum",
     cycle_id: 10,
+    execution_mode: "paper",
     created_at: "2026-03-15T10:00:00",
   })),
   total: 50,
@@ -75,6 +76,7 @@ const mixedSignals = {
       skip_reason: null,
       strategy_type: "momentum",
       cycle_id: 10,
+      execution_mode: "live",
       created_at: "2026-03-15T10:00:00",
     },
     {
@@ -88,6 +90,7 @@ const mixedSignals = {
       skip_reason: "low_confidence",
       strategy_type: "fr_reversal",
       cycle_id: 11,
+      execution_mode: "paper",
       created_at: "2026-03-15T11:00:00",
     },
     {
@@ -101,6 +104,7 @@ const mixedSignals = {
       skip_reason: null,
       strategy_type: null,
       cycle_id: null,
+      execution_mode: "paper",
       created_at: "2026-03-15T12:00:00",
     },
   ],

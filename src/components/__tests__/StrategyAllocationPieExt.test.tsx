@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import React from "react";
 import { render, screen, cleanup } from "@testing-library/react";
 
-let capturedTooltipContent: React.ReactElement | null = null;
+let capturedTooltipContent: React.ReactElement<Record<string, unknown>> | null = null;
 let capturedLegendFormatter: ((value: string) => React.ReactNode) | null = null;
 let capturedPieLabel: ((props: Record<string, unknown>) => string) | null = null;
 
@@ -28,7 +28,7 @@ vi.mock("recharts", () => {
     Cell: ({ fill }: { fill?: string }) => (
       <div data-testid="recharts-cell" data-fill={fill} />
     ),
-    Tooltip: ({ content }: { content?: React.ReactElement }) => {
+    Tooltip: ({ content }: { content?: React.ReactElement<Record<string, unknown>> }) => {
       capturedTooltipContent = content ?? null;
       return null;
     },
