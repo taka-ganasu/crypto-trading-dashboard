@@ -391,6 +391,20 @@ describe("fetchMdseSummary", () => {
     const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
     expect(url).toContain("/mdse/summary");
   });
+
+  it("includes days param when provided", async () => {
+    globalThis.fetch = mockFetchOk({});
+    await fetchMdseSummary(7);
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("days=7");
+  });
+
+  it("omits days param when not provided", async () => {
+    globalThis.fetch = mockFetchOk({});
+    await fetchMdseSummary();
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).not.toContain("days=");
+  });
 });
 
 describe("fetchMdseEvents", () => {
@@ -417,6 +431,37 @@ describe("fetchMdseEvents", () => {
     const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
     expect(url).toContain("start=2026-03-01");
     expect(url).not.toContain("end=");
+  });
+
+  it("includes limit param", async () => {
+    globalThis.fetch = mockFetchOk([]);
+    await fetchMdseEvents(24, undefined, undefined, 25);
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("limit=25");
+  });
+
+  it("includes offset when > 0", async () => {
+    globalThis.fetch = mockFetchOk([]);
+    await fetchMdseEvents(24, undefined, undefined, 50, 100);
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("limit=50");
+    expect(url).toContain("offset=100");
+  });
+
+  it("omits offset when 0", async () => {
+    globalThis.fetch = mockFetchOk([]);
+    await fetchMdseEvents(24, undefined, undefined, 50, 0);
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("limit=50");
+    expect(url).not.toContain("offset=");
+  });
+
+  it("defaults limit=50 and offset=0", async () => {
+    globalThis.fetch = mockFetchOk([]);
+    await fetchMdseEvents(24);
+    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(url).toContain("limit=50");
+    expect(url).not.toContain("offset=");
   });
 });
 

@@ -175,14 +175,19 @@ export async function fetchMdseScores(): Promise<MdseDetectorScore[]> {
   return fetchJSON<MdseDetectorScore[]>("/mdse/scores");
 }
 
-export async function fetchMdseSummary(): Promise<MdseSummary> {
-  return fetchJSON<MdseSummary>("/mdse/summary");
+export async function fetchMdseSummary(days?: number): Promise<MdseSummary> {
+  const params = new URLSearchParams();
+  if (days != null) params.set("days", String(days));
+  const query = params.toString();
+  return fetchJSON<MdseSummary>(`/mdse/summary${query ? `?${query}` : ""}`);
 }
 
 export async function fetchMdseEvents(
   hours: number = 24,
   start?: string,
-  end?: string
+  end?: string,
+  limit: number = 50,
+  offset: number = 0
 ): Promise<MdseEvent[]> {
   const params = new URLSearchParams();
   if (start) {
@@ -191,6 +196,8 @@ export async function fetchMdseEvents(
   } else {
     params.set("hours", String(hours));
   }
+  params.set("limit", String(limit));
+  if (offset > 0) params.set("offset", String(offset));
   return fetchJSON<MdseEvent[]>(`/mdse/events?${params.toString()}`);
 }
 
