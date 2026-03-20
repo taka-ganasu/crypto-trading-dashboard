@@ -147,3 +147,128 @@ describe("MdseEvents — timestamp rendering", () => {
     expect(screen.getByText("TS:2026-03-18T12:30:00Z")).toBeDefined();
   });
 });
+
+describe("MdseEvents — pagination", () => {
+  const manyEvents = Array.from({ length: 5 }, (_, i) =>
+    makeEvent({ id: i + 1, detector: `det_${i}`, symbol: `SYM${i}/USDT` })
+  );
+
+  it("shows pagination controls when onPageChange is provided and hasNextPage", () => {
+    render(
+      <MdseEvents
+        events={manyEvents}
+        currentPage={1}
+        hasNextPage={true}
+        onPageChange={vi.fn()}
+      />
+    );
+    expect(screen.getByText("Page 1")).toBeDefined();
+    expect(screen.getByText("Prev")).toBeDefined();
+    expect(screen.getByText("Next")).toBeDefined();
+  });
+
+  it("hides pagination when onPageChange is not provided", () => {
+    render(<MdseEvents events={manyEvents} />);
+    expect(screen.queryByText("Prev")).toBeNull();
+    expect(screen.queryByText("Next")).toBeNull();
+  });
+
+  it("disables Prev on first page", () => {
+    render(
+      <MdseEvents
+        events={manyEvents}
+        currentPage={1}
+        hasNextPage={true}
+        onPageChange={vi.fn()}
+      />
+    );
+    const prev = screen.getByText("Prev");
+    expect((prev as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("disables Next when no next page", () => {
+    render(
+      <MdseEvents
+        events={manyEvents}
+        currentPage={2}
+        hasNextPage={false}
+        onPageChange={vi.fn()}
+      />
+    );
+    const next = screen.getByText("Next");
+    expect((next as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("enables both Prev and Next on middle page", () => {
+    render(
+      <MdseEvents
+        events={manyEvents}
+        currentPage={2}
+        hasNextPage={true}
+        onPageChange={vi.fn()}
+      />
+    );
+    const prev = screen.getByText("Prev");
+    const next = screen.getByText("Next");
+    expect((prev as HTMLButtonElement).disabled).toBe(false);
+    expect((next as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("calls onPageChange with correct page on Next click", async () => {
+    const { userEvent } = await import("@testing-library/user-event");
+    const user = userEvent.setup();
+    const onPageChange = vi.fn();
+    render(
+      <MdseEvents
+        events={manyEvents}
+        currentPage={1}
+        hasNextPage={true}
+        onPageChange={onPageChange}
+      />
+    );
+    await user.click(screen.getByText("Next"));
+    expect(onPageChange).toHaveBeenCalledWith(2);
+  });
+
+  it("calls onPageChange with correct page on Prev click", async () => {
+    const { userEvent } = await import("@testing-library/user-event");
+    const user = userEvent.setup();
+    const onPageChange = vi.fn();
+    render(
+      <MdseEvents
+        events={manyEvents}
+        currentPage={3}
+        hasNextPage={true}
+        onPageChange={onPageChange}
+      />
+    );
+    await user.click(screen.getByText("Prev"));
+    expect(onPageChange).toHaveBeenCalledWith(2);
+  });
+
+  it("shows page indicator in header and footer", () => {
+    render(
+      <MdseEvents
+        events={manyEvents}
+        currentPage={3}
+        hasNextPage={true}
+        onPageChange={vi.fn()}
+      />
+    );
+    const pageIndicators = screen.getAllByText(/Page 3/);
+    expect(pageIndicators.length).toBe(2);
+  });
+
+  it("shows loading state when pageLoading is true", () => {
+    render(
+      <MdseEvents
+        events={[]}
+        currentPage={1}
+        hasNextPage={true}
+        onPageChange={vi.fn()}
+        pageLoading={true}
+      />
+    );
+    expect(screen.getByText(/Loading\.\.\./)).toBeDefined();
+  });
+});

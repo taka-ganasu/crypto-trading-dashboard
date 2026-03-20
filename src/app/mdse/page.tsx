@@ -15,6 +15,8 @@ import MdseEvents from "@/components/mdse/MdseEvents";
 import MdseTrades from "@/components/mdse/MdseTrades";
 import type { MdseSummaryDetector, MdseEvent, MdseTrade, MdseTimeline } from "@/types";
 
+const EVENTS_PAGE_SIZE = 50;
+
 export default function MdsePage() {
   return (
     <Suspense fallback={<LoadingSpinner label="Loading MDSE data..." />}>
@@ -31,14 +33,26 @@ function MdseContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
+  const [eventsPage, setEventsPage] = useState(1);
+  const [eventsPageLoading, setEventsPageLoading] = useState(false);
+  const [hasNextPage, setHasNextPage] = useState(false);
   const { start, end } = useTimeRange();
+
+  const loadEvents = useCallback(async (page: number) => {
+    const offset = (page - 1) * EVENTS_PAGE_SIZE;
+    const result = await fetchMdseEvents(24, start, end, EVENTS_PAGE_SIZE, offset);
+    setEvents(result);
+    setHasNextPage(result.length === EVENTS_PAGE_SIZE);
+    return result;
+  }, [start, end]);
 
   const loadMdseData = useCallback(async () => {
     setLoading(true);
+    setEventsPage(1);
     const [summaryResult, eventsResult, tradesResult, timelineResult] =
       await Promise.allSettled([
         fetchMdseSummary(),
-        fetchMdseEvents(24, start, end),
+        loadEvents(1),
         fetchMdseTrades(20, start, end),
         fetchMdseTimeline(24, start, end),
       ]);
@@ -54,9 +68,7 @@ function MdseContent() {
       criticalFailures += 1;
     }
 
-    if (eventsResult.status === "fulfilled") {
-      setEvents(eventsResult.value);
-    } else {
+    if (eventsResult.status === "rejected") {
       setEvents([]);
       failedSections.push("recent events");
       criticalFailures += 1;
@@ -91,7 +103,19 @@ function MdseContent() {
     }
 
     setLoading(false);
-  }, [start, end]);
+  }, [start, end, loadEvents]);
+
+  const handleEventsPageChange = useCallback(async (page: number) => {
+    setEventsPageLoading(true);
+    try {
+      await loadEvents(page);
+      setEventsPage(page);
+    } catch {
+      // Keep current page on error
+    } finally {
+      setEventsPageLoading(false);
+    }
+  }, [loadEvents]);
 
   useEffect(() => {
     queueMicrotask(() => { void loadMdseData(); });
@@ -132,7 +156,13 @@ function MdseContent() {
 
       <MdseOverview detectors={detectors} />
       <MdseDetectorTimeline timeline={timeline} />
-      <MdseEvents events={events} />
+      <MdseEvents
+        events={events}
+        currentPage={eventsPage}
+        hasNextPage={hasNextPage}
+        onPageChange={handleEventsPageChange}
+        pageLoading={eventsPageLoading}
+      />
       <MdseTrades trades={trades} events={events} />
     </div>
   );

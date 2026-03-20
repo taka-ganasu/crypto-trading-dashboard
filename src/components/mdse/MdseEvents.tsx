@@ -20,9 +20,21 @@ function detectorLabel(event: MdseEvent | null | undefined): string {
 
 interface MdseEventsProps {
   events: MdseEvent[];
+  currentPage?: number;
+  hasNextPage?: boolean;
+  onPageChange?: (page: number) => void;
+  pageLoading?: boolean;
 }
 
-export default function MdseEvents({ events }: MdseEventsProps) {
+export default function MdseEvents({
+  events,
+  currentPage = 1,
+  hasNextPage = false,
+  onPageChange,
+  pageLoading = false,
+}: MdseEventsProps) {
+  const showPagination = onPageChange && (currentPage > 1 || hasNextPage);
+
   return (
     <section>
       <div className="mb-4 flex items-center justify-between">
@@ -30,11 +42,12 @@ export default function MdseEvents({ events }: MdseEventsProps) {
           Recent Events
         </h2>
         <span className="text-sm text-zinc-500">
-          {events.length} events
+          {pageLoading ? "Loading..." : `${events.length} events`}
+          {showPagination && ` · Page ${currentPage}`}
         </span>
       </div>
       <div className="space-y-2">
-        {events.length === 0 ? (
+        {events.length === 0 && !pageLoading ? (
           <p className="text-center text-zinc-500 py-8">
             No events found
           </p>
@@ -86,6 +99,32 @@ export default function MdseEvents({ events }: MdseEventsProps) {
           })
         )}
       </div>
+
+      {showPagination && (
+        <div className="mt-4 flex items-center justify-between">
+          <span className="text-sm text-zinc-500">
+            Page {currentPage}
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+              disabled={currentPage <= 1 || pageLoading}
+              className="rounded border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={!hasNextPage || pageLoading}
+              className="rounded border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
