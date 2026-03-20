@@ -15,7 +15,7 @@ vi.mock("@/lib/api", () => ({
   fetchSystemMetrics: vi.fn(),
   fetchSystemInfo: vi.fn(),
   fetchBotHealth: vi.fn(),
-  fetchApiErrors: vi.fn(),
+  fetchJSON: vi.fn(),
 }));
 
 // Mock child components
@@ -95,11 +95,11 @@ vi.mock("@/components/system/ErrorLogSection", () => ({
 
 import SystemPage from "../system/page";
 import {
+  fetchJSON,
   fetchSystemHealth,
   fetchSystemMetrics,
   fetchSystemInfo,
   fetchBotHealth,
-  fetchApiErrors,
 } from "@/lib/api";
 
 const mockHealth = {
@@ -168,7 +168,7 @@ function setupMocksSuccess() {
   vi.mocked(fetchSystemMetrics).mockResolvedValue(mockMetrics);
   vi.mocked(fetchSystemInfo).mockResolvedValue(mockInfo);
   vi.mocked(fetchBotHealth).mockResolvedValue(mockBotHealth);
-  vi.mocked(fetchApiErrors).mockResolvedValue(mockApiErrors);
+  vi.mocked(fetchJSON).mockResolvedValue(mockApiErrors);
 }
 
 function setupMocksAllFail() {
@@ -176,7 +176,7 @@ function setupMocksAllFail() {
   vi.mocked(fetchSystemMetrics).mockRejectedValue(new Error("fail"));
   vi.mocked(fetchSystemInfo).mockRejectedValue(new Error("fail"));
   vi.mocked(fetchBotHealth).mockRejectedValue(new Error("fail"));
-  vi.mocked(fetchApiErrors).mockRejectedValue(new Error("fail"));
+  vi.mocked(fetchJSON).mockRejectedValue(new Error("fail"));
 }
 
 describe("System Page", () => {
@@ -185,7 +185,7 @@ describe("System Page", () => {
     vi.mocked(fetchSystemMetrics).mockReturnValue(new Promise(() => {}));
     vi.mocked(fetchSystemInfo).mockReturnValue(new Promise(() => {}));
     vi.mocked(fetchBotHealth).mockReturnValue(new Promise(() => {}));
-    vi.mocked(fetchApiErrors).mockReturnValue(new Promise(() => {}));
+    vi.mocked(fetchJSON).mockReturnValue(new Promise(() => {}));
 
     render(<SystemPage />);
     expect(screen.getByText("Loading system data...")).toBeDefined();
@@ -236,7 +236,7 @@ describe("System Page", () => {
     vi.mocked(fetchSystemMetrics).mockRejectedValue(new Error("fail"));
     vi.mocked(fetchSystemInfo).mockResolvedValue(mockInfo);
     vi.mocked(fetchBotHealth).mockResolvedValue(mockBotHealth);
-    vi.mocked(fetchApiErrors).mockResolvedValue([]);
+    vi.mocked(fetchJSON).mockResolvedValue([]);
 
     render(<SystemPage />);
 
@@ -258,7 +258,7 @@ describe("System Page", () => {
       health: null,
       state: null,
     });
-    vi.mocked(fetchApiErrors).mockResolvedValue([]);
+    vi.mocked(fetchJSON).mockResolvedValue([]);
 
     render(<SystemPage />);
 
@@ -308,7 +308,7 @@ describe("System Page", () => {
         ],
       },
     });
-    vi.mocked(fetchApiErrors).mockResolvedValue(mockApiErrors);
+    vi.mocked(fetchJSON).mockResolvedValue(mockApiErrors);
 
     render(<SystemPage />);
 
@@ -353,7 +353,7 @@ describe("System Page", () => {
         checks: "invalid",
       },
     } as never);
-    vi.mocked(fetchApiErrors).mockRejectedValue("permission denied");
+    vi.mocked(fetchJSON).mockRejectedValue("permission denied");
 
     render(<SystemPage />);
 

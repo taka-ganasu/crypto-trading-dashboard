@@ -13,7 +13,6 @@ import type {
   SystemHealth,
   SystemMetrics,
   SystemInfo,
-  ApiError,
   BotHealthResponse,
   SystemStatsResponse,
   StrategiesResponse,
@@ -25,6 +24,7 @@ import type {
   TradeByStrategyDaily,
   MdseTimeline,
 } from "@/types";
+import { delay } from "./delay";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
@@ -37,8 +37,12 @@ function appendExecutionModeParam(
   }
 }
 
-const MAX_RETRIES = parseInt(process.env.NEXT_PUBLIC_FETCH_MAX_RETRIES ?? '3', 10);
+const MAX_RETRIES = parseInt(process.env.NEXT_PUBLIC_FETCH_MAX_RETRIES ?? "3", 10);
 const BACKOFF_MS = [1000, 2000, 4000];
+
+type FetchJSONOptions<TResponse, TResult = TResponse> = {
+  mapResponse?: (payload: TResponse) => TResult;
+};
 
 function isRetryable(error: unknown): boolean {
   if (error instanceof Error) {
@@ -52,8 +56,6 @@ function isRetryable(error: unknown): boolean {
   }
   return false;
 }
-
-import { delay } from "./delay";
 
 async function fetchOnce<T>(path: string): Promise<T> {
   const controller = new AbortController();
@@ -76,11 +78,17 @@ async function fetchOnce<T>(path: string): Promise<T> {
   }
 }
 
-async function fetchJSON<T>(path: string): Promise<T> {
+export async function fetchJSON<TResponse, TResult = TResponse>(
+  path: string,
+  options?: FetchJSONOptions<TResponse, TResult>
+): Promise<TResult> {
   let lastError: unknown;
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      return await fetchOnce<T>(path);
+      const payload = await fetchOnce<TResponse>(path);
+      return options?.mapResponse
+        ? options.mapResponse(payload)
+        : (payload as TResult);
     } catch (error) {
       lastError = error;
       if (attempt < MAX_RETRIES && isRetryable(error)) {
@@ -222,36 +230,6 @@ export async function fetchSystemMetrics(): Promise<SystemMetrics> {
 
 export async function fetchSystemInfo(): Promise<SystemInfo> {
   return fetchJSON<SystemInfo>("/system/info");
-}
-
-export async function fetchApiErrors(
-  since?: string,
-  statusGte?: number,
-  limit?: number
-): Promise<ApiError[]> {
-  const params = new URLSearchParams();
-  if (since) params.set("since", since);
-  if (statusGte) params.set("status_gte", String(statusGte));
-  if (limit) params.set("limit", String(limit));
-  const query = params.toString();
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
-  try {
-    const res = await fetch(`${BASE_URL}/errors${query ? `?${query}` : ""}`, {
-      signal: controller.signal,
-    });
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    const payload: unknown = await res.json();
-    if (payload && typeof payload === "object" && "errors" in payload) {
-      const inner = (payload as { errors: unknown }).errors;
-      return Array.isArray(inner) ? (inner as ApiError[]) : [];
-    }
-    return Array.isArray(payload) ? (payload as ApiError[]) : [];
-  } catch (err) {
-    throw err instanceof Error ? err : new Error("Failed to fetch error logs");
-  } finally {
-    clearTimeout(timeoutId);
-  }
 }
 
 export async function fetchBotHealth(): Promise<BotHealthResponse> {

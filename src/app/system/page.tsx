@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import {
-  fetchApiErrors,
   fetchBotHealth,
+  fetchJSON,
   fetchSystemHealth,
   fetchSystemInfo,
   fetchSystemMetrics,
@@ -35,9 +35,32 @@ type GoLiveCheckItem = {
 };
 
 const DASHBOARD_VERSION = packageJson.version as string;
+type ApiErrorsPayload = ApiError[] | { errors?: unknown };
 
 function formatSinceIso(hours: number): string {
   return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+}
+
+function buildApiErrorsPath(
+  since?: string,
+  statusGte?: number,
+  limit?: number
+): string {
+  const params = new URLSearchParams();
+  if (since) params.set("since", since);
+  if (statusGte) params.set("status_gte", String(statusGte));
+  if (limit) params.set("limit", String(limit));
+  const query = params.toString();
+  return `/errors${query ? `?${query}` : ""}`;
+}
+
+function normalizeApiErrorsPayload(payload: ApiErrorsPayload): ApiError[] {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  const inner = payload?.errors;
+  return Array.isArray(inner) ? (inner as ApiError[]) : [];
 }
 
 function normalizeSystemStatus(status: string | null | undefined): SysStatus {
@@ -147,7 +170,9 @@ export default function SystemPage() {
           fetchSystemMetrics(),
           fetchSystemInfo(),
           fetchBotHealth(),
-          fetchApiErrors(since, 400, 50),
+          fetchJSON<ApiErrorsPayload, ApiError[]>(buildApiErrorsPath(since, 400, 50), {
+            mapResponse: normalizeApiErrorsPayload,
+          }),
         ]);
 
       if (cancelled) return;
