@@ -15,6 +15,7 @@ const { cycleTableSpy, regimeTimelineSpy, timeRangeState } = vi.hoisted(() => ({
 
 vi.mock("@/lib/api", () => ({
   fetchAnalysisCycles: vi.fn(),
+  fetchRegimeData: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock("@/components/TimeRangeFilter", () => ({

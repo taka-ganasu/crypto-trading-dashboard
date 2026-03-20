@@ -23,6 +23,7 @@ import type {
   StrategyPerformance,
   TradeByStrategyDaily,
   MdseTimeline,
+  RegimeData,
 } from "@/types";
 import { delay } from "./delay";
 
@@ -337,4 +338,8 @@ export async function fetchEquityCurve(
     }
     throw error;
   }
+}
+
+export async function fetchRegimeData(): Promise<RegimeData[]> {
+  return fetchJSON<RegimeData[]>("/regime");
 }
