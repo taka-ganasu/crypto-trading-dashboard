@@ -95,6 +95,16 @@ export interface ApiError {
   traceback: string | null;
 }
 
+export interface RegimeData {
+  symbol: string;
+  regime: string;
+  adx: number;
+  atr: number;
+  atr_zscore: number;
+  correlation: number;
+  timestamp: string;
+}
+
 export interface BotHealthCheckItem {
   name?: string | null;
   status?: string | null;

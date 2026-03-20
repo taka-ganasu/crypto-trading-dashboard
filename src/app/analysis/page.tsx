@@ -3,10 +3,10 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import CycleTable, { type DisplayCycle, type RegimeType } from "@/components/CycleTable";
 import RegimeTimeline from "@/components/RegimeTimeline";
-import { fetchAnalysisCycles } from "@/lib/api";
+import { fetchAnalysisCycles, fetchRegimeData } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import TimeRangeFilter, { useTimeRange } from "@/components/TimeRangeFilter";
-import type { AnalysisCycle } from "@/types";
+import type { AnalysisCycle, RegimeData } from "@/types";
 
 type ParsedRegime = {
   regime: RegimeType;
@@ -155,20 +155,27 @@ export default function AnalysisPage() {
 
 function AnalysisContent() {
   const [cycles, setCycles] = useState<AnalysisCycle[]>([]);
+  const [regimeData, setRegimeData] = useState<RegimeData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { start, end } = useTimeRange();
 
   useEffect(() => {
-    const load = () => {
+    const load = async () => {
       setLoading(true);
-      fetchAnalysisCycles(100, start, end)
-        .then((data) => {
-          setCycles(Array.isArray(data) ? data : []);
-          setError(null);
-        })
-        .catch((e: Error) => setError(e.message))
-        .finally(() => setLoading(false));
+      try {
+        const [cycleData, regime] = await Promise.all([
+          fetchAnalysisCycles(100, start, end),
+          fetchRegimeData().catch(() => [] as RegimeData[]),
+        ]);
+        setCycles(Array.isArray(cycleData) ? cycleData : []);
+        setRegimeData(Array.isArray(regime) ? regime : []);
+        setError(null);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, [start, end]);
@@ -227,6 +234,19 @@ function AnalysisContent() {
         </div>
       )}
 
+      {regimeData.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-400">
+            Live Market Regime
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {regimeData.map((r) => (
+              <RegimeCard key={r.symbol} data={r} />
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="Total Cycles" value={String(stats.totalCycles)} />
         <StatCard label="Total Signals" value={String(stats.totalSignals)} />
@@ -248,6 +268,48 @@ function StatCard({ label, value }: { label: string; value: string }) {
     <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
       <p className="text-xs uppercase tracking-wider text-zinc-500">{label}</p>
       <p className="mt-1 font-mono text-2xl font-bold text-zinc-100">{value}</p>
+    </div>
+  );
+}
+
+const REGIME_COLORS: Record<string, string> = {
+  trending: "text-green-400 border-green-500/40 bg-green-500/10",
+  ranging: "text-blue-400 border-blue-500/40 bg-blue-500/10",
+  high_volatility: "text-red-400 border-red-500/40 bg-red-500/10",
+  macro_driven: "text-yellow-400 border-yellow-500/40 bg-yellow-500/10",
+};
+
+const REGIME_LABELS: Record<string, string> = {
+  trending: "Trending",
+  ranging: "Ranging",
+  high_volatility: "High Volatility",
+  macro_driven: "Macro Driven",
+};
+
+function RegimeCard({ data }: { data: RegimeData }) {
+  const colors = REGIME_COLORS[data.regime] ?? "text-zinc-400 border-zinc-700 bg-zinc-800";
+  const label = REGIME_LABELS[data.regime] ?? data.regime;
+
+  return (
+    <div className={`rounded-lg border p-4 ${colors}`}>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-zinc-400">{data.symbol}</span>
+        <span className="text-xs font-bold uppercase">{label}</span>
+      </div>
+      <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+        <div>
+          <p className="text-[10px] uppercase text-zinc-500">ADX</p>
+          <p className="font-mono text-sm font-semibold text-zinc-200">{data.adx.toFixed(1)}</p>
+        </div>
+        <div>
+          <p className="text-[10px] uppercase text-zinc-500">ATR-Z</p>
+          <p className="font-mono text-sm font-semibold text-zinc-200">{data.atr_zscore.toFixed(2)}</p>
+        </div>
+        <div>
+          <p className="text-[10px] uppercase text-zinc-500">Corr</p>
+          <p className="font-mono text-sm font-semibold text-zinc-200">{data.correlation.toFixed(2)}</p>
+        </div>
+      </div>
     </div>
   );
 }
