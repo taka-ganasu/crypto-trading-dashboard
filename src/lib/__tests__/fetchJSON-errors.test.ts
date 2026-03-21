@@ -150,7 +150,8 @@ describe("fetchJSON — error message format", () => {
       Promise.reject(new DOMException("The operation was aborted", "AbortError"))
     );
 
-    await expect(fetchTradeSummary()).rejects.toThrow("Request timed out (5s)");
+    // fetchTradeSummary calls /trades/summary → 15s timeout
+    await expect(fetchTradeSummary()).rejects.toThrow("Request timed out (15s)");
   });
 });
 

@@ -45,10 +45,27 @@ type FetchJSONOptions<TResponse, TResult = TResponse> = {
   mapResponse?: (payload: TResponse) => TResult;
 };
 
+/** Endpoint-specific timeout configuration (ms). */
+const ENDPOINT_TIMEOUTS: [string, number][] = [
+  ["/health", 5_000],
+  ["/trades", 15_000],
+  ["/signals", 15_000],
+  ["/mdse/", 30_000],
+];
+const DEFAULT_TIMEOUT_MS = 10_000;
+
+/** Resolve timeout for a given API path based on prefix matching. */
+export function getTimeoutForPath(path: string): number {
+  for (const [prefix, ms] of ENDPOINT_TIMEOUTS) {
+    if (path.startsWith(prefix)) return ms;
+  }
+  return DEFAULT_TIMEOUT_MS;
+}
+
 function isRetryable(error: unknown): boolean {
   if (error instanceof Error) {
     // Timeout → retryable
-    if (error.message === "Request timed out (5s)") return true;
+    if (error.message.startsWith("Request timed out")) return true;
     // 5xx → retryable; 4xx → not retryable
     const match = error.message.match(/^API error: (\d+)/);
     if (match) return Number(match[1]) >= 500;
@@ -59,8 +76,9 @@ function isRetryable(error: unknown): boolean {
 }
 
 async function fetchOnce<T>(path: string): Promise<T> {
+  const timeoutMs = getTimeoutForPath(path);
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const res = await fetch(`${BASE_URL}${path}`, {
       signal: controller.signal,
@@ -71,7 +89,8 @@ async function fetchOnce<T>(path: string): Promise<T> {
     return (await res.json()) as T;
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error("Request timed out (5s)");
+      const secs = Math.round(timeoutMs / 1000);
+      throw new Error(`Request timed out (${secs}s)`);
     }
     throw error;
   } finally {

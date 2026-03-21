@@ -24,6 +24,7 @@ import {
   fetchMarketSnapshots,
   fetchStrategyPerformance,
   fetchTradesByStrategy,
+  getTimeoutForPath,
 } from "../api";
 
 // Mock delay to resolve instantly so retry tests don't wait
@@ -99,7 +100,7 @@ describe("fetchJSON (via fetch wrapper functions)", () => {
       return Promise.reject(error);
     });
 
-    await expect(fetchCircuitBreakerState()).rejects.toThrow("Request timed out (5s)");
+    await expect(fetchCircuitBreakerState()).rejects.toThrow(/^Request timed out/);
     // Timeouts are retried
     expect(globalThis.fetch).toHaveBeenCalledTimes(4);
   });
@@ -709,5 +710,86 @@ describe("fetchEquityCurve with params", () => {
   it("rethrows non-404 errors from primary endpoint", async () => {
     globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
     await expect(fetchEquityCurve()).rejects.toThrow("Network error");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Endpoint-specific timeout configuration                              */
+/* ------------------------------------------------------------------ */
+
+describe("getTimeoutForPath", () => {
+  it("returns 5000 for /health", () => {
+    expect(getTimeoutForPath("/health")).toBe(5_000);
+  });
+
+  it("returns 15000 for /trades", () => {
+    expect(getTimeoutForPath("/trades")).toBe(15_000);
+    expect(getTimeoutForPath("/trades/summary")).toBe(15_000);
+    expect(getTimeoutForPath("/trades/by-strategy")).toBe(15_000);
+  });
+
+  it("returns 15000 for /signals", () => {
+    expect(getTimeoutForPath("/signals")).toBe(15_000);
+    expect(getTimeoutForPath("/signals?limit=100")).toBe(15_000);
+  });
+
+  it("returns 30000 for /mdse/ endpoints", () => {
+    expect(getTimeoutForPath("/mdse/summary")).toBe(30_000);
+    expect(getTimeoutForPath("/mdse/events")).toBe(30_000);
+    expect(getTimeoutForPath("/mdse/correlation")).toBe(30_000);
+    expect(getTimeoutForPath("/mdse/timeline")).toBe(30_000);
+  });
+
+  it("returns 10000 (default) for other endpoints", () => {
+    expect(getTimeoutForPath("/portfolio/state")).toBe(10_000);
+    expect(getTimeoutForPath("/cb/state")).toBe(10_000);
+    expect(getTimeoutForPath("/performance/summary")).toBe(10_000);
+    expect(getTimeoutForPath("/equity-curve")).toBe(10_000);
+    expect(getTimeoutForPath("/system/health")).toBe(10_000);
+    expect(getTimeoutForPath("/regime")).toBe(10_000);
+    expect(getTimeoutForPath("/strategies")).toBe(10_000);
+    expect(getTimeoutForPath("/cycles")).toBe(10_000);
+  });
+});
+
+describe("timeout message reflects endpoint timeout", () => {
+  it("health endpoint shows 5s in timeout message", async () => {
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      return Promise.reject(
+        new DOMException("The operation was aborted", "AbortError")
+      );
+    });
+
+    await expect(fetchBotHealth()).rejects.toThrow("Request timed out (5s)");
+  });
+
+  it("trades endpoint shows 15s in timeout message", async () => {
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      return Promise.reject(
+        new DOMException("The operation was aborted", "AbortError")
+      );
+    });
+
+    await expect(fetchTradeSummary()).rejects.toThrow("Request timed out (15s)");
+  });
+
+  it("mdse endpoint shows 30s in timeout message", async () => {
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      return Promise.reject(
+        new DOMException("The operation was aborted", "AbortError")
+      );
+    });
+
+    await expect(fetchMdseScores()).rejects.toThrow("Request timed out (30s)");
+  });
+
+  it("default endpoint shows 10s in timeout message", async () => {
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      return Promise.reject(
+        new DOMException("The operation was aborted", "AbortError")
+      );
+    });
+
+    await expect(fetchPortfolioState()).rejects.toThrow("Request timed out (10s)");
   });
 });
