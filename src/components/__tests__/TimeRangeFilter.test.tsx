@@ -1,13 +1,22 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import React from "react";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
-
-const pushMock = vi.fn();
+import { render, screen, cleanup } from "@testing-library/react";
 
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
-  useRouter: () => ({ push: pushMock }),
   usePathname: () => "/test",
+}));
+
+vi.mock("next/link", () => ({
+  default: ({
+    href,
+    children,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 import TimeRangeFilter, { getTimeRangeDates, useTimeRange } from "../TimeRangeFilter";
@@ -19,7 +28,6 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
-  pushMock.mockReset();
   vi.useRealTimers();
 });
 
@@ -44,34 +52,29 @@ describe("TimeRangeFilter", () => {
     expect(btn.getAttribute("aria-pressed")).toBe("true");
   });
 
-  it("clicking 24h navigates with range=24h", () => {
+  it("24h points to range=24h", () => {
     render(<TimeRangeFilter />);
-    fireEvent.click(screen.getByText("24h"));
-    expect(pushMock).toHaveBeenCalledWith("/test?range=24h");
+    expect(screen.getByText("24h").getAttribute("href")).toBe("/test?range=24h");
   });
 
-  it("clicking 30d navigates with range=30d", () => {
+  it("30d points to range=30d", () => {
     render(<TimeRangeFilter />);
-    fireEvent.click(screen.getByText("30d"));
-    expect(pushMock).toHaveBeenCalledWith("/test?range=30d");
+    expect(screen.getByText("30d").getAttribute("href")).toBe("/test?range=30d");
   });
 
-  it("clicking 90d navigates with range=90d", () => {
+  it("90d points to range=90d", () => {
     render(<TimeRangeFilter />);
-    fireEvent.click(screen.getByText("90d"));
-    expect(pushMock).toHaveBeenCalledWith("/test?range=90d");
+    expect(screen.getByText("90d").getAttribute("href")).toBe("/test?range=90d");
   });
 
-  it("clicking All navigates with range=all", () => {
+  it("All points to range=all", () => {
     render(<TimeRangeFilter />);
-    fireEvent.click(screen.getByText("All"));
-    expect(pushMock).toHaveBeenCalledWith("/test?range=all");
+    expect(screen.getByText("All").getAttribute("href")).toBe("/test?range=all");
   });
 
-  it("clicking 7d removes range param (default)", () => {
+  it("7d points to the bare path", () => {
     render(<TimeRangeFilter />);
-    fireEvent.click(screen.getByText("7d"));
-    expect(pushMock).toHaveBeenCalledWith("/test");
+    expect(screen.getByText("7d").getAttribute("href")).toBe("/test");
   });
 });
 

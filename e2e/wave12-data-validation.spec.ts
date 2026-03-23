@@ -3,7 +3,9 @@ import {
   defaultApiResponses,
   expectNoConsoleErrors,
   installApiMocks,
+  selectTimeRange,
   trackConsoleErrors,
+  waitForTimeRangeFilter,
 } from "./test-utils";
 
 async function readTradeSymbols(page: Page): Promise<string[]> {
@@ -148,11 +150,9 @@ test.describe("Trades data validation", () => {
     await page.goto("/trades");
     await expect(page.getByRole("table", { name: "Trades table" })).toBeVisible();
 
-    expect(await readTradeSymbols(page)).toEqual([
-      "ETH/USDT",
-      "BTC/USDT",
-      "SOL/USDT",
-    ]);
+    await expect
+      .poll(() => readTradeSymbols(page))
+      .toEqual(["ETH/USDT", "BTC/USDT", "SOL/USDT"]);
 
     expectNoConsoleErrors(errors);
   });
@@ -324,17 +324,17 @@ test.describe("Performance data validation", () => {
   test("time range filter changes URL and persists", async ({ page }) => {
     const errors = trackConsoleErrors(page);
     await page.goto("/performance");
+    await waitForTimeRangeFilter(page);
 
-    const filterGroup = page.getByRole("group", { name: "Time range filter" });
-    await filterGroup.getByRole("button", { name: "30d" }).click();
+    await selectTimeRange(page, "30d");
     await expect(page).toHaveURL(/range=30d/);
     await expect(page.getByTestId("equity-curve-chart")).toBeVisible();
 
-    await filterGroup.getByRole("button", { name: "All" }).click();
+    await selectTimeRange(page, "All");
     await expect(page).toHaveURL(/range=all/);
     await expect(page.getByTestId("equity-curve-chart")).toBeVisible();
 
-    await filterGroup.getByRole("button", { name: "7d" }).click();
+    await selectTimeRange(page, "7d");
     await expect(page).not.toHaveURL(/range=/);
 
     expectNoConsoleErrors(errors);

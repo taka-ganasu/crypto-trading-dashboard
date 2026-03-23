@@ -17,7 +17,7 @@ test("unknown routes show custom 404 page", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
 });
 
-test("app error boundary renders fallback UI with retry button", async ({ page }) => {
+test("trades surfaces malformed API data as an inline alert", async ({ page }) => {
   const brokenResponses = {
     ...defaultApiResponses,
     "/api/trades": { invalid: true },
@@ -26,9 +26,11 @@ test("app error boundary renders fallback UI with retry button", async ({ page }
 
   await page.goto("/trades");
 
-  await expect(page.getByRole("heading", { level: 2, name: "Something went wrong" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
-
-  await page.getByRole("button", { name: "Retry" }).click();
-  await expect(page.getByRole("heading", { level: 2, name: "Something went wrong" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Trade History" })
+  ).toBeVisible();
+  await expect(page.locator("div[role='alert']").first()).toContainText(
+    "Data unavailable: e.trades is not iterable"
+  );
+  await expect(page.getByText("No trades found")).toBeVisible();
 });

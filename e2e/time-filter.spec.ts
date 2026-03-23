@@ -3,7 +3,9 @@ import {
   defaultApiResponses,
   expectNoConsoleErrors,
   installApiMocks,
+  selectTimeRange,
   trackConsoleErrors,
+  waitForTimeRangeFilter,
 } from "./test-utils";
 
 const pagesWithFilter = [
@@ -21,9 +23,8 @@ for (const target of pagesWithFilter) {
     const errors = trackConsoleErrors(page);
 
     await page.goto(target.path);
-    const filterGroup = page.getByRole("group", {
-      name: "Time range filter",
-    });
+    await waitForTimeRangeFilter(page);
+    const filterGroup = page.getByRole("group", { name: "Time range filter" });
     await expect(filterGroup).toBeVisible();
 
     // Default selection is 7d
@@ -37,12 +38,10 @@ for (const target of pagesWithFilter) {
     const errors = trackConsoleErrors(page);
 
     await page.goto(target.path);
-    const filterGroup = page.getByRole("group", {
-      name: "Time range filter",
-    });
+    await waitForTimeRangeFilter(page);
+    const filterGroup = page.getByRole("group", { name: "Time range filter" });
 
-    // Click 30d
-    await filterGroup.getByRole("button", { name: "30d" }).click();
+    await selectTimeRange(page, "30d");
     await expect(page).toHaveURL(new RegExp(`range=30d`));
 
     // 30d should be active
@@ -51,7 +50,7 @@ for (const target of pagesWithFilter) {
     ).toHaveAttribute("aria-pressed", "true");
 
     // Click 24h
-    await filterGroup.getByRole("button", { name: "24h" }).click();
+    await selectTimeRange(page, "24h");
     await expect(page).toHaveURL(new RegExp(`range=24h`));
 
     expectNoConsoleErrors(errors);
@@ -63,11 +62,10 @@ for (const target of pagesWithFilter) {
     const errors = trackConsoleErrors(page);
 
     await page.goto(`${target.path}?range=30d`);
-    const filterGroup = page.getByRole("group", {
-      name: "Time range filter",
-    });
+    await waitForTimeRangeFilter(page);
+    const filterGroup = page.getByRole("group", { name: "Time range filter" });
 
-    await filterGroup.getByRole("button", { name: "All" }).click();
+    await selectTimeRange(page, "All");
     await expect(page).toHaveURL(new RegExp(`range=all`));
     await expect(
       filterGroup.getByRole("button", { name: "All" })
@@ -82,9 +80,8 @@ for (const target of pagesWithFilter) {
     const errors = trackConsoleErrors(page);
 
     await page.goto(`${target.path}?range=90d`);
-    const filterGroup = page.getByRole("group", {
-      name: "Time range filter",
-    });
+    await waitForTimeRangeFilter(page);
+    const filterGroup = page.getByRole("group", { name: "Time range filter" });
 
     await expect(
       filterGroup.getByRole("button", { name: "90d" })

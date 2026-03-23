@@ -186,15 +186,18 @@ test("performance filter propagates execution_mode to all dependent APIs and cle
   await expect(
     page.getByRole("heading", { level: 1, name: "Performance" })
   ).toBeVisible();
+  const filterGroup = page.getByRole("group", {
+    name: "Execution mode filter",
+  });
   await expectPerformanceRequestMode(apiCalls, performanceRequestGroups, "live");
 
   apiCalls.length = 0;
-  await page.getByRole("button", { name: "Paper" }).click();
+  await filterGroup.getByRole("button", { name: "Paper" }).click();
   await expect(page).toHaveURL(/execution_mode=paper/);
   await expectPerformanceRequestMode(apiCalls, performanceRequestGroups, "paper");
 
   apiCalls.length = 0;
-  await page.getByRole("button", { name: "All" }).click();
+  await filterGroup.getByRole("button", { name: "All" }).click();
   await expect(page).toHaveURL(/execution_mode=all/);
   await expectPerformanceRequestMode(apiCalls, performanceRequestGroups, null);
 
@@ -457,12 +460,15 @@ test("test_execution_mode_filter_switch", async ({ page }) => {
   await page.goto("/performance");
   await expect(page.getByText("+96.87")).toBeVisible();
   await expect(page.getByText(/\(14\.75%\)/)).toBeVisible();
+  const filterGroup = page.getByRole("group", {
+    name: "Execution mode filter",
+  });
 
-  await page.getByRole("button", { name: "Paper" }).click();
+  await filterGroup.getByRole("button", { name: "Paper" }).click();
   await expect(page.getByText("+120.00")).toBeVisible();
   await expect(page.getByText(/\(1\.20%\)/)).toBeVisible();
 
-  await page.getByRole("button", { name: "All" }).click();
+  await filterGroup.getByRole("button", { name: "All" }).click();
   await expect(page.getByText("+999.00")).toBeVisible();
   await expect(page.getByText(/\(14\.75%\)/)).toHaveCount(0);
   await expect(page.getByText(/\(1\.20%\)/)).toHaveCount(0);

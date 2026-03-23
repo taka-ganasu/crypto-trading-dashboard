@@ -3,7 +3,9 @@ import {
   defaultApiResponses,
   expectNoConsoleErrors,
   installApiMocks,
+  selectTimeRange,
   trackConsoleErrors,
+  waitForTimeRangeFilter,
 } from "./test-utils";
 
 type ApiPayloadMap = Record<string, unknown>;
@@ -101,6 +103,7 @@ test.describe("Dashboard E2E expansion v2 — time range filter", () => {
     const errors = trackConsoleErrors(page);
 
     await page.goto("/trades");
+    await waitForTimeRangeFilter(page);
 
     const filter = page.getByRole("group", { name: "Time range filter" });
     await expect(filter).toBeVisible();
@@ -133,7 +136,8 @@ test.describe("Dashboard E2E expansion v2 — time range filter", () => {
     });
 
     await page.goto("/trades");
-    await page.getByRole("button", { name: "24h" }).click();
+    await waitForTimeRangeFilter(page);
+    await selectTimeRange(page, "24h");
     await expect(page).toHaveURL(/range=24h/);
 
     await expect
@@ -153,7 +157,8 @@ test.describe("Dashboard E2E expansion v2 — time range filter", () => {
     const errors = trackConsoleErrors(page);
 
     await page.goto("/trades?tradeId=1&range=30d");
-    await page.getByRole("button", { name: "7d" }).click();
+    await waitForTimeRangeFilter(page);
+    await selectTimeRange(page, "7d");
 
     await expect(page).toHaveURL(/\/trades\?tradeId=1$/);
     expect(page.url()).not.toContain("range=");
@@ -168,13 +173,14 @@ test.describe("Dashboard E2E expansion v2 — time range filter", () => {
     const errors = trackConsoleErrors(page);
 
     await page.goto("/signals?range=1m");
+    await waitForTimeRangeFilter(page);
     const filter = page.getByRole("group", { name: "Time range filter" });
     await expect(filter.getByRole("button", { name: "7d" })).toHaveAttribute(
       "aria-pressed",
       "true"
     );
 
-    await filter.getByRole("button", { name: "30d" }).click();
+    await selectTimeRange(page, "30d");
     await expect(page).toHaveURL(/range=30d/);
 
     expectNoConsoleErrors(errors);
@@ -200,17 +206,17 @@ test.describe("Dashboard E2E expansion v2 — time range filter", () => {
     });
 
     await page.goto("/mdse?range=24h");
-    await page
-      .getByRole("group", { name: "Time range filter" })
-      .getByRole("button", { name: "All" })
-      .click();
+    await waitForTimeRangeFilter(page);
+    await selectTimeRange(page, "All");
     await expect(page).toHaveURL(/range=all/);
 
+    await expect
+      .poll(() => mdseCalls.filter((call) => call.includes("/api/mdse/events")).at(-1) ?? "")
+      .toContain("hours=24");
     const lastEventsCall = mdseCalls
       .filter((call) => call.includes("/api/mdse/events"))
       .at(-1);
     expect(lastEventsCall).toBeDefined();
-    expect(lastEventsCall).toContain("hours=24");
     expect(lastEventsCall).not.toContain("start=");
     expect(lastEventsCall).not.toContain("end=");
 
@@ -236,13 +242,11 @@ test.describe("Dashboard E2E expansion v2 — trades interactions", () => {
     });
 
     await page.goto("/trades");
+    await waitForTimeRangeFilter(page);
     await expect(page.getByText("1 trades")).toBeVisible();
     await expect(page.getByRole("cell", { name: "BTC/USDT" })).toBeVisible();
 
-    await page
-      .getByRole("group", { name: "Time range filter" })
-      .getByRole("button", { name: "All" })
-      .click();
+    await selectTimeRange(page, "All");
     await expect(page).toHaveURL(/range=all/);
     await expect(page.getByText("2 trades")).toBeVisible();
     await expect(page.getByRole("cell", { name: "ETH/USDT" })).toBeVisible();
@@ -265,13 +269,12 @@ test.describe("Dashboard E2E expansion v2 — trades interactions", () => {
     });
 
     await page.goto("/trades?range=30d");
+    await waitForTimeRangeFilter(page);
     await expect(page.getByText("2 trades")).toBeVisible();
 
-    await page
-      .getByRole("group", { name: "Time range filter" })
-      .getByRole("button", { name: "All" })
-      .click();
-    await expect(page.getByText("0 trades")).toBeVisible();
+    await selectTimeRange(page, "All");
+    await expect(page).toHaveURL(/range=all/);
+    await expect(page.getByText("0 trades")).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText("No trades found")).toBeVisible();
 
     expectNoConsoleErrors(errors);

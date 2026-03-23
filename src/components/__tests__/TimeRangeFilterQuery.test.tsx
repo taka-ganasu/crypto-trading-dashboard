@@ -1,14 +1,24 @@
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 
 let searchParamsValue = "";
-const pushMock = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(searchParamsValue),
-  useRouter: () => ({ push: pushMock }),
   usePathname: () => "/analysis",
+}));
+
+vi.mock("next/link", () => ({
+  default: ({
+    href,
+    children,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 import TimeRangeFilter, { useTimeRange } from "../TimeRangeFilter";
@@ -32,19 +42,15 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
-  pushMock.mockReset();
   vi.useRealTimers();
 });
 
 describe("TimeRangeFilter query behavior", () => {
-  it("preserves unrelated query params when switching to 30d", () => {
+  it("preserves unrelated query params in the 30d href", () => {
     searchParamsValue = "tab=signals&execution_mode=paper";
 
     render(<TimeRangeFilter />);
-    fireEvent.click(screen.getByText("30d"));
-
-    expect(pushMock).toHaveBeenCalledTimes(1);
-    const href = pushMock.mock.calls[0][0] as string;
+    const href = screen.getByText("30d").getAttribute("href") as string;
     const [pathname, query = ""] = href.split("?");
     const params = new URLSearchParams(query);
 
@@ -54,14 +60,11 @@ describe("TimeRangeFilter query behavior", () => {
     expect(params.get("range")).toBe("30d");
   });
 
-  it("removes only range when switching back to 7d", () => {
+  it("removes only range in the 7d href", () => {
     searchParamsValue = "range=30d&tab=signals&execution_mode=paper";
 
     render(<TimeRangeFilter />);
-    fireEvent.click(screen.getByText("7d"));
-
-    expect(pushMock).toHaveBeenCalledTimes(1);
-    const href = pushMock.mock.calls[0][0] as string;
+    const href = screen.getByText("7d").getAttribute("href") as string;
     const [pathname, query = ""] = href.split("?");
     const params = new URLSearchParams(query);
 

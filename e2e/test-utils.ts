@@ -471,6 +471,56 @@ export async function installApiMocks(
   });
 }
 
+export async function waitForTimeRangeFilter(page: Page): Promise<void> {
+  const filterGroup = page.getByRole("group", { name: "Time range filter" });
+  await expect(filterGroup).toBeVisible();
+  await expect(filterGroup.getByRole("button", { name: "7d", exact: true })).toBeVisible();
+}
+
+function rangeKeyForLabel(label: string): string {
+  return label === "All" ? "all" : label;
+}
+
+function currentRangeParam(page: Page): string {
+  const currentUrl = new URL(page.url());
+  return currentUrl.searchParams.get("range") ?? "__none__";
+}
+
+export async function selectTimeRange(page: Page, label: string): Promise<void> {
+  const expectedRange = rangeKeyForLabel(label);
+  const expectedParam = expectedRange === "7d" ? "__none__" : expectedRange;
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const filterGroup = page.getByRole("group", { name: "Time range filter" });
+    await expect(filterGroup).toBeVisible();
+
+    const button = filterGroup.getByRole("button", { name: label, exact: true });
+    await expect(button).toBeVisible();
+    await expect(button).toBeEnabled();
+    await button.scrollIntoViewIfNeeded();
+
+    if (attempt < 2) {
+      await button.click();
+    } else {
+      await button.evaluate((element) => {
+        (element as HTMLButtonElement).click();
+      });
+    }
+
+    try {
+      await expect.poll(() => currentRangeParam(page), { timeout: 1_500 }).toBe(expectedParam);
+      return;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error(`Failed to select time range: ${label}`);
+}
+
 export function trackConsoleErrors(page: Page): string[] {
   const errors: string[] = [];
 

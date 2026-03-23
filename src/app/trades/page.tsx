@@ -28,6 +28,22 @@ export default function TradesPage() {
 
 const PAGE_SIZE = 50;
 
+function tradeTimestamp(trade: Trade): number {
+  const primaryTimestamp = trade.entry_time ?? trade.exit_time ?? trade.created_at;
+  if (!primaryTimestamp) return 0;
+
+  const parsed = Date.parse(primaryTimestamp);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function sortTradesNewestFirst(trades: Trade[]): Trade[] {
+  return [...trades].sort((left, right) => {
+    const timestampDiff = tradeTimestamp(right) - tradeTimestamp(left);
+    if (timestampDiff !== 0) return timestampDiff;
+    return right.id - left.id;
+  });
+}
+
 function TradesContent() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [totalTrades, setTotalTrades] = useState(0);
@@ -56,7 +72,7 @@ function TradesContent() {
       const offset = (currentPage - 1) * PAGE_SIZE;
       fetchTrades(undefined, PAGE_SIZE, start, end, apiExecutionMode, offset)
         .then((res) => {
-          setTrades(res.trades);
+          setTrades(sortTradesNewestFirst(res.trades));
           setTotalTrades(res.total);
         })
         .catch((e: Error) => setError(e.message))
