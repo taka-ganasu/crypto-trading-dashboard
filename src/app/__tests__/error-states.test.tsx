@@ -87,6 +87,13 @@ import {
 } from "@/lib/api";
 
 const mockMdseSummary = {
+  total_events: 15,
+  validated_events: 10,
+  unvalidated_events: 5,
+  daily_event_trend: [],
+  weekly_event_trend: [],
+  detector_hit_rate_trend: [],
+  confidence_distribution: [],
   detectors: [
     {
       detector_name: "fr_extreme",
@@ -109,6 +116,10 @@ const mockMdseEvents = [
     direction: "long",
     confidence: 0.85,
     timestamp: "2026-03-15T10:00:00",
+    ttl: 600,
+    validated: 0,
+    alert_sent: false,
+    detector: "fr_extreme",
   },
 ];
 
@@ -122,6 +133,7 @@ const mockMdseTrades = [
     exit_price: 71000,
     entry_time: "2026-03-15T10:00:00",
     exit_time: "2026-03-15T11:00:00",
+    position_size: 0.01,
   },
 ];
 

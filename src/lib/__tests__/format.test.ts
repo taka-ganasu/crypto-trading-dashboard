@@ -136,7 +136,7 @@ describe("formatDuration", () => {
   });
 
   it("returns dash when end timestamp is omitted", () => {
-    expect(formatDuration("2026-01-01T11:00:00Z")).toBe("—");
+    expect(formatDuration("2026-01-01T11:00:00Z" as unknown as number)).toBe("—");
   });
 });
 

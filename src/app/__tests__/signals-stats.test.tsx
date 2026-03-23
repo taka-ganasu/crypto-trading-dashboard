@@ -42,6 +42,7 @@ function makeSignal(overrides: Record<string, unknown> = {}) {
     skip_reason: null,
     strategy_type: "momentum",
     cycle_id: 10,
+    execution_mode: "live",
     created_at: "2026-03-15T10:00:00",
     ...overrides,
   };

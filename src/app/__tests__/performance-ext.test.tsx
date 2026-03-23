@@ -50,10 +50,12 @@ function setupAllSuccess(summaryOverrides: Record<string, unknown> = {}) {
     profit_factor: 1.82,
     avg_slippage: 0.045,
     initial_balance: 1000,
+    total_trades: 10,
     ...summaryOverrides,
   });
   vi.mocked(fetchExecutionQuality).mockResolvedValue([
     {
+      id: 1,
       trade_id: 1,
       expected_price: 50000,
       actual_price: 50010,
@@ -64,6 +66,7 @@ function setupAllSuccess(summaryOverrides: Record<string, unknown> = {}) {
   ]);
   vi.mocked(fetchMarketSnapshots).mockResolvedValue([
     {
+      id: 1,
       symbol: "BTC/USDT",
       price: 83000,
       rsi: 55.3,
@@ -109,9 +112,11 @@ describe("Performance — slippageColor", () => {
       profit_factor: 1.0,
       avg_slippage: 0.8,
       initial_balance: 1000,
+      total_trades: 10,
     });
     vi.mocked(fetchExecutionQuality).mockResolvedValue([
       {
+        id: 1,
         trade_id: 1,
         expected_price: 100,
         actual_price: 101,
@@ -152,9 +157,11 @@ describe("Performance — slippageColor", () => {
       profit_factor: 1.0,
       avg_slippage: 0.2,
       initial_balance: 1000,
+      total_trades: 10,
     });
     vi.mocked(fetchExecutionQuality).mockResolvedValue([
       {
+        id: 1,
         trade_id: 1,
         expected_price: 100,
         actual_price: 100.3,
@@ -207,10 +214,12 @@ describe("Performance — rsiColor", () => {
       profit_factor: 1.0,
       avg_slippage: 0.01,
       initial_balance: 1000,
+      total_trades: 10,
     });
     vi.mocked(fetchExecutionQuality).mockResolvedValue([]);
     vi.mocked(fetchMarketSnapshots).mockResolvedValue([
       {
+        id: 1,
         symbol: "BTC/USDT",
         price: 80000,
         rsi: 75.2,
@@ -245,10 +254,12 @@ describe("Performance — rsiColor", () => {
       profit_factor: 1.0,
       avg_slippage: 0.01,
       initial_balance: 1000,
+      total_trades: 10,
     });
     vi.mocked(fetchExecutionQuality).mockResolvedValue([]);
     vi.mocked(fetchMarketSnapshots).mockResolvedValue([
       {
+        id: 1,
         symbol: "ETH/USDT",
         price: 3000,
         rsi: 22.5,
@@ -417,6 +428,7 @@ describe("Performance — warning section specifics", () => {
       profit_factor: 1.0,
       avg_slippage: 0.01,
       initial_balance: 1000,
+      total_trades: 10,
     });
     vi.mocked(fetchExecutionQuality).mockResolvedValue([]);
     vi.mocked(fetchMarketSnapshots).mockResolvedValue([]);
@@ -437,6 +449,7 @@ describe("Performance — warning section specifics", () => {
       profit_factor: 1.0,
       avg_slippage: 0.01,
       initial_balance: 1000,
+      total_trades: 10,
     });
     vi.mocked(fetchExecutionQuality).mockResolvedValue([]);
     vi.mocked(fetchMarketSnapshots).mockRejectedValue(new Error("fail"));
@@ -493,9 +506,11 @@ describe("Performance — execution null trade_id", () => {
       profit_factor: 1.0,
       avg_slippage: 0.01,
       initial_balance: 1000,
+      total_trades: 10,
     });
     vi.mocked(fetchExecutionQuality).mockResolvedValue([
       {
+        id: 1,
         trade_id: null,
         expected_price: 100,
         actual_price: 100.5,

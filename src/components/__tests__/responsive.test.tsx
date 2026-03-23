@@ -118,6 +118,7 @@ function seedApiMocks(): void {
         skip_reason: null,
         strategy_type: "momentum",
         cycle_id: 1,
+        execution_mode: "paper",
         created_at: "2026-03-15T10:00:00Z",
       },
     ],
@@ -163,6 +164,7 @@ function seedApiMocks(): void {
   });
 
   vi.mocked(fetchPerformanceSummary).mockResolvedValue({
+    total_trades: 10,
     total_pnl: 50,
     win_rate: 0.5,
     profit_factor: 1.25,
@@ -172,6 +174,7 @@ function seedApiMocks(): void {
 
   vi.mocked(fetchExecutionQuality).mockResolvedValue([
     {
+      id: 1,
       trade_id: 1,
       expected_price: 83000,
       actual_price: 83020,
@@ -183,6 +186,7 @@ function seedApiMocks(): void {
 
   vi.mocked(fetchMarketSnapshots).mockResolvedValue([
     {
+      id: 1,
       symbol: "BTC/USDT",
       price: 83000,
       rsi: 55,
@@ -213,6 +217,7 @@ function seedApiMocks(): void {
       errors: null,
       duration_seconds: 300,
       regime_info: "{\"regime\":\"trending\",\"avg_confidence\":72.5}",
+      execution_mode: "paper",
       created_at: "2026-03-15T10:05:00Z",
       total_count: 1,
     },

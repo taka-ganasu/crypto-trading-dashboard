@@ -28,7 +28,7 @@ vi.mock("@/lib/api", () => ({
 }));
 
 vi.mock("@/components/StatsOverviewCards", () => ({
-  default: ({ stats, error }: { stats: unknown; error: string | null }) => (
+  default: ({ stats, error }: { stats: Record<string, unknown> | null; error: string | null }) => (
     <div data-testid="stats-overview-cards">
       {error && <span>{error}</span>}
       {stats && <span>Stats loaded</span>}
@@ -41,7 +41,7 @@ vi.mock("@/components/SystemStatusWidget", () => ({
     health,
     error,
   }: {
-    health: unknown;
+    health: Record<string, unknown> | null;
     error: string | null;
   }) => (
     <div data-testid="system-status-widget">
@@ -291,7 +291,7 @@ describe("Home — toNumber and portfolio fallbacks", () => {
 
   it("parses string equity correctly via toNumber", async () => {
     vi.mocked(fetchPortfolioState).mockResolvedValue({
-      data: { total_balance: "1234.56", daily_pnl: "0", daily_pnl_pct: "0" },
+      data: { total_balance: "1234.56" as unknown as number, daily_pnl: "0" as unknown as number, daily_pnl_pct: "0" as unknown as number },
     });
     vi.mocked(fetchCircuitBreakerState).mockResolvedValue(mockCb);
     vi.mocked(fetchTrades).mockResolvedValue(mockTrades);
@@ -383,13 +383,13 @@ describe("Home — trade rendering", () => {
           pnl: null,
           pnl_pct: null,
           fees: null,
-          entry_time: null,
+          entry_time: null as unknown as string,
           exit_time: null,
           exit_reason: null,
           strategy: "test",
           cycle_id: 5,
           created_at: "2026-03-20T00:00:00",
-          execution_mode: null,
+          execution_mode: null as unknown as string,
         },
       ],
       total: 1,

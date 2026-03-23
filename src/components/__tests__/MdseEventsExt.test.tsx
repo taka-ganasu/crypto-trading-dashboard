@@ -14,10 +14,14 @@ afterEach(cleanup);
 function makeEvent(overrides: Partial<MdseEvent> = {}): MdseEvent {
   return {
     id: 1,
+    detector_name: "test_det",
     detector: "test_det",
     symbol: "BTC/USDT",
     direction: "long",
     confidence: 0.7,
+    ttl: 3600,
+    validated: 0,
+    alert_sent: false,
     timestamp: "2026-03-18T00:00:00Z",
     ...overrides,
   };
