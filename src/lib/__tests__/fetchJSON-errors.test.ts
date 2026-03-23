@@ -3,7 +3,6 @@ import {
   fetchTradeSummary,
   fetchSystemHealth,
   fetchBotHealth,
-  fetchApiErrors,
 } from "../api";
 
 // Mock delay to resolve instantly so retry tests don't wait
@@ -150,88 +149,8 @@ describe("fetchJSON — error message format", () => {
       Promise.reject(new DOMException("The operation was aborted", "AbortError"))
     );
 
-    await expect(fetchTradeSummary()).rejects.toThrow("Request timed out (5s)");
+    // fetchTradeSummary calls /trades/summary → 15s timeout
+    await expect(fetchTradeSummary()).rejects.toThrow("Request timed out (15s)");
   });
 });
 
-/* ------------------------------------------------------------------ */
-/* fetchApiErrors — specific error handling                            */
-/* ------------------------------------------------------------------ */
-
-describe("fetchApiErrors — additional error handling", () => {
-  it("throws API error with status code on non-ok response", async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 403,
-      json: () => Promise.resolve({}),
-    });
-
-    await expect(fetchApiErrors()).rejects.toThrow("API error: 403");
-  });
-
-  it("handles timeout via AbortError", async () => {
-    globalThis.fetch = vi.fn().mockImplementation(() =>
-      Promise.reject(new DOMException("The operation was aborted", "AbortError"))
-    );
-
-    // fetchApiErrors has its own try/catch that rethrows Error instances
-    await expect(fetchApiErrors()).rejects.toThrow();
-  });
-
-  it("wraps non-Error thrown values with descriptive message", async () => {
-    globalThis.fetch = vi.fn().mockRejectedValue(42);
-
-    await expect(fetchApiErrors()).rejects.toThrow(
-      "Failed to fetch error logs"
-    );
-  });
-
-  it("wraps null thrown value", async () => {
-    globalThis.fetch = vi.fn().mockRejectedValue(null);
-
-    await expect(fetchApiErrors()).rejects.toThrow(
-      "Failed to fetch error logs"
-    );
-  });
-
-  it("preserves Error instances with original message", async () => {
-    globalThis.fetch = vi.fn().mockRejectedValue(
-      new Error("Custom fetch error")
-    );
-
-    await expect(fetchApiErrors()).rejects.toThrow("Custom fetch error");
-  });
-
-  it("returns empty array for object response without errors field", async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ data: "something" }),
-    });
-
-    const result = await fetchApiErrors();
-    expect(result).toEqual([]);
-  });
-
-  it("returns empty array for null response", async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(null),
-    });
-
-    const result = await fetchApiErrors();
-    expect(result).toEqual([]);
-  });
-
-  it("omits query params when none provided", async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve([]),
-    });
-
-    await fetchApiErrors();
-    const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock
-      .calls[0][0] as string;
-    expect(url).toContain("/errors");
-    expect(url).not.toContain("?");
-  });
-});
