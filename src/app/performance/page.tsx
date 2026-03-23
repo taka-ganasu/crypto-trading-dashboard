@@ -18,6 +18,7 @@ import ExecutionModeFilter, {
   useExecutionMode,
 } from "@/components/ExecutionModeFilter";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import TimeRangeFilter, { useTimeRange } from "@/components/TimeRangeFilter";
 import {
   formatNumber,
   formatPercent,
@@ -68,6 +69,7 @@ function PerformanceContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
+  const { start, end } = useTimeRange();
   const { apiExecutionMode } = useExecutionMode();
 
   const loadData = useCallback(async () => {
@@ -82,8 +84,8 @@ function PerformanceContent() {
         fetchPerformanceSummary(apiExecutionMode),
         fetchExecutionQuality(50, apiExecutionMode),
         fetchMarketSnapshots(20, apiExecutionMode),
-        fetchEquityCurve(undefined, undefined, apiExecutionMode, tzOffset),
-        fetchTradesByStrategy(undefined, undefined, apiExecutionMode, tzOffset),
+        fetchEquityCurve(start, end, apiExecutionMode, tzOffset),
+        fetchTradesByStrategy(start, end, apiExecutionMode, tzOffset),
       ]);
 
     const failedSections: string[] = [];
@@ -140,7 +142,7 @@ function PerformanceContent() {
     }
 
     setLoading(false);
-  }, [apiExecutionMode]);
+  }, [apiExecutionMode, end, start]);
 
   useEffect(() => {
     let cancelled = false;
@@ -192,7 +194,10 @@ function PerformanceContent() {
       <div className="mb-6">
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-xl font-bold text-zinc-100">Performance</h1>
-          <ExecutionModeFilter />
+          <div className="flex items-center gap-4">
+            <TimeRangeFilter />
+            <ExecutionModeFilter />
+          </div>
         </div>
       </div>
 

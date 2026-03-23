@@ -1,7 +1,7 @@
 "use client";
 
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { useCallback } from "react";
+import Link from "next/link";
+import { useSearchParams, usePathname } from "next/navigation";
 
 export type TimeRange = "24h" | "7d" | "30d" | "90d" | "all";
 
@@ -49,32 +49,28 @@ export function useTimeRange(): {
 
 export default function TimeRangeFilter() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
-
   const raw = searchParams.get("range");
   const currentRange: TimeRange = isTimeRange(raw) ? raw : "7d";
 
-  const setRange = useCallback(
-    (range: TimeRange) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (range === "7d") {
-        params.delete("range");
-      } else {
-        params.set("range", range);
-      }
-      const query = params.toString();
-      router.push(query ? `${pathname}?${query}` : pathname);
-    },
-    [searchParams, router, pathname]
-  );
+  const buildHref = (range: TimeRange): string => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (range === "7d") {
+      params.delete("range");
+    } else {
+      params.set("range", range);
+    }
+    const query = params.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  };
 
   return (
     <div className="flex gap-1" role="group" aria-label="Time range filter">
       {RANGES.map(({ key, label }) => (
-        <button
+        <Link
           key={key}
-          onClick={() => setRange(key)}
+          href={buildHref(key)}
+          role="button"
           aria-pressed={currentRange === key}
           className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
             currentRange === key
@@ -83,7 +79,7 @@ export default function TimeRangeFilter() {
           }`}
         >
           {label}
-        </button>
+        </Link>
       ))}
     </div>
   );
