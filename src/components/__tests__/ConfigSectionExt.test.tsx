@@ -60,6 +60,7 @@ describe("ConfigSection — partial info fields", () => {
       bot_version: "0.42.0",
       db_path: "/data/trades.db",
       python_version: "3.12.4",
+      platform: "linux",
     };
     renderConfig({
       info,

@@ -236,7 +236,7 @@ describe("Portfolio — totalEquity derivation", () => {
           b: { symbol: "B", strategy: "y", allocation_pct: 50, equity: 500, initial_equity: 500 },
         },
       },
-    } as ReturnType<typeof makePortfolio>);
+    } as unknown as ReturnType<typeof makePortfolio>);
     vi.mocked(fetchEquityCurve).mockResolvedValue(mockEquityCurve);
     vi.mocked(fetchStrategyPerformance).mockResolvedValue(mockStrategyPerf);
 
@@ -257,7 +257,7 @@ describe("Portfolio — totalEquity derivation", () => {
         last_updated: "2026-03-15T10:00:00",
         strategies: {},
       },
-    } as ReturnType<typeof makePortfolio>);
+    } as unknown as ReturnType<typeof makePortfolio>);
     vi.mocked(fetchEquityCurve).mockResolvedValue(mockEquityCurve);
     vi.mocked(fetchStrategyPerformance).mockResolvedValue(mockStrategyPerf);
 
@@ -280,7 +280,7 @@ describe("Portfolio — lastUpdated fallback", () => {
         total_balance: 1000,
         strategies: {},
       },
-    } as ReturnType<typeof makePortfolio>);
+    } as unknown as ReturnType<typeof makePortfolio>);
     vi.mocked(fetchEquityCurve).mockResolvedValue(mockEquityCurve);
     vi.mocked(fetchStrategyPerformance).mockResolvedValue(mockStrategyPerf);
 
@@ -298,7 +298,7 @@ describe("Portfolio — lastUpdated fallback", () => {
         timestamp: "2026-03-16T08:00:00",
         strategies: {},
       },
-    } as ReturnType<typeof makePortfolio>);
+    } as unknown as ReturnType<typeof makePortfolio>);
     vi.mocked(fetchEquityCurve).mockResolvedValue(mockEquityCurve);
     vi.mocked(fetchStrategyPerformance).mockResolvedValue(mockStrategyPerf);
 
