@@ -1,151 +1,15 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import {
-  fetchBotHealth,
-  fetchJSON,
-  fetchSystemHealth,
-  fetchSystemInfo,
-  fetchSystemMetrics,
-} from "@/lib/api";
+import { Suspense } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import HealthSection from "@/components/system/HealthSection";
 import MetricsSection from "@/components/system/MetricsSection";
 import ConfigSection from "@/components/system/ConfigSection";
 import ErrorLogSection from "@/components/system/ErrorLogSection";
-import type {
-  ApiError,
-  BotHealthCheckItem,
-  BotHealthResponse,
-  SystemHealth,
-  SystemInfo,
-  SystemMetrics,
-} from "@/types";
 import packageJson from "../../../package.json";
-
-type SysStatus = "OK" | "DEGRADED" | "DOWN" | "unreachable";
-type ActiveTab = "info" | "errors";
-type GoLiveStatus = "ok" | "warning" | "error" | "unknown";
-
-type GoLiveCheckItem = {
-  name: string;
-  status: GoLiveStatus;
-  message: string;
-  latencyMs: number | null;
-};
+import { useSystemData } from "./useSystemData";
 
 const DASHBOARD_VERSION = packageJson.version as string;
-type ApiErrorsPayload = ApiError[] | { errors?: unknown };
-
-function formatSinceIso(hours: number): string {
-  return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
-}
-
-function buildApiErrorsPath(
-  since?: string,
-  statusGte?: number,
-  limit?: number
-): string {
-  const params = new URLSearchParams();
-  if (since) params.set("since", since);
-  if (statusGte) params.set("status_gte", String(statusGte));
-  if (limit) params.set("limit", String(limit));
-  const query = params.toString();
-  return `/errors${query ? `?${query}` : ""}`;
-}
-
-function normalizeApiErrorsPayload(payload: ApiErrorsPayload): ApiError[] {
-  if (Array.isArray(payload)) {
-    return payload;
-  }
-
-  const inner = payload?.errors;
-  return Array.isArray(inner) ? (inner as ApiError[]) : [];
-}
-
-function normalizeSystemStatus(status: string | null | undefined): SysStatus {
-  const normalized = (status ?? "").toLowerCase();
-  if (normalized === "ok") return "OK";
-  if (normalized === "degraded") return "DEGRADED";
-  if (normalized === "down") return "DOWN";
-  return "unreachable";
-}
-
-function asRecord(value: unknown): Record<string, unknown> | null {
-  if (value && typeof value === "object" && !Array.isArray(value)) {
-    return value as Record<string, unknown>;
-  }
-  return null;
-}
-
-function asString(value: unknown): string | null {
-  if (typeof value === "string") {
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : null;
-  }
-  return null;
-}
-
-function asNumber(value: unknown): number | null {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value;
-  }
-  return null;
-}
-
-function readStringField(payload: Record<string, unknown>, keys: string[]): string | null {
-  for (const key of keys) {
-    const value = asString(payload[key]);
-    if (value) return value;
-  }
-  return null;
-}
-
-function readHealthField(health: BotHealthResponse | null, keys: string[]): string | null {
-  const root = asRecord(health);
-  if (!root) return null;
-
-  const direct = readStringField(root, keys);
-  if (direct) return direct;
-
-  const data = asRecord(root.data);
-  if (!data) return null;
-  return readStringField(data, keys);
-}
-
-function normalizeGoLiveStatus(status: string | null | undefined): GoLiveStatus {
-  const normalized = (status ?? "").toLowerCase();
-  if (normalized === "ok") return "ok";
-  if (normalized === "warn" || normalized === "warning") return "warning";
-  if (normalized === "fail" || normalized === "error") return "error";
-  return "unknown";
-}
-
-function readHealthChecks(health: BotHealthResponse | null): BotHealthCheckItem[] {
-  const root = asRecord(health);
-  if (!root) return [];
-
-  if (Array.isArray(root.checks)) {
-    return root.checks as BotHealthCheckItem[];
-  }
-
-  const data = asRecord(root.data);
-  if (data && Array.isArray(data.checks)) {
-    return data.checks as BotHealthCheckItem[];
-  }
-  return [];
-}
-
-function normalizeGoLiveChecks(health: BotHealthResponse | null): GoLiveCheckItem[] {
-  return readHealthChecks(health).map((item, index) => {
-    const rawItem = asRecord(item);
-    const name = asString(rawItem?.name) ?? `check_${index + 1}`;
-    const status = normalizeGoLiveStatus(asString(rawItem?.status));
-    const message = asString(rawItem?.message) ?? "—";
-    const latencyMs = asNumber(rawItem?.latency_ms);
-    return { name, status, message, latencyMs };
-  });
-}
 
 export default function SystemPage() {
   return (
@@ -156,117 +20,9 @@ export default function SystemPage() {
 }
 
 function SystemContent() {
-  const [health, setHealth] = useState<SystemHealth | null>(null);
-  const [botHealth, setBotHealth] = useState<BotHealthResponse | null>(null);
-  const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
-  const [info, setInfo] = useState<SystemInfo | null>(null);
-  const [apiErrors, setApiErrors] = useState<ApiError[]>([]);
-  const [systemError, setSystemError] = useState<string | null>(null);
-  const [errorLogError, setErrorLogError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<ActiveTab>("info");
-  const [expandedTraceKey, setExpandedTraceKey] = useState<string | null>(null);
+  const data = useSystemData();
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      const since = formatSinceIso(24);
-      const [healthResult, metricsResult, infoResult, botHealthResult, errorsResult] =
-        await Promise.allSettled([
-          fetchSystemHealth(),
-          fetchSystemMetrics(),
-          fetchSystemInfo(),
-          fetchBotHealth(),
-          fetchJSON<ApiErrorsPayload, ApiError[]>(buildApiErrorsPath(since, 400, 50), {
-            mapResponse: normalizeApiErrorsPayload,
-          }),
-        ]);
-
-      if (cancelled) return;
-
-      const failedSystemCalls: string[] = [];
-
-      if (healthResult.status === "fulfilled") {
-        setHealth(healthResult.value);
-      } else {
-        setHealth(null);
-        failedSystemCalls.push("health");
-      }
-
-      if (metricsResult.status === "fulfilled") {
-        setMetrics(metricsResult.value);
-      } else {
-        setMetrics(null);
-        failedSystemCalls.push("metrics");
-      }
-
-      if (infoResult.status === "fulfilled") {
-        setInfo(infoResult.value);
-      } else {
-        setInfo(null);
-        failedSystemCalls.push("info");
-      }
-
-      if (botHealthResult.status === "fulfilled") {
-        setBotHealth(botHealthResult.value);
-      } else {
-        setBotHealth(null);
-        failedSystemCalls.push("bot_health");
-      }
-
-      if (failedSystemCalls.length > 0) {
-        setSystemError(`Failed to fetch: ${failedSystemCalls.join(", ")}`);
-      } else {
-        setSystemError(null);
-      }
-
-      if (errorsResult.status === "fulfilled") {
-        setApiErrors(errorsResult.value);
-        setErrorLogError(null);
-      } else {
-        setApiErrors([]);
-        setErrorLogError(
-          errorsResult.reason instanceof Error
-            ? errorsResult.reason.message
-            : "Failed to fetch error logs"
-        );
-      }
-
-      setLoading(false);
-    }
-
-    load();
-    const interval = setInterval(load, 30000);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, []);
-
-  const status = normalizeSystemStatus(health?.status ?? null);
-  const botVersionFromHealth = readHealthField(botHealth, [
-    "bot_version",
-    "version",
-    "app_version",
-  ]);
-  const vpsHead = readHealthField(botHealth, [
-    "vps_head",
-    "vps_git_head",
-    "vps_commit",
-    "git_head",
-    "commit",
-  ]);
-  const mainHead = readHealthField(botHealth, [
-    "main_head",
-    "main_git_head",
-    "origin_main_head",
-    "upstream_main_head",
-  ]);
-  const isHeadDrift = Boolean(vpsHead && mainHead && vpsHead !== mainHead);
-  const goLiveChecks = normalizeGoLiveChecks(botHealth);
-
-  if (loading && !health && !metrics && !info && !systemError) {
+  if (data.loading && !data.health && !data.metrics && !data.info && !data.systemError) {
     return <LoadingSpinner label="Loading system data..." />;
   }
 
@@ -283,9 +39,9 @@ function SystemContent() {
         <button
           type="button"
           data-testid="system-tab-info"
-          onClick={() => setActiveTab("info")}
+          onClick={() => data.setActiveTab("info")}
           className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === "info"
+            data.activeTab === "info"
               ? "bg-cyan-500/20 text-cyan-300"
               : "text-zinc-400 hover:text-zinc-200"
           }`}
@@ -295,9 +51,9 @@ function SystemContent() {
         <button
           type="button"
           data-testid="system-tab-error-log"
-          onClick={() => setActiveTab("errors")}
+          onClick={() => data.setActiveTab("errors")}
           className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === "errors"
+            data.activeTab === "errors"
               ? "bg-cyan-500/20 text-cyan-300"
               : "text-zinc-400 hover:text-zinc-200"
           }`}
@@ -306,35 +62,33 @@ function SystemContent() {
         </button>
       </div>
 
-      {activeTab === "info" ? (
+      {data.activeTab === "info" ? (
         <>
           <HealthSection
-            loading={loading}
-            systemError={systemError}
-            status={status}
-            health={health}
-            goLiveChecks={goLiveChecks}
+            loading={data.loading}
+            systemError={data.systemError}
+            status={data.status}
+            health={data.health}
+            goLiveChecks={data.goLiveChecks}
           />
-          <MetricsSection loading={loading} metrics={metrics} />
+          <MetricsSection loading={data.loading} metrics={data.metrics} />
           <ConfigSection
-            loading={loading}
-            botVersionFromHealth={botVersionFromHealth}
-            vpsHead={vpsHead}
-            mainHead={mainHead}
-            isHeadDrift={isHeadDrift}
-            info={info}
+            loading={data.loading}
+            botVersionFromHealth={data.botVersionFromHealth}
+            vpsHead={data.vpsHead}
+            mainHead={data.mainHead}
+            isHeadDrift={data.isHeadDrift}
+            info={data.info}
             dashboardVersion={DASHBOARD_VERSION}
           />
         </>
       ) : (
         <ErrorLogSection
-          loading={loading}
-          errorLogError={errorLogError}
-          apiErrors={apiErrors}
-          expandedTraceKey={expandedTraceKey}
-          onToggleTrace={(key) =>
-            setExpandedTraceKey((current) => (current === key ? null : key))
-          }
+          loading={data.loading}
+          errorLogError={data.errorLogError}
+          apiErrors={data.apiErrors}
+          expandedTraceKey={data.expandedTraceKey}
+          onToggleTrace={data.toggleTrace}
         />
       )}
     </div>
