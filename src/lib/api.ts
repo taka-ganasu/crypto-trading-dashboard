@@ -24,6 +24,7 @@ import type {
   TradeByStrategyDaily,
   MdseTimeline,
   RegimeData,
+  OnchainRegimeData,
 } from "@/types";
 import { delay } from "./delay";
 
@@ -368,4 +369,8 @@ export async function fetchEquityCurve(
 
 export async function fetchRegimeData(): Promise<RegimeData[]> {
   return fetchJSON<RegimeData[]>("/regime");
+}
+
+export async function fetchOnchainRegime(): Promise<OnchainRegimeData> {
+  return fetchJSON<OnchainRegimeData>("/onchain/regime");
 }

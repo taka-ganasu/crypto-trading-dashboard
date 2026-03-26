@@ -130,6 +130,37 @@ export interface BotHealthResponse {
   } | null;
 }
 
+export interface OnchainDataPoint {
+  date: string;
+  value: number | null;
+}
+
+export interface BtcPricePoint {
+  date: string;
+  price: number;
+  sma_200: number | null;
+}
+
+export interface OnchainRegimeData {
+  regime: string;
+  bear_flag_count: number;
+  layer1: string;
+  layer1_5: string;
+  nupl_latest: number | null;
+  mvrv_latest: number | null;
+  sopr_7d_latest: number | null;
+  btc_price: number | null;
+  btc_sma_200: number | null;
+  nupl_bear: boolean;
+  mvrv_bear: boolean;
+  sopr_bear: boolean;
+  nupl_series: OnchainDataPoint[];
+  mvrv_series: OnchainDataPoint[];
+  sopr_7d_series: OnchainDataPoint[];
+  btc_price_series: BtcPricePoint[];
+  timestamp: string;
+}
+
 export interface SystemStatsResponse {
   total_endpoints?: number | null;
   db_stats?: {
